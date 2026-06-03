@@ -83,5 +83,5 @@ The documentation is organized by genre:
 | Genre         | Directory        | Content                                                                                                            |
 |---------------|------------------|---------------------------------------------------------------------------------------------------------------------|
 | **Reference** | [`docs/reference/`](docs/reference/) | Role reference: [Resolver](docs/reference/resolver.md), [Assembler](docs/reference/assembler.md), [Aggregator](docs/reference/aggregator.md), [OutputNode](docs/reference/output-node.md), [Visitor](docs/reference/visitor.md) |
-| **How-To**    | [`docs/how-to/`](docs/how-to/)       | Task-oriented: [Assembler customization](docs/how-to/assembler-customization.md), [Translations pipeline](docs/how-to/translations-pipeline.md) |
+| **How-To**    | [`docs/how-to/`](docs/how-to/)       | Task-oriented: [Aggregator plugin project](docs/how-to/aggregator-plugin-project.md), [Assembler customization](docs/how-to/assembler-customization.md), [Translations pipeline](docs/how-to/translations-pipeline.md) |
 | **Concept**   | [`docs/concepts/`](docs/concepts/)   | Background & design decisions: [Translatable values: immutability & identity](docs/concepts/translations-rationale.md) |
