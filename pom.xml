@@ -49,7 +49,7 @@
 	<properties>
 		<junit.version>6.1.0</junit.version>
 		<mockito.version>5.23.0</mockito.version>
-		<spotbugs.version>4.9.8</spotbugs.version>
+		<spotbugs.version>4.10.2</spotbugs.version>
 		<gpg.skip>true</gpg.skip>
 		<maven.compiler.release>25</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
