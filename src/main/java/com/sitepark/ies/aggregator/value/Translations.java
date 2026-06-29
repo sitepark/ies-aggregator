@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.value;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An immutable, per-language translation table: maps {@link TranslatableText} instances to their
@@ -22,15 +23,19 @@ import java.util.Map;
  * key it is built around — to avoid a package cycle with the collecting and rendering packages that
  * depend on it.
  */
+// Identity-keyed by design: TranslatableText instances are looked up by reference, not value
+// (see class Javadoc). The IdentityHashMap usage is intentional, not the accidental misuse the
+// Error Prone check guards against.
+@SuppressWarnings("IdentityHashMapUsage")
 public final class Translations {
 
   /** Renders the source language: no translations and no language prefix. */
   public static final Translations SOURCE = new Translations(null, new IdentityHashMap<>());
 
-  private final String targetLang;
+  private final @Nullable String targetLang;
   private final Map<TranslatableText, String> translations;
 
-  private Translations(String targetLang, Map<TranslatableText, String> translations) {
+  private Translations(@Nullable String targetLang, Map<TranslatableText, String> translations) {
     this.targetLang = targetLang;
     this.translations = new IdentityHashMap<>(translations);
   }
@@ -64,7 +69,7 @@ public final class Translations {
   }
 
   /** Returns the target language code, or {@code null} for the source language. */
-  public String targetLang() {
+  public @Nullable String targetLang() {
     return this.targetLang;
   }
 

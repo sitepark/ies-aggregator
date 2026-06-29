@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A translatable wrapper around a {@link Uri} whose path segments are individually translatable.
@@ -24,9 +25,9 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
 
   private final PlainUri uri;
 
-  private List<TranslatableText> translatablePath;
+  private @Nullable List<TranslatableText> translatablePath;
 
-  private String microsite;
+  private @Nullable String microsite;
 
   private int id = -1;
 
@@ -56,6 +57,8 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
     return translatableUri;
   }
 
+  @SuppressWarnings(
+      "StringSplitter") // blank segments are skipped, so trailing-empty behavior is moot
   private void initPath(String path) {
 
     if (path == null) {

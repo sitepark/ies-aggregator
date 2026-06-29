@@ -11,7 +11,15 @@ import java.util.List;
  */
 public interface Resolver {
 
-  Resolver EMPTY = new EmptyResolver();
+  /**
+   * Returns the shared empty resolver, a null-object whose lookups all return defaults or empty
+   * results.
+   *
+   * @return the empty resolver
+   */
+  static Resolver empty() {
+    return EmptyResolver.INSTANCE;
+  }
 
   /**
    * Returns true if the context is empty, i.e. contains no data.

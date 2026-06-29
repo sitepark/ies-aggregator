@@ -43,8 +43,8 @@ public class TranslatableSplitText implements TranslatableContainer {
   public List<TranslatableText> getTranslatableTextList() {
     List<TranslatableText> translatableTextList = new ArrayList<>();
     for (Object o : this.splittedText) {
-      if (o instanceof TranslatableText) {
-        translatableTextList.add((TranslatableText) o);
+      if (o instanceof TranslatableText text) {
+        translatableTextList.add(text);
       }
     }
     return translatableTextList;

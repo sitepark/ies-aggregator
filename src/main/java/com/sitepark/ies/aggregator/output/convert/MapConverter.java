@@ -19,6 +19,8 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Visitor that converts an {@link OutputObject} or {@link OutputList} hierarchy into nested {@link
@@ -32,8 +34,8 @@ import java.util.Map;
 public final class MapConverter extends OutputVisitor {
 
   private final Deque<Container> stack = new ArrayDeque<>();
-  private String currentKey;
-  private Object result;
+  private @Nullable String currentKey;
+  private @Nullable Object result;
 
   /** Creates a converter without a domain object mapper. */
   public MapConverter() {
@@ -59,7 +61,7 @@ public final class MapConverter extends OutputVisitor {
     reset();
     root.accept(this);
     @SuppressWarnings("unchecked")
-    Map<String, Object> typed = (Map<String, Object>) this.result;
+    Map<String, Object> typed = (Map<String, Object>) Objects.requireNonNull(this.result);
     return typed;
   }
 
@@ -73,7 +75,8 @@ public final class MapConverter extends OutputVisitor {
     reset();
     root.accept(this);
     @SuppressWarnings("unchecked")
-    List<Map<String, Object>> typed = (List<Map<String, Object>>) this.result;
+    List<Map<String, Object>> typed =
+        (List<Map<String, Object>>) Objects.requireNonNull(this.result);
     return typed;
   }
 
@@ -87,7 +90,7 @@ public final class MapConverter extends OutputVisitor {
     reset();
     visitCollection(root);
     @SuppressWarnings("unchecked")
-    List<Object> typed = (List<Object>) this.result;
+    List<Object> typed = (List<Object>) Objects.requireNonNull(this.result);
     return typed;
   }
 
@@ -99,7 +102,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitObject(OutputObject obj) {
-    Map<String, Object> map = new LinkedHashMap<>();
+    Map<@Nullable String, @Nullable Object> map = new LinkedHashMap<>();
     putValue(map);
     this.stack.push(new MapContainer(map));
     iterateFields(obj);
@@ -108,7 +111,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitList(OutputList list) {
-    List<Object> array = new ArrayList<>();
+    List<@Nullable Object> array = new ArrayList<>();
     putValue(array);
     this.stack.push(new ListContainer(array));
     for (OutputListItem item : list.items()) {
@@ -119,7 +122,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitCollection(Collection<?> collection) {
-    List<Object> nested = new ArrayList<>();
+    List<@Nullable Object> nested = new ArrayList<>();
     putValue(nested);
     this.stack.push(new ListContainer(nested));
     for (Object item : collection) {
@@ -130,7 +133,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitArray(Object[] array) {
-    List<Object> nested = new ArrayList<>();
+    List<@Nullable Object> nested = new ArrayList<>();
     putValue(nested);
     this.stack.push(new ListContainer(nested));
     for (Object item : array) {
@@ -141,7 +144,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitListItem(OutputListItem item) {
-    Map<String, Object> map = new LinkedHashMap<>();
+    Map<@Nullable String, @Nullable Object> map = new LinkedHashMap<>();
     putValue(map);
     this.stack.push(new MapContainer(map));
     iterateFields(item);
@@ -150,7 +153,7 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitMap(Map<?, ?> map) {
-    Map<String, Object> nested = new LinkedHashMap<>();
+    Map<@Nullable String, @Nullable Object> nested = new LinkedHashMap<>();
     putValue(nested);
     this.stack.push(new MapContainer(nested));
     map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
@@ -158,7 +161,7 @@ public final class MapConverter extends OutputVisitor {
   }
 
   @Override
-  public void visitField(String key, Object value) {
+  public void visitField(@Nullable String key, @Nullable Object value) {
     this.currentKey = key;
     super.visitField(key, value);
   }
@@ -223,7 +226,7 @@ public final class MapConverter extends OutputVisitor {
     putValue(value);
   }
 
-  private void putValue(Object value) {
+  private void putValue(@Nullable Object value) {
     Container top = this.stack.peek();
     if (top == null) {
       this.result = value;
@@ -233,19 +236,19 @@ public final class MapConverter extends OutputVisitor {
   }
 
   private sealed interface Container permits MapContainer, ListContainer {
-    void put(String key, Object value);
+    void put(@Nullable String key, @Nullable Object value);
   }
 
-  private record MapContainer(Map<String, Object> map) implements Container {
+  private record MapContainer(Map<@Nullable String, @Nullable Object> map) implements Container {
     @Override
-    public void put(String key, Object value) {
+    public void put(@Nullable String key, @Nullable Object value) {
       this.map.put(key, value);
     }
   }
 
-  private record ListContainer(List<Object> list) implements Container {
+  private record ListContainer(List<@Nullable Object> list) implements Container {
     @Override
-    public void put(String key, Object value) {
+    public void put(@Nullable String key, @Nullable Object value) {
       this.list.add(value);
     }
   }

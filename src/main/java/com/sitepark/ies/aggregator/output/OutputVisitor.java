@@ -11,6 +11,7 @@ import com.sitepark.ies.aggregator.value.Translations;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Visitor that traverses an {@link Output} tree.
@@ -118,7 +119,7 @@ public abstract class OutputVisitor {
    * @param key the field name, or {@code null} inside a collection or array
    * @param value the field value
    */
-  public void visitField(String key, Object value) {
+  public void visitField(@Nullable String key, @Nullable Object value) {
     switch (value) {
       case null -> visitNull();
       case OutputObject o -> visitObject(o);
@@ -183,7 +184,7 @@ public abstract class OutputVisitor {
    * @param value the unrecognized value
    */
   public void visitDomain(Object value) {
-    Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
+    @Nullable Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
     if (properties == null) {
       visitUnknown(value);
     } else {

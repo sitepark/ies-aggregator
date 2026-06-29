@@ -1,5 +1,7 @@
 package com.sitepark.ies.aggregator.output;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Concrete {@link OutputNode} representing a single object node in the output tree.
  *
@@ -8,19 +10,19 @@ package com.sitepark.ies.aggregator.output;
  */
 public class OutputObject extends OutputNode {
 
-  private final String field;
+  private final @Nullable String field;
 
   /**
    * @param field the field name under which this object is stored; {@code null} for the root
    * @param parent the parent node; {@code null} for the root
    */
-  public OutputObject(String field, OutputNode parent) {
+  public OutputObject(@Nullable String field, @Nullable OutputNode parent) {
     super(parent);
     this.field = field;
   }
 
   @Override
-  public String field() {
+  public @Nullable String field() {
     return this.field;
   }
 

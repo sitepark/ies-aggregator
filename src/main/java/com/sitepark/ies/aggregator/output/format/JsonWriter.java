@@ -13,7 +13,6 @@ import com.sitepark.ies.aggregator.value.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.TranslatableText;
 import com.sitepark.ies.aggregator.value.TranslatableUri;
 import com.sitepark.ies.aggregator.value.Translations;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -81,9 +80,6 @@ public final class JsonWriter extends OutputVisitor {
    * @param translations the translation table (use {@link Translations#SOURCE} for the source
    *     language)
    */
-  @SuppressFBWarnings(
-      value = "EI_EXPOSE_REP2",
-      justification = "The writer is intentionally shared with the caller as the output target.")
   public JsonWriter(
       Writer writer, DomainObjectMapper domainObjectMapper, Translations translations) {
     super(domainObjectMapper, translations);

@@ -8,7 +8,6 @@ import com.sitepark.ies.aggregator.output.OutputNode;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
 import com.sitepark.ies.aggregator.value.Translations;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -83,9 +82,6 @@ public final class PhpArrayWriter extends OutputVisitor {
    * @param translations the translation table (use {@link Translations#SOURCE} for the source
    *     language)
    */
-  @SuppressFBWarnings(
-      value = "EI_EXPOSE_REP2",
-      justification = "The writer is intentionally shared with the caller as the output target.")
   public PhpArrayWriter(
       Writer writer, DomainObjectMapper domainObjectMapper, Translations translations) {
     super(domainObjectMapper, translations);

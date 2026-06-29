@@ -1,5 +1,7 @@
 package com.sitepark.ies.aggregator.output;
 
+import java.util.Objects;
+
 /**
  * A single entry inside an {@link OutputList}, itself an {@link OutputNode} that stores named
  * fields.
@@ -18,7 +20,7 @@ public class OutputListItem extends OutputNode {
 
   @Override
   public OutputList parent() {
-    return (OutputList) super.parent();
+    return (OutputList) Objects.requireNonNull(super.parent());
   }
 
   @Override

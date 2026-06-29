@@ -1,5 +1,7 @@
 package com.sitepark.ies.aggregator.output;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Common interface for all nodes in an output tree ({@link OutputObject}, {@link OutputList},
  * {@link OutputListItem}).
@@ -10,7 +12,7 @@ package com.sitepark.ies.aggregator.output;
 public interface Output {
 
   /** Returns the parent node, or {@code null} if this is the root. */
-  Output parent();
+  @Nullable Output parent();
 
   /** Returns {@code true} if this node has no parent. */
   default boolean isRoot() {
@@ -21,7 +23,7 @@ public interface Output {
   OutputObject root();
 
   /** Returns the field name under which this node is stored in its parent. */
-  String field();
+  @Nullable String field();
 
   /** Returns the dot-separated path from the root to this node (e.g. {@code "a.b.c[0]"}). */
   String path();

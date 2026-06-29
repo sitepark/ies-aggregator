@@ -39,6 +39,8 @@ class EmptyResolverTest {
 
   @Test
   void resolverEmptyConstantIsEmpty() {
-    assertThat(Resolver.EMPTY.isEmpty()).as("Resolver.EMPTY should be an empty resolver").isTrue();
+    assertThat(Resolver.empty().isEmpty())
+        .as("Resolver.empty() should be an empty resolver")
+        .isTrue();
   }
 }

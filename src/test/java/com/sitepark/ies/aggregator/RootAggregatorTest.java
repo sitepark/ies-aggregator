@@ -37,7 +37,7 @@ class RootAggregatorTest {
   void aggregateReturnsFreshRootOutputObject() {
     RootAggregator rootAggregator = new RootAggregator(List.of());
 
-    OutputObject result = rootAggregator.aggregate(Resolver.EMPTY);
+    OutputObject result = rootAggregator.aggregate(Resolver.empty());
 
     assertThat(result).as("aggregate() should always return a non-null OutputObject").isNotNull();
     assertThat(result.path()).as("Returned OutputObject should be the root (empty path)").isEmpty();
@@ -48,11 +48,11 @@ class RootAggregatorTest {
     Aggregator first = mock(Aggregator.class);
     Aggregator second = mock(Aggregator.class);
 
-    new RootAggregator(List.of(first, second)).aggregate(Resolver.EMPTY);
+    new RootAggregator(List.of(first, second)).aggregate(Resolver.empty());
 
     InOrder order = inOrder(first, second);
-    order.verify(first).aggregate(eq(Resolver.EMPTY), any(OutputNode.class));
-    order.verify(second).aggregate(eq(Resolver.EMPTY), any(OutputNode.class));
+    order.verify(first).aggregate(eq(Resolver.empty()), any(OutputNode.class));
+    order.verify(second).aggregate(eq(Resolver.empty()), any(OutputNode.class));
   }
 
   @Test
@@ -60,7 +60,7 @@ class RootAggregatorTest {
     RecordingAggregator first = new RecordingAggregator();
     RecordingAggregator second = new RecordingAggregator();
 
-    OutputObject result = new RootAggregator(List.of(first, second)).aggregate(Resolver.EMPTY);
+    OutputObject result = new RootAggregator(List.of(first, second)).aggregate(Resolver.empty());
 
     assertThat(first.received)
         .as("First aggregator should receive the same OutputObject that is returned")
@@ -76,7 +76,7 @@ class RootAggregatorTest {
     Aggregator writer = (source, out) -> out.put("greeting", "hello");
     Aggregator reader = (source, out) -> seenByLater.add(out.getString("greeting"));
 
-    new RootAggregator(List.of(writer, reader)).aggregate(Resolver.EMPTY);
+    new RootAggregator(List.of(writer, reader)).aggregate(Resolver.empty());
 
     assertThat(seenByLater)
         .as("Later aggregator should see writes made by earlier aggregators on the shared output")
@@ -89,7 +89,7 @@ class RootAggregatorTest {
     AggregatorException boom = new AggregatorException("boom");
     doThrow(boom).when(failing).aggregate(any(), any());
 
-    assertThatThrownBy(() -> new RootAggregator(List.of(failing)).aggregate(Resolver.EMPTY))
+    assertThatThrownBy(() -> new RootAggregator(List.of(failing)).aggregate(Resolver.empty()))
         .as("Exception from an aggregator should propagate unchanged out of aggregate()")
         .isSameAs(boom);
   }
@@ -100,7 +100,8 @@ class RootAggregatorTest {
     Aggregator later = mock(Aggregator.class);
     doThrow(new AggregatorException("boom")).when(failing).aggregate(any(), any());
 
-    assertThatThrownBy(() -> new RootAggregator(List.of(failing, later)).aggregate(Resolver.EMPTY))
+    assertThatThrownBy(
+            () -> new RootAggregator(List.of(failing, later)).aggregate(Resolver.empty()))
         .isInstanceOf(AggregatorException.class);
 
     verify(later, never()).aggregate(any(), any());
