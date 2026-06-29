@@ -2,6 +2,7 @@ package com.sitepark.ies.aggregator.output;
 
 import java.util.*;
 import java.util.function.Predicate;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Output node that holds an ordered list of {@link OutputListItem} elements.
@@ -13,7 +14,7 @@ import java.util.function.Predicate;
 public class OutputList implements Output {
   private final String field;
   private final Output parent;
-  private final List<OutputListItem> items = new LinkedList<>();
+  private final List<OutputListItem> items = new ArrayList<>();
 
   /**
    * @param field the field name under which this list is stored in its parent; must not be
@@ -56,7 +57,7 @@ public class OutputList implements Output {
    * @param fn the predicate to test each item against
    * @return the first matching item, or {@code null}
    */
-  public OutputListItem findFirst(Predicate<OutputListItem> fn) {
+  public @Nullable OutputListItem findFirst(Predicate<OutputListItem> fn) {
     return items.stream().filter(fn).findFirst().orElse(null);
   }
 

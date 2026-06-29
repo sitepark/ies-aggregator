@@ -35,4 +35,7 @@
  * here, next to the identity keys they operate on, to avoid a package cycle with the collecting and
  * rendering packages that depend on them.
  */
+@NullMarked
 package com.sitepark.ies.aggregator.value;
+
+import org.jspecify.annotations.NullMarked;

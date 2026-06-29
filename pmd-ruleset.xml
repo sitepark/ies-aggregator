@@ -45,6 +45,8 @@
     <exclude name="AvoidUncheckedExceptionsInSignatures"/>
     <!-- Too noisy: flags ordinary calls on local variables holding method results. -->
     <exclude name="LawOfDemeter"/>
+    <!-- Requires an explicit package list to do anything; unconfigured it is dropped with a warning. -->
+    <exclude name="LoosePackageCoupling"/>
   </rule>
 
   <!-- Error Prone -->

@@ -3,7 +3,9 @@ package com.sitepark.ies.aggregator.value;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Wraps a nullable value resolved from a {@link com.sitepark.ies.aggregator.resolver.Resolver
@@ -16,7 +18,7 @@ import java.util.function.Supplier;
 public final class ResolvedValue {
   private static final String VALUE_NOT_SET = "Value not set";
 
-  private final Object value;
+  private final @Nullable Object value;
 
   /** Singleton empty value — indicates that no value is present. */
   public static final ResolvedValue EMPTY = new ResolvedValue(null);
@@ -24,7 +26,7 @@ public final class ResolvedValue {
   /**
    * @param value the wrapped value, or {@code null} to indicate absence
    */
-  private ResolvedValue(Object value) {
+  private ResolvedValue(@Nullable Object value) {
     this.value = value;
   }
 
@@ -61,7 +63,7 @@ public final class ResolvedValue {
   }
 
   /** Returns the raw wrapped value, or {@code null} if empty. */
-  public Object value() {
+  public @Nullable Object value() {
     return this.value;
   }
 
@@ -75,8 +77,9 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if the value is a list with more than one element
    */
   private Object singleItemIfList() {
-    if (!(this.value instanceof List<?> list)) {
-      return this.value;
+    Object current = Objects.requireNonNull(this.value);
+    if (!(current instanceof List<?> list)) {
+      return current;
     }
     if (list.size() > 1) {
       throw new IllegalArgumentException(
@@ -298,7 +301,7 @@ public final class ResolvedValue {
     if (this.isEmpty()) {
       throw new IllegalArgumentException(VALUE_NOT_SET);
     }
-    return asEnum(enumClass, null);
+    return Objects.requireNonNull(asEnum(enumClass, null));
   }
 
   /**
@@ -309,7 +312,7 @@ public final class ResolvedValue {
    * @param defaultValue the value to return when empty
    * @throws IllegalArgumentException if not empty and the value cannot be converted to the enum
    */
-  public <T extends Enum<T>> T asEnum(Class<T> enumClass, T defaultValue) {
+  public <T extends Enum<T>> @Nullable T asEnum(Class<T> enumClass, @Nullable T defaultValue) {
 
     if (this.isEmpty()) {
       return defaultValue;

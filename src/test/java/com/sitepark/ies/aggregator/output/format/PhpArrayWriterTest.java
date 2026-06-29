@@ -142,16 +142,18 @@ class PhpArrayWriterTest {
     assertThat(render(root))
         .as("Multi-item list should render each item on its own indented line")
         .isEqualTo(
-            "[\n"
-                + "\t\"items\" => [\n"
-                + "\t\t[\n"
-                + "\t\t\t\"id\" => 1\n"
-                + "\t\t],\n"
-                + "\t\t[\n"
-                + "\t\t\t\"id\" => 2\n"
-                + "\t\t]\n"
-                + "\t]\n"
-                + "]");
+            """
+            [
+            \t"items" => [
+            \t\t[
+            \t\t\t"id" => 1
+            \t\t],
+            \t\t[
+            \t\t\t"id" => 2
+            \t\t]
+            \t]
+            ]\
+            """);
   }
 
   @Test

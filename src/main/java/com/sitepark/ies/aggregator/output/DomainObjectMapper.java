@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.output;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Strategy for unwrapping a domain object (e.g. {@code Link}) into a {@code Map<String, Object>} of
@@ -36,5 +37,5 @@ public interface DomainObjectMapper {
    * @param value the value to unwrap; never {@code null}
    * @return the original property values keyed by property name, or {@code null}
    */
-  Map<String, Object> toProperties(Object value);
+  @Nullable Map<String, Object> toProperties(Object value);
 }

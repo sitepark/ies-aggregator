@@ -4,6 +4,7 @@ import com.sitepark.ies.aggregator.value.Uri;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Abstract base class for mutable output nodes that store named fields.
@@ -18,13 +19,13 @@ import java.util.Map;
  */
 public abstract class OutputNode implements Output {
 
-  private final Output parent;
+  private final @Nullable Output parent;
   private final Map<String, Object> content = new LinkedHashMap<>();
 
   /**
    * @param parent the parent node, or {@code null} for the root
    */
-  public OutputNode(Output parent) {
+  public OutputNode(@Nullable Output parent) {
     this.parent = parent;
   }
 
@@ -52,7 +53,7 @@ public abstract class OutputNode implements Output {
    *
    * @param field the field name
    */
-  public Object get(String field) {
+  public @Nullable Object get(String field) {
     return this.content.get(field);
   }
 
@@ -61,7 +62,7 @@ public abstract class OutputNode implements Output {
    *
    * @param field the field name
    */
-  public String getString(String field) {
+  public @Nullable String getString(String field) {
     Object o = this.content.get(field);
     if (o == null) {
       return null;
@@ -137,7 +138,7 @@ public abstract class OutputNode implements Output {
   }
 
   @Override
-  public Output parent() {
+  public @Nullable Output parent() {
     return this.parent;
   }
 

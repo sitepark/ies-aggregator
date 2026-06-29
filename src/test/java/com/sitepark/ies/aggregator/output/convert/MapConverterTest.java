@@ -47,7 +47,7 @@ class MapConverterTest {
     Map<String, Object> expected = new LinkedHashMap<>();
     expected.put("name", "Alice");
     expected.put("age", 42);
-    expected.put("active", Boolean.TRUE);
+    expected.put("active", true);
 
     assertThat(new MapConverter().toMap(root))
         .as("Scalar fields should be preserved as-is in the resulting map")

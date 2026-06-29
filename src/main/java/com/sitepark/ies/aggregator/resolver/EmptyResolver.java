@@ -7,9 +7,12 @@ import java.util.List;
  * A {@link Resolver} that is always empty — all lookups return defaults or empty results.
  *
  * <p>Used as a null-object substitute when no real data source is available.
- * Accessible via {@link Resolver#EMPTY}.
+ * Accessible via {@link Resolver#empty()}.
  */
-public class EmptyResolver implements Resolver {
+public final class EmptyResolver implements Resolver {
+
+  static final Resolver INSTANCE = new EmptyResolver();
+
   @Override
   public boolean isEmpty() {
     return true;

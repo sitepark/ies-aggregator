@@ -24,7 +24,7 @@ class ResolverTest {
 
       @Override
       public Resolver resolve(String key) {
-        return Resolver.EMPTY;
+        return Resolver.empty();
       }
 
       @Override
