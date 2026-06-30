@@ -174,7 +174,7 @@ public final class JsonWriter extends OutputVisitor {
   private void writeJsonObject(OutputNode node) {
     write('{');
     boolean first = true;
-    for (Map.Entry<String, Object> entry : node.entries().entrySet()) {
+    for (Map.Entry<String, Object> entry : flattenedEntries(node).entrySet()) {
       if (!first) {
         write(',');
       }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputObject;
+import com.sitepark.ies.aggregator.output.Unwrapped;
 import com.sitepark.ies.aggregator.value.text.Text;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
@@ -194,6 +195,42 @@ class JsonWriterTest {
             "Domain object should be unwrapped to a JSON object via the configured"
                 + " DomainObjectMapper")
         .isEqualTo("{\"link\":{\"name\":\"home\",\"label\":\"Hello\"}}");
+  }
+
+  @Test
+  void unwrappedMapValueIsInlinedAsSiblingFields() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+    Map<String, Object> extension = new LinkedHashMap<>();
+    extension.put("role", "admin");
+    extension.put("level", 3);
+    root.put("ext", new Unwrapped(extension));
+
+    assertThat(render(root))
+        .as("Unwrapped map should be inlined flat as sibling fields, not nested under its key")
+        .isEqualTo("{\"name\":\"Alice\",\"role\":\"admin\",\"level\":3}");
+  }
+
+  @Test
+  void unwrappedDomainObjectIsInlinedViaDomainMapper() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("id", 1);
+    root.put("ext", new Unwrapped(new Link("home", TranslatableText.of("Hello"))));
+
+    assertThat(renderWithDomainMapper(root))
+        .as("Unwrapped domain object should be inlined flat via the DomainObjectMapper, not nested")
+        .isEqualTo("{\"id\":1,\"name\":\"home\",\"label\":\"Hello\"}");
+  }
+
+  @Test
+  void unwrappedEmptyContributesNoFields() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+    root.put("ext", Unwrapped.EMPTY);
+
+    assertThat(render(root))
+        .as("Unwrapped.EMPTY should contribute no fields and leave no dangling key or comma")
+        .isEqualTo("{\"name\":\"Alice\"}");
   }
 
   @Test
