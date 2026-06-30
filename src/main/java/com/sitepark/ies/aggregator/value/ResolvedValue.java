@@ -5,6 +5,7 @@ import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
@@ -363,6 +364,46 @@ public final class ResolvedValue {
     }
     throw new IllegalArgumentException(
         "Value is not an boolean (" + value.getClass().getName() + ")");
+  }
+
+  /**
+   * Returns the value as {@code type}.
+   *
+   * <p>If the value is already an instance of {@code type}, it is returned as-is. If it is a {@link
+   * String}, it is deserialized via {@code parser} (typically parsing embedded JSON). Otherwise an
+   * exception is thrown.
+   *
+   * @param <T> the target type
+   * @param type the target type
+   * @param parser the parser used to deserialize a string value
+   * @throws IllegalArgumentException if empty, or the value can neither be cast nor parsed
+   */
+  public <T> T as(Class<T> type, StructuredValueParser parser) {
+    if (this.isEmpty()) {
+      throw new IllegalArgumentException(VALUE_NOT_SET);
+    }
+    Object value = singleItemIfList();
+    if (type.isInstance(value)) {
+      return type.cast(value);
+    }
+    if (value instanceof String raw) {
+      return parser.parse(raw, type);
+    }
+    throw new IllegalArgumentException(
+        "Value cannot be converted to " + type.getName() + " (" + value.getClass().getName() + ")");
+  }
+
+  /**
+   * Returns the value as a {@link Map}, deserializing a string value via {@code parser} (typically
+   * parsing embedded JSON) when needed.
+   *
+   * @param parser the parser used to deserialize a string value
+   * @throws IllegalArgumentException if empty, or the value is neither a {@link Map} nor a {@link
+   *     String}
+   */
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> asMap(StructuredValueParser parser) {
+    return as(Map.class, parser);
   }
 
   public ResolvedValue orElse(Supplier<ResolvedValue> other) {

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.Text;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
@@ -438,5 +439,76 @@ class ResolvedValueTest {
             "A scalar accessor should reject a multi-element list rather than silently "
                 + "using the first element")
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  // --- as / asMap (structured) --------------------------------------------
+
+  /** Parser that fails the test if invoked — used to prove no parsing happens on a cast path. */
+  private static final StructuredValueParser FAILING_PARSER =
+      new StructuredValueParser() {
+        @Override
+        public <T> T parse(String raw, Class<T> type) {
+          throw new AssertionError("parser should not be invoked");
+        }
+      };
+
+  /** Parser that ignores its input and returns a fixed map, standing in for a real JSON parser. */
+  private static final StructuredValueParser FIXED_MAP_PARSER =
+      new StructuredValueParser() {
+        @Override
+        public <T> T parse(String raw, Class<T> type) {
+          return type.cast(Map.of("foo", "bar"));
+        }
+      };
+
+  @Test
+  void asCastsAlreadyAssignablePayloadWithoutParsing() {
+    Map<String, Object> payload = Map.of("a", 1);
+    assertThat(ResolvedValue.of(payload).as(Map.class, FAILING_PARSER))
+        .as("as() should return an already-assignable payload as-is, without invoking the parser")
+        .isSameAs(payload);
+  }
+
+  @Test
+  void asParsesStringPayloadViaParser() {
+    assertThat(ResolvedValue.of("{\"foo\":\"bar\"}").as(Map.class, FIXED_MAP_PARSER))
+        .as("as() should deserialize a String payload through the parser")
+        .isEqualTo(Map.of("foo", "bar"));
+  }
+
+  @Test
+  void asOnEmptyThrows() {
+    assertThatThrownBy(() -> ResolvedValue.EMPTY.as(Map.class, FIXED_MAP_PARSER))
+        .as("as() should reject an empty value")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void asRejectsPayloadThatIsNeitherAssignableNorString() {
+    assertThatThrownBy(() -> ResolvedValue.of(123).as(Map.class, FIXED_MAP_PARSER))
+        .as("as() should reject a payload that is neither assignable to the type nor a String")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void asMapReturnsExistingMapUnchanged() {
+    Map<String, Object> payload = Map.of("a", 1);
+    assertThat(ResolvedValue.of(payload).asMap(FAILING_PARSER))
+        .as("asMap() should return an existing Map payload unchanged, without invoking the parser")
+        .isSameAs(payload);
+  }
+
+  @Test
+  void asMapParsesStringPayloadViaParser() {
+    assertThat(ResolvedValue.of("{\"foo\":\"bar\"}").asMap(FIXED_MAP_PARSER))
+        .as("asMap() should deserialize a JSON String payload to a Map through the parser")
+        .isEqualTo(Map.of("foo", "bar"));
+  }
+
+  @Test
+  void asUnwrapsSingleElementListBeforeConverting() {
+    assertThat(ResolvedValue.of(List.of("{\"foo\":\"bar\"}")).asMap(FIXED_MAP_PARSER))
+        .as("as()/asMap() should unwrap a single-element list before converting")
+        .isEqualTo(Map.of("foo", "bar"));
   }
 }
