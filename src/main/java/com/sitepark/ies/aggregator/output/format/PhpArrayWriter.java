@@ -185,7 +185,7 @@ public final class PhpArrayWriter extends OutputVisitor {
   }
 
   private void writeAssociative(OutputNode node) {
-    Map<String, Object> entries = node.entries();
+    Map<String, Object> entries = flattenedEntries(node);
     if (entries.isEmpty()) {
       write("[]");
       return;

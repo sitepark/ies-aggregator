@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputObject;
+import com.sitepark.ies.aggregator.output.Unwrapped;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
@@ -134,6 +135,32 @@ class TranslatableTextCollectorTest {
     assertThat(new TranslatableTextCollector().collect(root))
         .as("TranslatableTexts inside a raw Collection should be collected via visitCollection")
         .containsExactly(first, second);
+  }
+
+  @Test
+  void collectsFromUnwrappedMapValue() {
+    OutputObject root = new OutputObject(null, null);
+    TranslatableText tt = TranslatableText.of("inlined");
+    Map<String, Object> extension = new LinkedHashMap<>();
+    extension.put("label", tt);
+    root.put("ext", new Unwrapped(extension));
+
+    assertThat(new TranslatableTextCollector().collect(root))
+        .as("TranslatableText carried by an Unwrapped map should be collected")
+        .containsExactly(tt);
+  }
+
+  @Test
+  void collectsFromUnwrappedDomainObjectWhenMapperConfigured() {
+    OutputObject root = new OutputObject(null, null);
+    TranslatableText label = TranslatableText.of("Hello");
+    root.put("ext", new Unwrapped(new Link("home", label)));
+
+    assertThat(new TranslatableTextCollector(LINK_MAPPER).collect(root))
+        .as(
+            "TranslatableText property of an Unwrapped domain object should be collected via"
+                + " mapper")
+        .containsExactly(label);
   }
 
   @Test
