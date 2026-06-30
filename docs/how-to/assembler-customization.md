@@ -2,13 +2,15 @@
 
 > **Type:** How-To
 
-This document describes two patterns that allow assemblers to be extended or overridden per project
-without changes to the core code. Both patterns are based on `@Assembler` and `AssemblerFactory`.
+This document describes three patterns that allow assemblers to be extended or overridden per
+project without changes to the core code. Patterns 1 and 2 are based on `@Assembler` and
+`AssemblerFactory`; Pattern 3 adds project-specific fields to the produced model.
 
 | Pattern                                    | When to use                                                                                               |
 |--------------------------------------------|-----------------------------------------------------------------------------------------------------------|
 | **Pattern 1: Type-driven dispatching**     | Multiple implementations for different types; which one applies is only determined at runtime in the Resolver |
 | **Pattern 2: Direct override**             | Exactly one implementation; customer projects should be able to replace or extend it                      |
+| **Pattern 3: Additional model fields**     | A value type must carry extra, project-specific fields without changing the core record                   |
 
 ---
 
@@ -320,6 +322,84 @@ public class ProjectLinkListAssembler extends LinkListAssembler {
     }
 }
 ```
+
+---
+
+## Pattern 3: Additional model fields
+
+### Overview
+
+Patterns 1 and 2 let a project decide *which* assembler runs. But the value types an assembler
+produces are **final Java records** — a customer override can return a record, yet it cannot add a
+field to an existing record type (records cannot be subclassed).
+
+To add project-specific fields **without changing the core record**, a value type exposes an
+extension slot of type `Unwrapped`. The visitor inlines its contents **flat, at the top level** of
+the model (see [Visitor → Flattening properties](../reference/visitor.md)). The slot carries a
+typed object, so no `Map` is needed at the call site. The only framework type involved is
+`Unwrapped`.
+
+### Convention: an `Extensible` base interface
+
+Consumer projects typically introduce a small base interface so every model carries the slot
+uniformly:
+
+```java
+public interface Extensible {
+    Unwrapped extension();
+}
+```
+
+A value record adds the slot as a plain component — **no `@JsonProperty`**, because the carrier's
+key is dropped during inlining and the component name is never rendered:
+
+```java
+public record LinkList(
+        @JsonProperty("modelType") String modelType,
+        @JsonProperty("headline") Text headline,
+        @JsonProperty("linkBoxType") String linkBoxType,
+        @JsonProperty("items") List<Link> items,
+        Unwrapped extension)
+        implements Extensible {
+}
+```
+
+The built-in assembler passes `Unwrapped.EMPTY` (contributes nothing):
+
+```java
+return Optional.of(new LinkList("content.linkList", headline, boxType, items, Unwrapped.EMPTY));
+```
+
+### Adding fields in a customer project
+
+Combine with Pattern 2: register an override under the same key with a higher priority, reuse the
+base implementation, and place a **typed** extension object into the slot:
+
+```java
+public record LinkListBadge(String label, int count) {
+}
+
+@Assembler(value = "linkList", priority = 100)
+public class ProjectLinkListAssembler extends LinkListAssembler {
+
+    @Inject
+    public ProjectLinkListAssembler(LinkAssemblerDispatcher linkAssembler,
+                                    AggregatorErrorHandler errorHandler) {
+        super(linkAssembler, errorHandler);
+    }
+
+    @Override
+    public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
+        return super.assemble(source, options)
+                .map(list -> new LinkList(
+                        list.modelType(), list.headline(), list.linkBoxType(), list.items(),
+                        new Unwrapped(new LinkListBadge("new", list.items().size()))));
+    }
+}
+```
+
+The model then renders with `label` and `count` as **top-level** fields next to `modelType`,
+`headline`, … instead of nested under an `extension` key.
 
 ---
 

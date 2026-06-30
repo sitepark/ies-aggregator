@@ -150,3 +150,54 @@ This way:
 
 Anyone who does not need a mapper uses the null default `DomainObjectMapper.NONE` (automatically
 set when no mapper is passed).
+
+## Flattening properties: the `Unwrapped` carrier
+
+Normally every property is rendered under its own key — a `Map` or a domain object as a property
+value becomes a **nested** object. Sometimes a property's *own* properties should instead appear
+**inline, at the level of the surrounding object** (like Jackson's `@JsonUnwrapped`). That is what
+the `Unwrapped` carrier is for:
+
+```java
+public record Unwrapped(@Nullable Object value) {
+  Unwrapped EMPTY = new Unwrapped(null);
+}
+```
+
+When the dispatcher meets an `Unwrapped` as a field value, it does **not** emit a nested object
+under that field's key. Instead `visitUnwrapped` resolves the carried value's properties and
+dispatches each of them as a **sibling field at the current level** — the carrier's own key is
+dropped:
+
+```java
+public void visitUnwrapped(Unwrapped unwrapped) {
+  Object value = unwrapped.value();
+  if (value == null) {
+    return;                                       // EMPTY contributes nothing
+  }
+  if (value instanceof Map<?, ?> map) {
+    map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
+    return;
+  }
+  Map<String, Object> properties = domainObjectMapper().toProperties(value);  // same hook as visitDomain
+  if (properties == null) {
+    visitUnknown(value);
+  } else {
+    properties.forEach((k, v) -> visitField(k, v));
+  }
+}
+```
+
+Notes:
+
+- **No subclass changes needed.** The carried entries flow through the normal `visitField`
+  dispatcher, so every format visitor (`PhpArrayWriter`, `JsonWriter`, `MapConverter`, …) inlines
+  them automatically.
+- **Typed content, flat output.** The carried value may be any domain object (resolved via the
+  configured `DomainObjectMapper`) or a plain `Map`. A project can build a typed object and still
+  have its fields rendered flat.
+- **Sibling keys.** Because the carrier's key is dropped, the inlined keys become siblings of the
+  surrounding object's fields — the author is responsible for avoiding name collisions.
+- **Primary use:** extensible output models — a value type exposes an `Unwrapped` slot so projects
+  can add top-level fields without subclassing final records. See
+  [Extending Assemblers](../how-to/assembler-customization.md).
