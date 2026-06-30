@@ -51,7 +51,7 @@
 		<mockito.version>5.23.0</mockito.version>
 		<errorprone.version>2.49.0</errorprone.version>
 		<nullaway.version>0.13.7</nullaway.version>
-		<pmd.version>7.17.0</pmd.version>
+		<pmd.version>7.26.0</pmd.version>
 		<gpg.skip>true</gpg.skip>
 		<maven.compiler.release>25</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
