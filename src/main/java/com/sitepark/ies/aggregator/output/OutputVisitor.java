@@ -1,13 +1,13 @@
 package com.sitepark.ies.aggregator.output;
 
 import com.sitepark.ies.aggregator.output.format.RawPhpCode;
-import com.sitepark.ies.aggregator.value.PlainText;
-import com.sitepark.ies.aggregator.value.PlainUri;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
-import com.sitepark.ies.aggregator.value.TranslatableSplitText;
-import com.sitepark.ies.aggregator.value.TranslatableText;
-import com.sitepark.ies.aggregator.value.TranslatableUri;
-import com.sitepark.ies.aggregator.value.Translations;
+import com.sitepark.ies.aggregator.value.text.PlainText;
+import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
+import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import com.sitepark.ies.aggregator.value.text.Translations;
+import com.sitepark.ies.aggregator.value.uri.PlainUri;
+import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;

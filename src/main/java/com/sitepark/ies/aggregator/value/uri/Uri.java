@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.uri;
 
 import java.net.URI;
 import java.net.URL;

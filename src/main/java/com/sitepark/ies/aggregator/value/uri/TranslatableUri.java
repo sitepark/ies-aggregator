@@ -1,5 +1,8 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.uri;
 
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
+import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import com.sitepark.ies.aggregator.value.text.Translations;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +23,11 @@ import org.jspecify.annotations.Nullable;
  * segment is preserved verbatim while remaining path segments become translatable.
  *
  * <p>Object IDs embedded as a trailing {@code -<id>} suffix are preserved across translations.
+ *
+ * <p>Because this URI holds mutable, identity-keyed {@link TranslatableText} path segments (see
+ * {@link TranslatableText}), {@code equals}/{@code hashCode} are deliberately
+ * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
+ * be semantically wrong here.
  */
 public final class TranslatableUri implements Uri, TranslatableContainer {
 
@@ -207,5 +215,16 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
       return List.of();
     }
     return List.copyOf(this.translatablePath);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    // Identity-based by design: see class Javadoc.
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 }

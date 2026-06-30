@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 /**
  * A text value an aggregator writes into the output tree.

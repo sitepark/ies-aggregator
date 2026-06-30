@@ -1,7 +1,9 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.uri;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import com.sitepark.ies.aggregator.value.text.Translations;
 import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +12,11 @@ import java.util.List;
  * TranslatableText} segment up in the given table. {@link #toString()} renders the source language.
  * The {@link TranslatableContainer} implementation returns only the {@link TranslatableText}
  * segments so they can be collected for translation.
+ *
+ * <p>Because this container holds mutable, identity-keyed {@link TranslatableText} segments (see
+ * {@link TranslatableText}), {@code equals}/{@code hashCode} are deliberately
+ * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
+ * be semantically wrong here.
  */
 public class TranslatableSplitText implements TranslatableContainer {
   private final List<Object> splittedText = new ArrayList<>();
@@ -73,5 +78,16 @@ public class TranslatableSplitText implements TranslatableContainer {
   @Override
   public String toString() {
     return this.render(Translations.SOURCE);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    // Identity-based by design: see class Javadoc.
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 }

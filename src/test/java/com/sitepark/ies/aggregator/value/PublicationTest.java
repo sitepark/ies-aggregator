@@ -2,6 +2,7 @@ package com.sitepark.ies.aggregator.value;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sitepark.ies.aggregator.value.uri.Uri;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 

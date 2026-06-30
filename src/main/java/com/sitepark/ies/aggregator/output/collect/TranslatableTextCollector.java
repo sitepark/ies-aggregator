@@ -3,9 +3,9 @@ package com.sitepark.ies.aggregator.output.collect;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
-import com.sitepark.ies.aggregator.value.TranslatableSplitText;
-import com.sitepark.ies.aggregator.value.TranslatableText;
-import com.sitepark.ies.aggregator.value.TranslatableUri;
+import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
+import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.util.ArrayList;
 import java.util.List;
 
