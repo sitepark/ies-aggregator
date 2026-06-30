@@ -1,6 +1,6 @@
 package com.sitepark.ies.aggregator.output;
 
-import com.sitepark.ies.aggregator.value.Uri;
+import com.sitepark.ies.aggregator.value.uri.Uri;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>A node holds an ordered map of field name → value pairs. Values can be scalars (strings,
  * numbers, booleans), typed value objects ({@link
- * com.sitepark.ies.aggregator.value.TranslatableText TranslatableText}, {@link Uri Uri}, …), nested
+ * com.sitepark.ies.aggregator.value.text.TranslatableText TranslatableText}, {@link Uri Uri}, …), nested
  * {@link OutputObject} nodes, or {@link OutputList} nodes.
  *
  * <p>Sub-nodes are created lazily: {@link #node(String)} and {@link #nodeList(String)} return an

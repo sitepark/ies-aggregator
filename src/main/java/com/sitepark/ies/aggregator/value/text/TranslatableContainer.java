@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 import java.util.List;
 

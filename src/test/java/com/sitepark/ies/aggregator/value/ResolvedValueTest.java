@@ -3,8 +3,11 @@ package com.sitepark.ies.aggregator.value;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.sitepark.ies.aggregator.value.text.PlainText;
+import com.sitepark.ies.aggregator.value.text.Text;
 import java.util.List;
 import java.util.Set;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
 class ResolvedValueTest {
@@ -12,6 +15,13 @@ class ResolvedValueTest {
   enum TestEnum {
     ALPHA,
     BETA
+  }
+
+  // --- equals/hashCode ----------------------------------------------------
+
+  @Test
+  void testEquals() {
+    EqualsVerifier.forClass(ResolvedValue.class).verify();
   }
 
   // --- of() construction --------------------------------------------------
@@ -146,9 +156,9 @@ class ResolvedValueTest {
 
   @Test
   void asIntOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asInt())
-        .as("asInt() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asInt())
+        .as("asInt() without default should return 0")
+        .isEqualTo(0);
   }
 
   @Test
@@ -183,9 +193,9 @@ class ResolvedValueTest {
 
   @Test
   void asLongOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asLong())
-        .as("asLong() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asLong())
+        .as("asLong() without default should return 0L")
+        .isEqualTo(0L);
   }
 
   @Test
@@ -234,9 +244,9 @@ class ResolvedValueTest {
 
   @Test
   void asFloatOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asFloat())
-        .as("asFloat() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asFloat())
+        .as("asFloat() without default should return 0.0")
+        .isEqualTo(0.0f);
   }
 
   @Test
@@ -264,9 +274,9 @@ class ResolvedValueTest {
 
   @Test
   void asDoubleOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asDouble())
-        .as("asDouble() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asDouble())
+        .as("asDouble() without default should return 0.0")
+        .isEqualTo(0.0d);
   }
 
   @Test
@@ -287,9 +297,9 @@ class ResolvedValueTest {
 
   @Test
   void asStringOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asString())
-        .as("asString() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asString())
+        .as("asString() without default should return empty string")
+        .isEqualTo("");
   }
 
   @Test
@@ -318,9 +328,9 @@ class ResolvedValueTest {
 
   @Test
   void asTextOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asText())
-        .as("asText() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asText().toString())
+        .as("asText() without default should return empty string")
+        .isEqualTo("");
   }
 
   @Test
@@ -393,9 +403,9 @@ class ResolvedValueTest {
 
   @Test
   void asBooleanOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asBoolean())
-        .as("asBoolean() without default should reject empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(ResolvedValue.EMPTY.asBoolean())
+        .as("asBoolean() without default should return false")
+        .isFalse();
   }
 
   @Test

@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 /**
  * An immutable, identity-based source text that can be translated.
@@ -8,9 +8,9 @@ package com.sitepark.ies.aggregator.value;
  * table (see {@code com.sitepark.ies.aggregator.output.collect.Translations}). The instance itself
  * only carries the source text and its {@link Format}; the translation lives outside the tree.
  *
- * <p>Because instances are used as identity keys, this type intentionally does <strong>not</strong>
- * define {@code equals}/{@code hashCode}: two distinct occurrences of the same source text may be
- * translated differently depending on their position in the tree.
+ * <p>Because instances are used as identity keys, {@code equals}/{@code hashCode} are deliberately
+ * <strong>identity-based</strong> (reference equality), not value-based: two distinct occurrences of
+ * the same source text may be translated differently depending on their position in the tree.
  */
 public final class TranslatableText implements Text {
   private final Format format;
@@ -87,6 +87,17 @@ public final class TranslatableText implements Text {
   @Override
   public String toString() {
     return this.sourceText;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    // Identity-based by design: see class Javadoc.
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 
   public enum Format {

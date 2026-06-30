@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 /**
  * A source text to be translated, carrying its {@link TranslatableText.Format Format} so a

@@ -7,7 +7,7 @@ import com.sitepark.ies.aggregator.output.OutputListItem;
 import com.sitepark.ies.aggregator.output.OutputNode;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
-import com.sitepark.ies.aggregator.value.Translations;
+import com.sitepark.ies.aggregator.value.text.Translations;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;

@@ -1,4 +1,4 @@
-package com.sitepark.ies.aggregator.value;
+package com.sitepark.ies.aggregator.value.text;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -12,16 +12,22 @@ import org.jspecify.annotations.Nullable;
  * <p>The table is a render-time view over an unmodified output tree. A translation-aware writer
  * looks each {@link TranslatableText} up via {@link #translationFor(TranslatableText)} and uses
  * {@link #targetLang()} to render language-dependent parts (e.g. the path prefix of a {@link
- * TranslatableUri}). Because translations live here and not in the tree, the same tree can be
+ * com.sitepark.ies.aggregator.value.uri.TranslatableUri TranslatableUri}). Because translations
+ * live here and not in the tree, the same tree can be
  * rendered into any number of languages — even concurrently.
  *
  * <p>Build a table from the collected texts and the index-corresponding translations returned by a
  * translation service via {@link #fromIndexed(List, List, String)}. Use {@link #SOURCE} to render
  * the untranslated source language.
  *
- * <p>This type lives in the {@code value} package — next to {@link TranslatableText}, the identity
- * key it is built around — to avoid a package cycle with the collecting and rendering packages that
- * depend on it.
+ * <p>This type lives in the {@code value.text} package — next to {@link TranslatableText}, the
+ * identity key it is built around — to avoid a package cycle with the collecting and rendering
+ * packages that depend on it.
+ *
+ * <p>Because this table is keyed by object identity (an {@link IdentityHashMap} over {@link
+ * TranslatableText} instances), {@code equals}/{@code hashCode} are deliberately
+ * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
+ * be meaningless here.
  */
 // Identity-keyed by design: TranslatableText instances are looked up by reference, not value
 // (see class Javadoc). The IdentityHashMap usage is intentional, not the accidental misuse the
@@ -90,5 +96,16 @@ public final class Translations {
         + "', size="
         + this.translations.size()
         + "}";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    // Identity-based by design: see class Javadoc.
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 }

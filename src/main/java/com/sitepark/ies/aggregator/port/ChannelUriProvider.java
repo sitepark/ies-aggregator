@@ -1,7 +1,7 @@
 package com.sitepark.ies.aggregator.port;
 
 import com.sitepark.ies.aggregator.value.Channel;
-import com.sitepark.ies.aggregator.value.PlainUri;
+import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import java.util.Optional;
 
 /** Resolves the URI under which an object is accessible through a given {@link Channel}. */

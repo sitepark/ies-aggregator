@@ -1,5 +1,7 @@
 package com.sitepark.ies.aggregator.value;
 
+import com.sitepark.ies.aggregator.value.text.PlainText;
+import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
@@ -28,6 +30,10 @@ public final class ResolvedValue {
    */
   private ResolvedValue(@Nullable Object value) {
     this.value = value;
+  }
+
+  public static ResolvedValue empty() {
+    return EMPTY;
   }
 
   public static ResolvedValue of(Object value) {
@@ -102,9 +108,6 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if empty or the value is not an integral number
    */
   public int asInt() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asInt(0);
   }
 
@@ -135,9 +138,6 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if empty or the value is not an integral number
    */
   public long asLong() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asLong(0);
   }
 
@@ -168,9 +168,6 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if empty or the value is not a {@link Number}
    */
   public float asFloat() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asFloat(0.0f);
   }
 
@@ -200,9 +197,6 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if empty or the value is not a {@link Number}
    */
   public double asDouble() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asDouble(0.0);
   }
 
@@ -232,9 +226,6 @@ public final class ResolvedValue {
    * @throws IllegalArgumentException if empty
    */
   public String asString() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asString("");
   }
 
@@ -258,9 +249,6 @@ public final class ResolvedValue {
    *     String}
    */
   public PlainText asText() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asText(PlainText.EMPTY);
   }
 
@@ -352,9 +340,6 @@ public final class ResolvedValue {
    *     String}
    */
   public boolean asBoolean() {
-    if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
-    }
     return asBoolean(false);
   }
 
@@ -382,5 +367,15 @@ public final class ResolvedValue {
 
   public ResolvedValue orElse(Supplier<ResolvedValue> other) {
     return this.isEmpty() ? other.get() : this;
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    return (o instanceof ResolvedValue that) && Objects.equals(this.value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.value);
   }
 }
