@@ -151,53 +151,40 @@ This way:
 Anyone who does not need a mapper uses the null default `DomainObjectMapper.NONE` (automatically
 set when no mapper is passed).
 
-## Flattening properties: the `Unwrapped` carrier
+## Flattening properties: `@JsonUnwrapped`
 
 Normally every property is rendered under its own key — a `Map` or a domain object as a property
 value becomes a **nested** object. Sometimes a property's *own* properties should instead appear
-**inline, at the level of the surrounding object** (like Jackson's `@JsonUnwrapped`). That is what
-the `Unwrapped` carrier is for:
+**inline, at the level of the surrounding object**. This is expressed with Jackson's
+[`@JsonUnwrapped`](https://fasterxml.github.io/jackson-annotations/javadoc/2.14/com/fasterxml/jackson/annotation/JsonUnwrapped.html)
+on the property:
 
 ```java
-public record Unwrapped(@Nullable Object value) {
-  Unwrapped EMPTY = new Unwrapped(null);
-}
+public record ContentImage(
+    ImageDescription description,
+    @JsonUnwrapped Extension extension) {}   // inlined flat, no "extension" key
 ```
 
-When the dispatcher meets an `Unwrapped` as a field value, it does **not** emit a nested object
-under that field's key. Instead `visitUnwrapped` resolves the carried value's properties and
-dispatches each of them as a **sibling field at the current level** — the carrier's own key is
-dropped:
+Flattening is **not** the visitor's job — the visitor only ever sees an already-flat property map.
+It is the `DomainObjectMapper` that inlines: the Jackson-backed `JacksonDomainObjectMapper` detects
+`@JsonUnwrapped` during bean introspection and, instead of adding the property under its own key,
+merges the nested object's properties (value-preserving, so typed values like `TranslatableText`
+survive) as **sibling entries at the current level**.
 
-```java
-public void visitUnwrapped(Unwrapped unwrapped) {
-  Object value = unwrapped.value();
-  if (value == null) {
-    return;                                       // EMPTY contributes nothing
-  }
-  if (value instanceof Map<?, ?> map) {
-    map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
-    return;
-  }
-  Map<String, Object> properties = domainObjectMapper().toProperties(value);  // same hook as visitDomain
-  if (properties == null) {
-    visitUnknown(value);
-  } else {
-    properties.forEach((k, v) -> visitField(k, v));
-  }
-}
-```
+The key advantage over a value-level carrier: because the marker sits on the **declaration**, it is
+honored even when the property value is `null` — a `null` `@JsonUnwrapped` property simply
+contributes nothing and leaves **no dangling key**.
 
 Notes:
 
-- **No subclass changes needed.** The carried entries flow through the normal `visitField`
-  dispatcher, so every format visitor (`PhpArrayWriter`, `JsonWriter`, `MapConverter`, …) inlines
-  them automatically.
-- **Typed content, flat output.** The carried value may be any domain object (resolved via the
-  configured `DomainObjectMapper`) or a plain `Map`. A project can build a typed object and still
-  have its fields rendered flat.
-- **Sibling keys.** Because the carrier's key is dropped, the inlined keys become siblings of the
+- **No visitor changes needed.** The flat map flows through the normal `visitField` dispatcher, so
+  every format visitor (`PhpArrayWriter`, `JsonWriter`, `MapConverter`, …) renders it automatically.
+- **Typed content, flat output.** The unwrapped property may be any domain object (resolved
+  recursively) or a plain `Map`; its fields are rendered flat while keeping their typed values.
+- **Prefix/suffix.** A configured `@JsonUnwrapped(prefix = …, suffix = …)` is applied to the
+  inlined keys.
+- **Sibling keys.** Because the property's key is dropped, the inlined keys become siblings of the
   surrounding object's fields — the author is responsible for avoiding name collisions.
-- **Primary use:** extensible output models — a value type exposes an `Unwrapped` slot so projects
-  can add top-level fields without subclassing final records. See
+- **Primary use:** extensible output models — a value type exposes an `@JsonUnwrapped` slot so
+  projects can add top-level fields without subclassing final records. See
   [Extending Assemblers](../how-to/assembler-customization.md).

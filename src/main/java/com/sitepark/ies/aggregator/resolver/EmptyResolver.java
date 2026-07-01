@@ -6,8 +6,8 @@ import java.util.List;
 /**
  * A {@link Resolver} that is always empty — all lookups return defaults or empty results.
  *
- * <p>Used as a null-object substitute when no real data source is available.
- * Accessible via {@link Resolver#empty()}.
+ * <p>Used as a null-object substitute when no real data source is available. Accessible via {@link
+ * Resolver#empty()}.
  */
 public final class EmptyResolver implements Resolver {
 
@@ -30,6 +30,6 @@ public final class EmptyResolver implements Resolver {
 
   @Override
   public ResolvedValue value(String s) {
-    return ResolvedValue.EMPTY;
+    return ResolvedValue.empty();
   }
 }

@@ -334,10 +334,11 @@ produces are **final Java records** — a customer override can return a record,
 field to an existing record type (records cannot be subclassed).
 
 To add project-specific fields **without changing the core record**, a value type exposes an
-extension slot of type `Unwrapped`. The visitor inlines its contents **flat, at the top level** of
-the model (see [Visitor → Flattening properties](../reference/visitor.md)). The slot carries a
-typed object, so no `Map` is needed at the call site. The only framework type involved is
-`Unwrapped`.
+extension slot annotated with Jackson's `@JsonUnwrapped`. The `DomainObjectMapper` inlines its
+sub-properties **flat, at the top level** of the model (see
+[Visitor → Flattening properties](../reference/visitor.md)). The slot carries a typed object, so no
+`Map` is needed at the call site. Because the marker sits on the declaration, a `null` slot simply
+contributes nothing — no dangling `extension` key is rendered.
 
 ### Convention: an `Extensible` base interface
 
@@ -346,12 +347,12 @@ uniformly:
 
 ```java
 public interface Extensible {
-    Unwrapped extension();
+    Object extension();
 }
 ```
 
-A value record adds the slot as a plain component — **no `@JsonProperty`**, because the carrier's
-key is dropped during inlining and the component name is never rendered:
+A value record adds the slot as a component annotated `@JsonUnwrapped` — **no `@JsonProperty`**,
+because the slot's own key is dropped during inlining and the component name is never rendered:
 
 ```java
 public record LinkList(
@@ -359,15 +360,15 @@ public record LinkList(
         @JsonProperty("headline") Text headline,
         @JsonProperty("linkBoxType") String linkBoxType,
         @JsonProperty("items") List<Link> items,
-        Unwrapped extension)
+        @JsonUnwrapped Object extension)
         implements Extensible {
 }
 ```
 
-The built-in assembler passes `Unwrapped.EMPTY` (contributes nothing):
+The built-in assembler passes `null` (contributes nothing — no dangling key):
 
 ```java
-return Optional.of(new LinkList("content.linkList", headline, boxType, items, Unwrapped.EMPTY));
+return Optional.of(new LinkList("content.linkList", headline, boxType, items, null));
 ```
 
 ### Adding fields in a customer project
@@ -393,13 +394,19 @@ public class ProjectLinkListAssembler extends LinkListAssembler {
         return super.assemble(source, options)
                 .map(list -> new LinkList(
                         list.modelType(), list.headline(), list.linkBoxType(), list.items(),
-                        new Unwrapped(new LinkListBadge("new", list.items().size()))));
+                        new LinkListBadge("new", list.items().size())));
     }
 }
 ```
 
 The model then renders with `label` and `count` as **top-level** fields next to `modelType`,
 `headline`, … instead of nested under an `extension` key.
+
+> **Note:** the slot is typed `Object` here to accept any extension payload (as the removed
+> `Unwrapped` carrier did). `@JsonUnwrapped` on an `Object`/`Map` field is inlined by the
+> introspecting `JacksonDomainObjectMapper`, even though plain Jackson *serialization* only supports
+> it on concrete bean types. Projects that always use one payload type can declare that type
+> directly instead of `Object`.
 
 ---
 

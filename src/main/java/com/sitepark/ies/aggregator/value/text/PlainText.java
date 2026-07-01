@@ -12,9 +12,6 @@ import java.util.Objects;
 public final class PlainText implements Text {
   private final String text;
 
-  /** Represents the empty text ({@code ""}). */
-  public static final PlainText EMPTY = new PlainText("");
-
   /**
    * Creates a {@code PlainText} from the given content.
    *
@@ -24,7 +21,7 @@ public final class PlainText implements Text {
    *
    * @param text the text content; must not be {@code null}
    */
-  private PlainText(String text) {
+  PlainText(String text) {
     Objects.requireNonNull(text, "Text must not be null");
     this.text = text.trim();
   }

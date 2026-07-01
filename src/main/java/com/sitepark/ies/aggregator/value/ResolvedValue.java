@@ -24,7 +24,7 @@ public final class ResolvedValue {
   private final @Nullable Object value;
 
   /** Singleton empty value — indicates that no value is present. */
-  public static final ResolvedValue EMPTY = new ResolvedValue(null);
+  private static final ResolvedValue EMPTY = new ResolvedValue(null);
 
   /**
    * @param value the wrapped value, or {@code null} to indicate absence

@@ -9,7 +9,6 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
@@ -32,9 +31,10 @@ import org.jspecify.annotations.Nullable;
  * instances (like {@code TranslatableText}) are dispatched correctly. Otherwise the value falls
  * through to {@link #visitUnknown(Object)}.
  *
- * <p>A value of type {@link Unwrapped} is treated specially: instead of being rendered as a nested
- * object, its carried properties are inlined flat into the surrounding object (see {@link
- * #visitUnwrapped(Unwrapped)}).
+ * <p>Flat inlining of nested properties ("unwrapping", analogous to Jackson's {@code
+ * @JsonUnwrapped}) is not handled here: it is the responsibility of the {@link DomainObjectMapper},
+ * which inlines an annotated property's sub-properties as siblings when building the property map.
+ * The visitor therefore only ever sees an already-flat map.
  */
 public abstract class OutputVisitor {
 
@@ -118,55 +118,6 @@ public abstract class OutputVisitor {
   }
 
   /**
-   * Returns the entries of {@code node} with any {@link Unwrapped} field value expanded inline: the
-   * carrier's own key is dropped and the carried properties take its place as sibling entries at
-   * the current level. All other entries are kept unchanged and in document order.
-   *
-   * <p>Format visitors whose object rendering writes each field's key <em>before</em> dispatching
-   * its value (e.g. JSON, PHP array) iterate this instead of {@link OutputNode#entries()} so that
-   * {@code Unwrapped} values are inlined flat rather than nested under their key.
-   *
-   * @param node the node whose entries to flatten
-   * @return an ordered map of effective entries with {@code Unwrapped} values inlined
-   */
-  protected final Map<String, Object> flattenedEntries(OutputNode node) {
-    Map<String, Object> result = new LinkedHashMap<>();
-    node.entries()
-        .forEach(
-            (key, value) -> {
-              if (value instanceof Unwrapped unwrapped) {
-                result.putAll(unwrappedProperties(unwrapped));
-              } else {
-                result.put(key, value);
-              }
-            });
-    return result;
-  }
-
-  /**
-   * Resolves the properties an {@link Unwrapped} contributes for flat inlining, with keys
-   * normalized to strings. A {@link Map} value is used directly; any other non-{@code null} value
-   * is unwrapped via the configured {@link DomainObjectMapper}. Returns an empty map for an empty
-   * carrier or a value that cannot be unwrapped.
-   */
-  private Map<String, Object> unwrappedProperties(Unwrapped unwrapped) {
-    Object value = unwrapped.value();
-    Map<String, Object> result = new LinkedHashMap<>();
-    if (value == null) {
-      return result;
-    }
-    if (value instanceof Map<?, ?> map) {
-      map.forEach((k, v) -> result.put(k == null ? "" : k.toString(), v));
-      return result;
-    }
-    @Nullable Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
-    if (properties != null) {
-      result.putAll(properties);
-    }
-    return result;
-  }
-
-  /**
    * Central dispatcher — resolves the runtime type of {@code value} and calls the matching {@code
    * visit*} method.
    *
@@ -192,7 +143,6 @@ public abstract class OutputVisitor {
       case Map<?, ?> m -> visitMap(m);
       case Collection<?> c -> visitCollection(c);
       case Object[] a -> visitArray(a);
-      case Unwrapped u -> visitUnwrapped(u);
       default -> visitDomain(value);
     }
   }
@@ -244,31 +194,6 @@ public abstract class OutputVisitor {
       visitUnknown(value);
     } else {
       visitMap(properties);
-    }
-  }
-
-  /**
-   * Called when the current value is an {@link Unwrapped} carrier. Default: resolves the carried
-   * value's properties and dispatches each as a sibling field at the current level (no nested
-   * object). A {@link java.util.Map} value is used directly; any other non-null value is unwrapped
-   * via the configured {@link DomainObjectMapper}. A {@code null} carried value contributes nothing.
-   *
-   * @param unwrapped the carrier whose properties to inline
-   */
-  public void visitUnwrapped(Unwrapped unwrapped) {
-    Object value = unwrapped.value();
-    if (value == null) {
-      return;
-    }
-    if (value instanceof Map<?, ?> map) {
-      map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
-      return;
-    }
-    @Nullable Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
-    if (properties == null) {
-      visitUnknown(value);
-    } else {
-      properties.forEach(this::visitField);
     }
   }
 

@@ -29,7 +29,7 @@ class ResolverTest {
 
       @Override
       public ResolvedValue value(String key) {
-        return values.getOrDefault(key, ResolvedValue.EMPTY);
+        return values.getOrDefault(key, ResolvedValue.empty());
       }
     };
   }

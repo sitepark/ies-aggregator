@@ -59,6 +59,6 @@ public interface Resolver {
         return value;
       }
     }
-    return ResolvedValue.EMPTY;
+    return ResolvedValue.empty();
   }
 }

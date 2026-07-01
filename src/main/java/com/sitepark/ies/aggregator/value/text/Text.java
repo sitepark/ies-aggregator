@@ -11,10 +11,13 @@ package com.sitepark.ies.aggregator.value.text;
  * </ul>
  *
  * <p>Because the {@link com.sitepark.ies.aggregator.output.OutputVisitor OutputVisitor} dispatches
- * on the runtime type, a field declared as {@code Text} lets the aggregator decide per value whether
- * a text should be translatable — both kinds are written into the same field.
+ * on the runtime type, a field declared as {@code Text} lets the aggregator decide per value
+ * whether a text should be translatable — both kinds are written into the same field.
  */
 public sealed interface Text permits PlainText, TranslatableText {
+
+  /** Represents the empty text ({@code ""}). */
+  PlainText EMPTY = new PlainText("");
 
   /**
    * Creates a non-translatable, verbatim {@link PlainText}.
@@ -27,5 +30,9 @@ public sealed interface Text permits PlainText, TranslatableText {
    */
   static PlainText of(String text) {
     return PlainText.of(text);
+  }
+
+  static PlainText empty() {
+    return EMPTY;
   }
 }

@@ -34,7 +34,7 @@ class EmptyResolverTest {
   void valueReturnsEmptyResolvedValue() {
     assertThat(new EmptyResolver().value("anything"))
         .as("value() should always return ResolvedValue.EMPTY")
-        .isSameAs(ResolvedValue.EMPTY);
+        .isSameAs(ResolvedValue.empty());
   }
 
   @Test

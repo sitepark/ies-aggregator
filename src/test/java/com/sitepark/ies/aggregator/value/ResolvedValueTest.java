@@ -100,14 +100,14 @@ class ResolvedValueTest {
   void orElseReturnsSupplierResultWhenEmpty() {
     ResolvedValue fallback = ResolvedValue.of("fallback");
 
-    assertThat(ResolvedValue.EMPTY.orElse(() -> fallback))
+    assertThat(ResolvedValue.empty().orElse(() -> fallback))
         .as("orElse() should return the supplier's value when this value is empty")
         .isSameAs(fallback);
   }
 
   @Test
   void emptyConstantIsEmpty() {
-    assertThat(ResolvedValue.EMPTY.isEmpty())
+    assertThat(ResolvedValue.empty().isEmpty())
         .as("ResolvedValue.EMPTY should report itself as empty")
         .isTrue();
   }
@@ -136,7 +136,7 @@ class ResolvedValueTest {
 
   @Test
   void valueReturnsNullWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.value()).as("value() should be null when empty").isNull();
+    assertThat(ResolvedValue.empty().value()).as("value() should be null when empty").isNull();
   }
 
   // --- asInt --------------------------------------------------------------
@@ -157,14 +157,14 @@ class ResolvedValueTest {
 
   @Test
   void asIntOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asInt())
+    assertThat(ResolvedValue.empty().asInt())
         .as("asInt() without default should return 0")
         .isEqualTo(0);
   }
 
   @Test
   void asIntWithDefaultReturnsDefaultWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.asInt(99))
+    assertThat(ResolvedValue.empty().asInt(99))
         .as("asInt(default) should return the default when empty")
         .isEqualTo(99);
   }
@@ -194,14 +194,14 @@ class ResolvedValueTest {
 
   @Test
   void asLongOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asLong())
+    assertThat(ResolvedValue.empty().asLong())
         .as("asLong() without default should return 0L")
         .isEqualTo(0L);
   }
 
   @Test
   void asLongWithDefaultReturnsDefaultWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.asLong(12L))
+    assertThat(ResolvedValue.empty().asLong(12L))
         .as("asLong(default) should return the default when empty")
         .isEqualTo(12L);
   }
@@ -245,7 +245,7 @@ class ResolvedValueTest {
 
   @Test
   void asFloatOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asFloat())
+    assertThat(ResolvedValue.empty().asFloat())
         .as("asFloat() without default should return 0.0")
         .isEqualTo(0.0f);
   }
@@ -275,7 +275,7 @@ class ResolvedValueTest {
 
   @Test
   void asDoubleOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asDouble())
+    assertThat(ResolvedValue.empty().asDouble())
         .as("asDouble() without default should return 0.0")
         .isEqualTo(0.0d);
   }
@@ -298,14 +298,14 @@ class ResolvedValueTest {
 
   @Test
   void asStringOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asString())
+    assertThat(ResolvedValue.empty().asString())
         .as("asString() without default should return empty string")
         .isEqualTo("");
   }
 
   @Test
   void asStringWithDefaultReturnsDefaultWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.asString("fallback"))
+    assertThat(ResolvedValue.empty().asString("fallback"))
         .as("asString(default) should return the default when empty")
         .isEqualTo("fallback");
   }
@@ -329,7 +329,7 @@ class ResolvedValueTest {
 
   @Test
   void asTextOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asText().toString())
+    assertThat(ResolvedValue.empty().asText().toString())
         .as("asText() without default should return empty string")
         .isEqualTo("");
   }
@@ -337,14 +337,14 @@ class ResolvedValueTest {
   @Test
   void asTextWithDefaultReturnsDefaultWhenEmpty() {
     PlainText def = PlainText.of("def");
-    assertThat(ResolvedValue.EMPTY.asText(def))
+    assertThat(ResolvedValue.empty().asText(def))
         .as("asText(default) should return the default when empty")
         .isSameAs(def);
   }
 
   @Test
   void asTextRejectsUnsupportedPayload() {
-    assertThatThrownBy(() -> ResolvedValue.of(123).asText(PlainText.EMPTY))
+    assertThatThrownBy(() -> ResolvedValue.of(123).asText(Text.empty()))
         .as("asText() should reject payloads that are neither Text nor String")
         .isInstanceOf(IllegalArgumentException.class);
   }
@@ -367,14 +367,14 @@ class ResolvedValueTest {
 
   @Test
   void asEnumOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.asEnum(TestEnum.class))
+    assertThatThrownBy(() -> ResolvedValue.empty().asEnum(TestEnum.class))
         .as("asEnum() without default should reject empty value")
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void asEnumWithDefaultReturnsDefaultWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.asEnum(TestEnum.class, TestEnum.ALPHA))
+    assertThat(ResolvedValue.empty().asEnum(TestEnum.class, TestEnum.ALPHA))
         .as("asEnum(default) should return the default when empty")
         .isSameAs(TestEnum.ALPHA);
   }
@@ -404,14 +404,14 @@ class ResolvedValueTest {
 
   @Test
   void asBooleanOnEmptyThrows() {
-    assertThat(ResolvedValue.EMPTY.asBoolean())
+    assertThat(ResolvedValue.empty().asBoolean())
         .as("asBoolean() without default should return false")
         .isFalse();
   }
 
   @Test
   void asBooleanWithDefaultReturnsDefaultWhenEmpty() {
-    assertThat(ResolvedValue.EMPTY.asBoolean(true))
+    assertThat(ResolvedValue.empty().asBoolean(true))
         .as("asBoolean(default) should return the default when empty")
         .isTrue();
   }
@@ -478,7 +478,7 @@ class ResolvedValueTest {
 
   @Test
   void asOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.EMPTY.as(Map.class, FIXED_MAP_PARSER))
+    assertThatThrownBy(() -> ResolvedValue.empty().as(Map.class, FIXED_MAP_PARSER))
         .as("as() should reject an empty value")
         .isInstanceOf(IllegalArgumentException.class);
   }

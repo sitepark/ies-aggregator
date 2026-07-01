@@ -122,7 +122,7 @@ class MapConverterTest {
   @Test
   void emptyResolvedValueBecomesNull() {
     OutputObject root = new OutputObject(null, null);
-    root.put("empty", ResolvedValue.EMPTY);
+    root.put("empty", ResolvedValue.empty());
 
     assertThat(new MapConverter().toMap(root).get("empty"))
         .as("Empty ResolvedValue should be unwrapped to null")
