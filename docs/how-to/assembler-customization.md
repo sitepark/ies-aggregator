@@ -14,6 +14,28 @@ project without changes to the core code. Patterns 1 and 2 are based on `@Assemb
 
 ---
 
+## Core principle: delegation, not inheritance
+
+All built-in assembler implementations are `final`. Projects **never extend an assembler to
+customize it** — they always **delegate**. An override implements the same *interface* as the
+built-in, registers it with a higher `@Assembler` priority, and calls the built-in implementation
+through an injected delegate.
+
+This is not just a style rule; it is enforced by how the factory resolves implementations:
+
+- **The dispatch type must be an interface.** `AssemblerFactory.create(key, type)` selects
+  candidates by *assignability* to `type` (`type.isAssignableFrom(candidate)`) and picks the highest
+  `priority` for that `key`. If the dispatch type were a `final` concrete class, no override could
+  ever be assignable to it — the factory would never select it. Therefore every overridable assembler
+  is dispatched via an interface (e.g. `LinkAssembler`, `ImageAssembler`, `LinkListAssembler`), and
+  the built-in class (e.g. `DefaultLinkListAssembler`) is a `final` implementation of it.
+- **Never re-enter the factory for the same key.** An override must obtain the built-in instance by
+  **injecting the concrete `Default…` class directly** — not via `factory.create(sameKey, …)`, which
+  would resolve back to the override itself and recurse infinitely. Injecting the concrete class lets
+  the DI container (Guice) construct the built-in directly, bypassing key/priority resolution.
+
+---
+
 ## Pattern 1: Type-driven dispatching
 
 ### Overview
@@ -36,7 +58,7 @@ Using the Link assembler family as an example:
 
 ```mermaid
 sequenceDiagram
-    participant LL as LinkListAssembler
+    participant LL as DefaultLinkListAssembler
     participant D as LinkAssemblerDispatcher
     participant R as Resolver
     participant F as AssemblerFactory
@@ -90,7 +112,7 @@ public class LinkAssemblerDispatcher {
 ```java
 
 @Assembler("link.internal")
-public class InternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
+public final class InternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     @Inject
     InternalLinkAssembler(ChannelUriProvider uriProvider, ChannelProvider channelProvider,
@@ -155,7 +177,7 @@ must match the pattern `"link." + sp_linkType`:
 ```java
 
 @Assembler("link.external")
-public class ExternalLinkAssembler implements LinkAssembler<Link.ExternalLink> {
+public final class ExternalLinkAssembler implements LinkAssembler<Link.ExternalLink> {
 
     @Inject
     public ExternalLinkAssembler() {
@@ -190,7 +212,7 @@ To replace a built-in implementation per project, the same key is used with a
 ```java
 
 @Assembler(value = "link.internal", priority = 100)
-public class ProjectInternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
+public final class ProjectInternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     private final ChannelUriProvider uriProvider;
     private final ChannelProvider channelProvider;
@@ -220,6 +242,11 @@ public class ProjectInternalLinkAssembler implements LinkAssembler<Link.Internal
 The `AssemblerFactory` automatically selects this class because its `priority` value is higher. The
 built-in implementation remains unchanged on the classpath but is no longer used.
 
+Both the built-in and the override are `final` and implement the shared `LinkAssembler` interface —
+there is no `extends`. The example above *replaces* the built-in entirely. If you only want to
+*extend* it (reuse the built-in result and enrich it), inject the built-in `InternalLinkAssembler`
+as a delegate and call it, exactly as shown for `DefaultLinkListAssembler` in Pattern 2.
+
 ---
 
 ## Pattern 2: Direct override
@@ -238,23 +265,28 @@ concrete class is returned is decided by the factory based on the registered
 
 Using `LinkListAssembler` and `LinkListAggregator` as an example.
 
-The **assembler** is registered with `@Assembler`:
+The extension point is the **`LinkListAssembler` interface**; the built-in **implementation** is
+`final` and registered with `@Assembler`:
 
 ```java
+public interface LinkListAssembler {
+    Optional<LinkList> assemble(Resolver source, LinkListOptions options);
+}
 
 @Assembler("linkList")
-public class LinkListAssembler {
+public final class DefaultLinkListAssembler implements LinkListAssembler {
 
     private final LinkAssemblerDispatcher linkAssembler;
     private final AggregatorErrorHandler errorHandler;
 
     @Inject
-    public LinkListAssembler(LinkAssemblerDispatcher linkAssembler,
-                             AggregatorErrorHandler errorHandler) {
+    public DefaultLinkListAssembler(LinkAssemblerDispatcher linkAssembler,
+                                    AggregatorErrorHandler errorHandler) {
         this.linkAssembler = linkAssembler;
         this.errorHandler = errorHandler;
     }
 
+    @Override
     public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
         Text headline = source.value("sp_headline").asText(PlainText.EMPTY).translatable();
         String boxType = source.value("sp_linkBoxType").asString(options.box().defaultType());
@@ -292,28 +324,28 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
 
 ### Override in a customer project
 
-A subclass with a higher priority value automatically takes control — without any change
-to `LinkListAggregator`:
+An implementation of `LinkListAssembler` with a higher priority value automatically takes control —
+without any change to `LinkListAggregator`. Instead of inheriting from the built-in, it **injects
+`DefaultLinkListAssembler` as a delegate** and enriches its result:
 
 ```java
 
 @Assembler(value = "linkList", priority = 100)
-public class ProjectLinkListAssembler extends LinkListAssembler {
+public final class ProjectLinkListAssembler implements LinkListAssembler {
 
+    private final DefaultLinkListAssembler delegate;   // concrete built-in, injected directly
     private final ProjectTeaser teaser;
 
     @Inject
-    public ProjectLinkListAssembler(LinkAssemblerDispatcher linkAssembler,
-                                    AggregatorErrorHandler errorHandler,
-                                    ProjectTeaser teaser) {
-        super(linkAssembler, errorHandler);
+    public ProjectLinkListAssembler(DefaultLinkListAssembler delegate, ProjectTeaser teaser) {
+        this.delegate = delegate;
         this.teaser = teaser;
     }
 
     @Override
     public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
-        // call the base implementation and enrich the result, or replace it entirely
-        return super.assemble(source, options).map(list -> enrich(list, source));
+        // call the built-in implementation and enrich the result, or replace it entirely
+        return this.delegate.assemble(source, options).map(list -> enrich(list, source));
     }
 
     private LinkList enrich(LinkList list, Resolver source) {
@@ -322,6 +354,11 @@ public class ProjectLinkListAssembler extends LinkListAssembler {
     }
 }
 ```
+
+> **Do not** call `assemblerFactory.create("linkList", LinkListAssembler.class)` from inside the
+> override — it resolves back to this very class (highest priority) and recurses infinitely. Inject
+> the concrete `DefaultLinkListAssembler` instead; the DI container constructs it directly, bypassing
+> key/priority resolution.
 
 ---
 
@@ -374,24 +411,25 @@ return Optional.of(new LinkList("content.linkList", headline, boxType, items, nu
 ### Adding fields in a customer project
 
 Combine with Pattern 2: register an override under the same key with a higher priority, reuse the
-base implementation, and place a **typed** extension object into the slot:
+built-in implementation via delegation, and place a **typed** extension object into the slot:
 
 ```java
 public record LinkListBadge(String label, int count) {
 }
 
 @Assembler(value = "linkList", priority = 100)
-public class ProjectLinkListAssembler extends LinkListAssembler {
+public final class ProjectLinkListAssembler implements LinkListAssembler {
+
+    private final DefaultLinkListAssembler delegate;
 
     @Inject
-    public ProjectLinkListAssembler(LinkAssemblerDispatcher linkAssembler,
-                                    AggregatorErrorHandler errorHandler) {
-        super(linkAssembler, errorHandler);
+    public ProjectLinkListAssembler(DefaultLinkListAssembler delegate) {
+        this.delegate = delegate;
     }
 
     @Override
     public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
-        return super.assemble(source, options)
+        return this.delegate.assemble(source, options)
                 .map(list -> new LinkList(
                         list.modelType(), list.headline(), list.linkBoxType(), list.items(),
                         new LinkListBadge("new", list.items().size())));
@@ -426,7 +464,7 @@ in the DI container.
 
 ### Fault tolerance in list processing
 
-The `LinkListAssembler` catches `AggregatorException` errors individually per list item and forwards
+The `DefaultLinkListAssembler` catches `AggregatorException` errors individually per list item and forwards
 them to the `AggregatorErrorHandler`. A single failed link does not abort the
 entire list:
 
