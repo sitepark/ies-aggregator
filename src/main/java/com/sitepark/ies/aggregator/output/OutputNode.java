@@ -1,9 +1,11 @@
 package com.sitepark.ies.aggregator.output;
 
+import com.sitepark.ies.aggregator.value.Emptiable;
 import com.sitepark.ies.aggregator.value.uri.Uri;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -17,7 +19,7 @@ import org.jspecify.annotations.Nullable;
  * <p>Sub-nodes are created lazily: {@link #node(String)} and {@link #nodeList(String)} return an
  * existing sub-node or create a new one.
  */
-public abstract class OutputNode implements Output {
+public abstract class OutputNode implements Output, Emptiable {
 
   private final @Nullable Output parent;
   private final Map<String, Object> content = new LinkedHashMap<>();
@@ -37,6 +39,26 @@ public abstract class OutputNode implements Output {
    */
   public void put(String field, Object value) {
     this.content.put(field, value);
+  }
+
+  /**
+   * Stores {@code value} under {@code field} only if it is not empty (as determined by {@link
+   * Emptiable#isEmpty(Object)}), replacing any previous value. A {@code null} value is treated as
+   * empty and never stored.
+   *
+   * @param field the field name
+   * @param value the value to store when non-empty; may be {@code null}
+   */
+  public void putIfNotEmpty(String field, @Nullable Object value) {
+    if (!Emptiable.isEmpty(value)) {
+      this.put(field, Objects.requireNonNull(value));
+    }
+  }
+
+  /** Returns {@code true} if this node has no entries. */
+  @Override
+  public boolean isEmpty() {
+    return this.content.isEmpty();
   }
 
   /**

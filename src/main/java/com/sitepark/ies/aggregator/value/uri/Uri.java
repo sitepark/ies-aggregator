@@ -1,5 +1,6 @@
 package com.sitepark.ies.aggregator.value.uri;
 
+import com.sitepark.ies.aggregator.value.Emptiable;
 import java.net.URI;
 import java.net.URL;
 
@@ -19,7 +20,7 @@ import java.net.URL;
  * on the runtime type, a field declared as {@code Uri} lets the aggregator decide per value whether
  * a URI should be translatable — both kinds are written into the same field.
  */
-public sealed interface Uri permits PlainUri, TranslatableUri {
+public sealed interface Uri extends Emptiable permits PlainUri, TranslatableUri {
 
   /** Represents the empty text ({@code ""}). */
   PlainUri EMPTY = new PlainUri(URI.create(""));
@@ -27,8 +28,6 @@ public sealed interface Uri permits PlainUri, TranslatableUri {
   static PlainUri empty() {
     return EMPTY;
   }
-
-  boolean isEmpty();
 
   /**
    * Creates a non-translatable, verbatim {@link PlainUri} wrapping the given {@link URL}.

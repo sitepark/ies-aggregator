@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
  * key. Calling a typed accessor on an empty value without a default throws {@link
  * IllegalArgumentException}.
  */
-public final class ResolvedValue {
+public final class ResolvedValue implements Emptiable {
   private static final String VALUE_NOT_SET = "Value not set";
 
   private final @Nullable Object value;
@@ -56,6 +56,7 @@ public final class ResolvedValue {
   }
 
   /** Returns {@code true} if no value is present. */
+  @Override
   public boolean isEmpty() {
     return value == null;
   }

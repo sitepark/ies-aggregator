@@ -1,5 +1,7 @@
 package com.sitepark.ies.aggregator.value.text;
 
+import com.sitepark.ies.aggregator.value.Emptiable;
+
 /**
  * A text value an aggregator writes into the output tree.
  *
@@ -14,12 +16,10 @@ package com.sitepark.ies.aggregator.value.text;
  * on the runtime type, a field declared as {@code Text} lets the aggregator decide per value
  * whether a text should be translatable — both kinds are written into the same field.
  */
-public sealed interface Text permits PlainText, TranslatableText {
+public sealed interface Text extends Emptiable permits PlainText, TranslatableText {
 
   /** Represents the empty text ({@code ""}). */
   PlainText EMPTY = new PlainText("");
-
-  boolean isEmpty();
 
   /**
    * Creates a non-translatable, verbatim {@link PlainText}.
