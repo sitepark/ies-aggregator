@@ -2,6 +2,8 @@ package com.sitepark.ies.aggregator.value;
 
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import com.sitepark.ies.aggregator.value.uri.PlainUri;
+import com.sitepark.ies.aggregator.value.uri.Uri;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
@@ -276,6 +278,35 @@ public final class ResolvedValue {
     }
     throw new IllegalArgumentException(
         "Value is not an string or Text ( " + value.getClass().getName() + ")");
+  }
+
+  /**
+   * Returns the value as a {@link PlainUri}.
+   *
+   * @throws IllegalArgumentException if empty or the value is not a {@link PlainUri} or {@link
+   *     String}
+   */
+  public PlainUri asUri() {
+    return asUri(Uri.empty());
+  }
+
+  /**
+   * Returns the value as a {@link PlainUri}, or {@code defaultValue} if empty.
+   *
+   * @param defaultValue the value to return when empty
+   * @throws IllegalArgumentException if not empty and the value is not a {@link PlainUri} or {@link
+   *     String}
+   */
+  public PlainUri asUri(PlainUri defaultValue) {
+    if (this.isEmpty()) {
+      return defaultValue;
+    }
+    String s = asString();
+    if (s.isBlank()) {
+      return Uri.empty();
+    }
+
+    return PlainUri.of(s);
   }
 
   /**

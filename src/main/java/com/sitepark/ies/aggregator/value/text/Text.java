@@ -19,6 +19,8 @@ public sealed interface Text permits PlainText, TranslatableText {
   /** Represents the empty text ({@code ""}). */
   PlainText EMPTY = new PlainText("");
 
+  boolean isEmpty();
+
   /**
    * Creates a non-translatable, verbatim {@link PlainText}.
    *

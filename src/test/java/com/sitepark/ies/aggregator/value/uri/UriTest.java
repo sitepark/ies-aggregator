@@ -22,4 +22,9 @@ class UriTest {
         .as("TranslatableUri should be usable wherever a Uri is expected")
         .isInstanceOf(Uri.class);
   }
+
+  @Test
+  void testEmptyUri() {
+    assertThat(Uri.of("").isEmpty()).as("Uri.of() should produce an empty Uri").isTrue();
+  }
 }

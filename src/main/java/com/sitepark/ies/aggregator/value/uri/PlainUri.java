@@ -8,9 +8,9 @@ import java.net.URL;
  * A non-translatable {@link Uri}: an immutable wrapper for a {@link java.net.URI} that exposes
  * individual URI components and is rendered verbatim.
  *
- * <p>Use the static factory methods {@link #of(URI)} and {@link #of(String)} to construct instances.
- * The constructor is package-private to restrict construction to the static factory methods. Can be
- * promoted to a {@link TranslatableUri} via {@link #translatable()}.
+ * <p>Use the static factory methods {@link #of(URI)} and {@link #of(String)} to construct
+ * instances. The constructor is package-private to restrict construction to the static factory
+ * methods. Can be promoted to a {@link TranslatableUri} via {@link #translatable()}.
  */
 public final class PlainUri implements Uri {
 
@@ -200,6 +200,11 @@ public final class PlainUri implements Uri {
 
   public TranslatableUri translatable() {
     return TranslatableUri.of(this);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return this.originUri.getScheme() == null && this.originUri.getPath().isEmpty();
   }
 
   @Override

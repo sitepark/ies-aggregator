@@ -205,6 +205,11 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
   }
 
   @Override
+  public boolean isEmpty() {
+    return this.uri.isEmpty();
+  }
+
+  @Override
   public String toString() {
     return this.render(Translations.SOURCE);
   }

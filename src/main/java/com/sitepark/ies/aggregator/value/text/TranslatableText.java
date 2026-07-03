@@ -3,14 +3,15 @@ package com.sitepark.ies.aggregator.value.text;
 /**
  * An immutable, identity-based source text that can be translated.
  *
- * <p>Unlike {@link PlainText}, this type is used <em>by identity</em>: it is collected from the output
- * tree by a {@code TranslatableTextCollector} and serves as the key of an external translation
- * table (see {@code com.sitepark.ies.aggregator.output.collect.Translations}). The instance itself
- * only carries the source text and its {@link Format}; the translation lives outside the tree.
+ * <p>Unlike {@link PlainText}, this type is used <em>by identity</em>: it is collected from the
+ * output tree by a {@code TranslatableTextCollector} and serves as the key of an external
+ * translation table (see {@code com.sitepark.ies.aggregator.output.collect.Translations}). The
+ * instance itself only carries the source text and its {@link Format}; the translation lives
+ * outside the tree.
  *
  * <p>Because instances are used as identity keys, {@code equals}/{@code hashCode} are deliberately
- * <strong>identity-based</strong> (reference equality), not value-based: two distinct occurrences of
- * the same source text may be translated differently depending on their position in the tree.
+ * <strong>identity-based</strong> (reference equality), not value-based: two distinct occurrences
+ * of the same source text may be translated differently depending on their position in the tree.
  */
 public final class TranslatableText implements Text {
   private final Format format;
@@ -78,6 +79,11 @@ public final class TranslatableText implements Text {
   /** Returns the source text. */
   public String getSourceText() {
     return this.sourceText;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return this.sourceText.isEmpty();
   }
 
   /**

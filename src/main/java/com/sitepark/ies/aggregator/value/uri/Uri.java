@@ -21,6 +21,15 @@ import java.net.URL;
  */
 public sealed interface Uri permits PlainUri, TranslatableUri {
 
+  /** Represents the empty text ({@code ""}). */
+  PlainUri EMPTY = new PlainUri(URI.create(""));
+
+  static PlainUri empty() {
+    return EMPTY;
+  }
+
+  boolean isEmpty();
+
   /**
    * Creates a non-translatable, verbatim {@link PlainUri} wrapping the given {@link URL}.
    *

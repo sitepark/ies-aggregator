@@ -54,6 +54,11 @@ public final class PlainText implements Text {
   }
 
   @Override
+  public boolean isEmpty() {
+    return this.text.isEmpty();
+  }
+
+  @Override
   public boolean equals(Object o) {
     return (o instanceof PlainText that) && this.text.equals(that.text);
   }
