@@ -3,7 +3,6 @@ package com.sitepark.ies.aggregator.output;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.sitepark.ies.aggregator.value.text.Text;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,54 +115,6 @@ class OutputObjectTest {
     assertThat(root.get("name"))
         .as("put() should overwrite any existing value for the same field")
         .isEqualTo("Bob");
-  }
-
-  @Test
-  void putIfNotEmptyStoresNonEmptyValue() {
-    OutputObject root = new OutputObject(null, null);
-
-    root.putIfNotEmpty("name", "Alice");
-
-    assertThat(root.get("name"))
-        .as("putIfNotEmpty() should store a non-empty value")
-        .isEqualTo("Alice");
-  }
-
-  @Test
-  void putIfNotEmptySkipsNullValue() {
-    OutputObject root = new OutputObject(null, null);
-
-    root.putIfNotEmpty("name", null);
-
-    assertThat(root.has("name"))
-        .as("putIfNotEmpty() should treat null as empty and not store it")
-        .isFalse();
-  }
-
-  @Test
-  void putIfNotEmptySkipsEmptyValuesOfAnySupportedType() {
-    OutputObject root = new OutputObject(null, null);
-
-    root.putIfNotEmpty("string", "");
-    root.putIfNotEmpty("list", List.of());
-    root.putIfNotEmpty("map", Map.of());
-    root.putIfNotEmpty("array", new String[0]);
-    root.putIfNotEmpty("text", Text.empty());
-
-    assertThat(root.entries())
-        .as("putIfNotEmpty() should skip empty strings, collections, maps, arrays and Emptiables")
-        .isEmpty();
-  }
-
-  @Test
-  void isEmptyReflectsWhetherNodeHasEntries() {
-    OutputObject root = new OutputObject(null, null);
-
-    assertThat(root.isEmpty()).as("A node without entries should be empty").isTrue();
-
-    root.put("name", "Alice");
-
-    assertThat(root.isEmpty()).as("A node with entries should not be empty").isFalse();
   }
 
   @Test

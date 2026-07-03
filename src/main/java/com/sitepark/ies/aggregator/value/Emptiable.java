@@ -10,9 +10,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Implemented by all value types an aggregator writes into the output tree that can be empty,
  * such as {@link com.sitepark.ies.aggregator.value.text.Text Text}, {@link
- * com.sitepark.ies.aggregator.value.uri.Uri Uri} and {@link ResolvedValue}. It lets the output tree
- * treat emptiness uniformly &mdash; see {@link
- * com.sitepark.ies.aggregator.output.OutputNode#putIfNotEmpty(String, Object)}.
+ * com.sitepark.ies.aggregator.value.uri.Uri Uri} and {@link ResolvedValue}. It lets the output
+ * pipeline treat emptiness uniformly &mdash; e.g. a {@link
+ * com.sitepark.ies.aggregator.output.DomainObjectMapper} drops empty properties while unwrapping a
+ * domain object.
  */
 @FunctionalInterface
 public interface Emptiable {

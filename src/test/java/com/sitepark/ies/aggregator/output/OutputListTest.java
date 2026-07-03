@@ -39,21 +39,6 @@ class OutputListTest {
   }
 
   @Test
-  void pruneEmptyItemsRemovesEmptyItemsButKeepsFilledOnes() {
-    OutputObject parent = new OutputObject(null, null);
-    OutputList list = parent.nodeList("items");
-    OutputListItem filled = list.addItem();
-    filled.put("id", 1);
-    list.addItem(); // empty item
-
-    list.pruneEmptyItems();
-
-    assertThat(list.items())
-        .as("pruneEmptyItems() should drop empty items but keep filled ones")
-        .containsExactly(filled);
-  }
-
-  @Test
   void addItemRejectsItemFromDifferentParent() {
     OutputObject parent = new OutputObject(null, null);
     OutputList listA = parent.nodeList("a");

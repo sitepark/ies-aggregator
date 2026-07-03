@@ -151,28 +151,28 @@ This way:
 Anyone who does not need a mapper uses the null default `DomainObjectMapper.NONE` (automatically
 set when no mapper is passed).
 
-## Flattening properties: `@JsonUnwrapped`
+## Flattening properties: `@OutputUnwrapped`
 
 Normally every property is rendered under its own key — a `Map` or a domain object as a property
 value becomes a **nested** object. Sometimes a property's *own* properties should instead appear
-**inline, at the level of the surrounding object**. This is expressed with Jackson's
-[`@JsonUnwrapped`](https://fasterxml.github.io/jackson-annotations/javadoc/2.14/com/fasterxml/jackson/annotation/JsonUnwrapped.html)
-on the property:
+**inline, at the level of the surrounding object**. This is expressed with the Jackson-free
+`@OutputUnwrapped` annotation (`com.sitepark.ies.aggregator.output.OutputUnwrapped`) on the
+property:
 
 ```java
 public record ContentImage(
     ImageDescription description,
-    @JsonUnwrapped Extension extension) {}   // inlined flat, no "extension" key
+    @OutputUnwrapped Extension extension) {}   // inlined flat, no "extension" key
 ```
 
 Flattening is **not** the visitor's job — the visitor only ever sees an already-flat property map.
-It is the `DomainObjectMapper` that inlines: the Jackson-backed `JacksonDomainObjectMapper` detects
-`@JsonUnwrapped` during bean introspection and, instead of adding the property under its own key,
-merges the nested object's properties (value-preserving, so typed values like `TranslatableText`
-survive) as **sibling entries at the current level**.
+It is the `DomainObjectMapper` that inlines: a Jackson-backed `JacksonDomainObjectMapper` detects
+`@OutputUnwrapped` during bean introspection (via a custom `AnnotationIntrospector`) and, instead of
+adding the property under its own key, merges the nested object's properties (value-preserving, so
+typed values like `TranslatableText` survive) as **sibling entries at the current level**.
 
 The key advantage over a value-level carrier: because the marker sits on the **declaration**, it is
-honored even when the property value is `null` — a `null` `@JsonUnwrapped` property simply
+honored even when the property value is `null` — a `null` `@OutputUnwrapped` property simply
 contributes nothing and leaves **no dangling key**.
 
 Notes:
@@ -181,10 +181,10 @@ Notes:
   every format visitor (`PhpArrayWriter`, `JsonWriter`, `MapConverter`, …) renders it automatically.
 - **Typed content, flat output.** The unwrapped property may be any domain object (resolved
   recursively) or a plain `Map`; its fields are rendered flat while keeping their typed values.
-- **Prefix/suffix.** A configured `@JsonUnwrapped(prefix = …, suffix = …)` is applied to the
+- **Prefix/suffix.** A configured `@OutputUnwrapped(prefix = …, suffix = …)` is applied to the
   inlined keys.
 - **Sibling keys.** Because the property's key is dropped, the inlined keys become siblings of the
   surrounding object's fields — the author is responsible for avoiding name collisions.
-- **Primary use:** extensible output models — a value type exposes an `@JsonUnwrapped` slot so
+- **Primary use:** extensible output models — a value type exposes an `@OutputUnwrapped` slot so
   projects can add top-level fields without subclassing final records. See
   [Extending Assemblers](../how-to/assembler-customization.md).

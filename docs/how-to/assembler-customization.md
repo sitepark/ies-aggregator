@@ -139,13 +139,13 @@ public interface Link {
     boolean newWindow();
 
     record InternalLink(
-            @JsonProperty("modelType") String modelType,
-            @JsonProperty("iesId") int iesId,
-            @JsonProperty("objectType") String objectType,
-            @JsonProperty("resourceUrl") String resourceUrl,
-            @JsonProperty("url") Uri url,
-            @JsonProperty("label") Text label,
-            @JsonProperty("newWindow") boolean newWindow)
+            String modelType,
+            int iesId,
+            String objectType,
+            String resourceUrl,
+            Uri url,
+            Text label,
+            boolean newWindow)
             implements Link {
     }
 }
@@ -162,10 +162,10 @@ public interface Link {
     // ... existing methods and records ...
 
     record ExternalLink(
-            @JsonProperty("modelType") String modelType,
-            @JsonProperty("url") Uri url,
-            @JsonProperty("label") Text label,
-            @JsonProperty("newWindow") boolean newWindow)
+            String modelType,
+            Uri url,
+            Text label,
+            boolean newWindow)
             implements Link {
     }
 }
@@ -371,7 +371,7 @@ produces are **final Java records** — a customer override can return a record,
 field to an existing record type (records cannot be subclassed).
 
 To add project-specific fields **without changing the core record**, a value type exposes an
-extension slot annotated with Jackson's `@JsonUnwrapped`. The `DomainObjectMapper` inlines its
+extension slot annotated with `@OutputUnwrapped`. The `DomainObjectMapper` inlines its
 sub-properties **flat, at the top level** of the model (see
 [Visitor → Flattening properties](../reference/visitor.md)). The slot carries a typed object, so no
 `Map` is needed at the call site. Because the marker sits on the declaration, a `null` slot simply
@@ -388,16 +388,16 @@ public interface Extensible {
 }
 ```
 
-A value record adds the slot as a component annotated `@JsonUnwrapped` — **no `@JsonProperty`**,
+A value record adds the slot as a component annotated `@OutputUnwrapped` — no key annotation,
 because the slot's own key is dropped during inlining and the component name is never rendered:
 
 ```java
 public record LinkList(
-        @JsonProperty("modelType") String modelType,
-        @JsonProperty("headline") Text headline,
-        @JsonProperty("linkBoxType") String linkBoxType,
-        @JsonProperty("items") List<Link> items,
-        @JsonUnwrapped Object extension)
+        String modelType,
+        Text headline,
+        String linkBoxType,
+        List<Link> items,
+        @OutputUnwrapped Object extension)
         implements Extensible {
 }
 ```
@@ -441,7 +441,7 @@ The model then renders with `label` and `count` as **top-level** fields next to 
 `headline`, … instead of nested under an `extension` key.
 
 > **Note:** the slot is typed `Object` here to accept any extension payload (as the removed
-> `Unwrapped` carrier did). `@JsonUnwrapped` on an `Object`/`Map` field is inlined by the
+> `Unwrapped` carrier did). `@OutputUnwrapped` on an `Object`/`Map` field is inlined by the
 > introspecting `JacksonDomainObjectMapper`, even though plain Jackson *serialization* only supports
 > it on concrete bean types. Projects that always use one payload type can declare that type
 > directly instead of `Object`.

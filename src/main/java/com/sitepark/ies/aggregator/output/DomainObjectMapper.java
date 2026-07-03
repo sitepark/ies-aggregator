@@ -17,9 +17,13 @@ import org.jspecify.annotations.Nullable;
  * <p>If the mapper does not recognize the value, it must return {@code null} so the visitor can
  * fall back to {@link OutputVisitor#visitUnknown(Object)}.
  *
- * <p>The returned map must contain the original property values (not Jackson-serialized
+ * <p>The returned map must contain the original property values (not already-serialized
  * sub-representations) — otherwise typed value classes lose their identity and the visitor cannot
  * dispatch them correctly.
+ *
+ * <p>Property renaming and flat inlining are expressed with the Jackson-free annotations {@link
+ * OutputProperty} and {@link OutputUnwrapped}; an implementation is expected to honor them (and
+ * {@link OutputKeepIfEmpty}) when building the property map.
  */
 @FunctionalInterface
 public interface DomainObjectMapper {

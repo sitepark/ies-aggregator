@@ -18,4 +18,4 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
-public @interface KeepIfEmpty {}
+public @interface OutputKeepIfEmpty {}

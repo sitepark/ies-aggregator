@@ -31,8 +31,8 @@ import org.jspecify.annotations.Nullable;
  * instances (like {@code TranslatableText}) are dispatched correctly. Otherwise the value falls
  * through to {@link #visitUnknown(Object)}.
  *
- * <p>Flat inlining of nested properties ("unwrapping", analogous to Jackson's {@code
- * @JsonUnwrapped}) is not handled here: it is the responsibility of the {@link DomainObjectMapper},
+ * <p>Flat inlining of nested properties ("unwrapping", see {@link OutputUnwrapped}) is not handled
+ * here: it is the responsibility of the {@link DomainObjectMapper},
  * which inlines an annotated property's sub-properties as siblings when building the property map.
  * The visitor therefore only ever sees an already-flat map.
  */

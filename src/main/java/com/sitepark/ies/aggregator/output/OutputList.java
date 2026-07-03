@@ -8,9 +8,8 @@ import org.jspecify.annotations.Nullable;
  * Output node that holds an ordered list of {@link OutputListItem} elements.
  *
  * <p>Items can be added individually via {@link #addItem()} or located by predicate via
- * {@link #findFirst} and {@link #find}. Empty items can be dropped in bulk via
- * {@link #pruneEmptyItems()}. The list enforces that only items whose parent is this list may be
- * added.
+ * {@link #findFirst} and {@link #find}. The list enforces that only items whose parent is this list
+ * may be added.
  */
 public class OutputList implements Output {
   private final String field;
@@ -50,13 +49,6 @@ public class OutputList implements Output {
       throw new IllegalArgumentException("Parent of item must be this list");
     }
     items.add(item);
-  }
-
-  /**
-   * Removes all items that are empty, i.e. {@link OutputListItem} objects without any entries.
-   */
-  public void pruneEmptyItems() {
-    items.removeIf(OutputListItem::isEmpty);
   }
 
   /**
