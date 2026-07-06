@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.output;
 
 import com.sitepark.ies.aggregator.output.format.RawPhpCode;
+import com.sitepark.ies.aggregator.value.Emptiable;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
@@ -8,7 +9,11 @@ import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.text.Translations;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
@@ -35,6 +40,14 @@ import org.jspecify.annotations.Nullable;
  * here: it is the responsibility of the {@link DomainObjectMapper},
  * which inlines an annotated property's sub-properties as siblings when building the property map.
  * The visitor therefore only ever sees an already-flat map.
+ *
+ * <p><b>Empty values are dropped.</b> While iterating a container (object fields, list items, map
+ * entries, collection/array elements, and unwrapped domain-object properties) the visitor omits
+ * every value that {@link #rendersEmpty renders empty} — recursively, so a nested node that becomes
+ * empty after its own empties are removed is dropped as well. A value whose type carries {@link
+ * OutputKeepIfEmpty} is always kept. This is the single place where output emptiness is decided;
+ * {@link DomainObjectMapper} implementations only map structure (renaming/unwrapping), not
+ * emptiness.
  */
 public abstract class OutputVisitor {
 
@@ -78,6 +91,132 @@ public abstract class OutputVisitor {
   }
 
   /**
+   * Returns {@code true} if {@code value} should be omitted from the output because it is empty.
+   *
+   * <p>Emptiness is evaluated <b>recursively</b>: a container (nested {@link OutputObject}/{@link
+   * OutputList}, {@link Map}, {@link Collection}, array or unwrapped domain object) is empty when
+   * <b>all</b> of its (recursively non-empty-filtered) children are empty. A leaf value is empty
+   * when it is {@code null}, an empty {@link CharSequence}, an empty {@link Collection}/{@link
+   * Map}/array, or an {@link Emptiable} reporting {@link Emptiable#isEmpty() empty} (e.g. an empty
+   * {@code Text} or {@code Uri}). Numbers and booleans — including {@code 0}/{@code false} — and
+   * {@link RawPhpCode} are never empty.
+   *
+   * <p>A value whose runtime class carries {@link OutputKeepIfEmpty} is never treated as empty, so
+   * instances of that type are always rendered.
+   *
+   * @param value the value to inspect; may be {@code null}
+   * @return {@code true} if the value should be dropped from the output
+   */
+  protected final boolean rendersEmpty(@Nullable Object value) {
+    if (value == null) {
+      return true;
+    }
+    if (value.getClass().isAnnotationPresent(OutputKeepIfEmpty.class)) {
+      return false;
+    }
+    return switch (value) {
+      case KeepEmpty _ -> false;
+      case Emptiable e -> e.isEmpty();
+      case CharSequence s -> s.isEmpty();
+      case Number _ -> false;
+      case Boolean _ -> false;
+      case RawPhpCode _ -> false;
+      case OutputList l -> allRenderEmpty(l.items());
+      case OutputNode n -> allRenderEmpty(n.entries().values());
+      case Map<?, ?> m -> allRenderEmpty(m.values());
+      case Collection<?> c -> allRenderEmpty(c);
+      case Object[] a -> allRenderEmpty(List.of(a));
+      default -> {
+        if (value.getClass().isArray()) {
+          yield Array.getLength(value) == 0;
+        }
+        Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
+        yield properties != null && allRenderEmpty(properties.values());
+      }
+    };
+  }
+
+  private boolean allRenderEmpty(Iterable<?> values) {
+    for (Object value : values) {
+      if (!rendersEmpty(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns the entries of {@code node} in document order, excluding those whose value {@link
+   * #rendersEmpty renders empty}.
+   *
+   * @param node the node whose entries to filter
+   * @return the non-empty entries
+   */
+  protected final Map<String, Object> nonEmptyEntries(OutputNode node) {
+    Map<String, Object> result = new LinkedHashMap<>();
+    node.entries()
+        .forEach(
+            (key, value) -> {
+              if (!rendersEmpty(value)) {
+                result.put(key, value);
+              }
+            });
+    return result;
+  }
+
+  /**
+   * Returns the items of {@code list} in order, excluding those that {@link #rendersEmpty render
+   * empty}.
+   *
+   * @param list the list whose items to filter
+   * @return the non-empty items
+   */
+  protected final List<OutputListItem> nonEmptyItems(OutputList list) {
+    List<OutputListItem> result = new ArrayList<>();
+    for (OutputListItem item : list.items()) {
+      if (!rendersEmpty(item)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns the entries of {@code map} in order, excluding those whose value {@link #rendersEmpty
+   * renders empty}.
+   *
+   * @param map the map whose entries to filter
+   * @return the non-empty entries
+   */
+  protected final Map<?, ?> nonEmptyMap(Map<?, ?> map) {
+    Map<Object, Object> result = new LinkedHashMap<>();
+    map.forEach(
+        (key, value) -> {
+          if (!rendersEmpty(value)) {
+            result.put(key, value);
+          }
+        });
+    return result;
+  }
+
+  /**
+   * Returns the elements of {@code items} in order, excluding those that {@link #rendersEmpty render
+   * empty}.
+   *
+   * @param items the elements to filter
+   * @return the non-empty elements
+   */
+  protected final List<Object> nonEmptyElements(Iterable<?> items) {
+    List<Object> result = new ArrayList<>();
+    for (Object item : items) {
+      if (!rendersEmpty(item)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
+  /**
    * Called when the current value is an {@link OutputObject}. Default: iterates all fields via
    * {@link #iterateFields}.
    *
@@ -93,7 +232,7 @@ public abstract class OutputVisitor {
    * @param list the list node to visit
    */
   public void visitList(OutputList list) {
-    for (OutputListItem item : list.items()) {
+    for (OutputListItem item : nonEmptyItems(list)) {
       visitListItem(item);
     }
   }
@@ -114,7 +253,7 @@ public abstract class OutputVisitor {
    * @param node the node whose entries to iterate
    */
   protected final void iterateFields(OutputNode node) {
-    node.entries().forEach(this::visitField);
+    nonEmptyEntries(node).forEach(this::visitField);
   }
 
   /**
@@ -127,6 +266,7 @@ public abstract class OutputVisitor {
   public void visitField(@Nullable String key, @Nullable Object value) {
     switch (value) {
       case null -> visitNull();
+      case KeepEmpty(var wrapped) -> visitField(key, wrapped);
       case OutputObject o -> visitObject(o);
       case OutputList l -> visitList(l);
       case OutputListItem i -> visitListItem(i);
@@ -154,7 +294,7 @@ public abstract class OutputVisitor {
    * @param map the map to visit
    */
   public void visitMap(Map<?, ?> map) {
-    map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
+    nonEmptyMap(map).forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
   }
 
   /**
@@ -164,7 +304,7 @@ public abstract class OutputVisitor {
    * @param collection the collection to visit
    */
   public void visitCollection(Collection<?> collection) {
-    for (Object item : collection) {
+    for (Object item : nonEmptyElements(collection)) {
       visitField(null, item);
     }
   }
@@ -176,7 +316,7 @@ public abstract class OutputVisitor {
    * @param array the array to visit
    */
   public void visitArray(Object[] array) {
-    for (Object item : array) {
+    for (Object item : nonEmptyElements(List.of(array))) {
       visitField(null, item);
     }
   }

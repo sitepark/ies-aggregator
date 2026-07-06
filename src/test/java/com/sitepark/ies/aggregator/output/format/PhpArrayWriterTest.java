@@ -103,13 +103,15 @@ class PhpArrayWriterTest {
   }
 
   @Test
-  void nullValueIsWrittenAsNullLiteral() {
+  void emptyValuesAreDropped() {
     OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
     root.put("missing", null);
+    root.put("blank", "");
 
     assertThat(render(root))
-        .as("Null value should be written as the bare null literal")
-        .isEqualTo("[\n\t\"missing\" => null\n]");
+        .as("Null and empty fields should be dropped from the output")
+        .isEqualTo("[\n\t\"name\" => \"Alice\"\n]");
   }
 
   @Test
@@ -168,13 +170,15 @@ class PhpArrayWriterTest {
   }
 
   @Test
-  void emptyListRendersAsEmptyArray() {
+  void emptyNestedNodesAreDropped() {
     OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
     root.nodeList("items");
+    root.node("meta").put("blank", "");
 
     assertThat(render(root))
-        .as("Empty OutputList should render as []")
-        .isEqualTo("[\n\t\"items\" => []\n]");
+        .as("Empty nested list/object fields should be dropped")
+        .isEqualTo("[\n\t\"name\" => \"Alice\"\n]");
   }
 
   @Test

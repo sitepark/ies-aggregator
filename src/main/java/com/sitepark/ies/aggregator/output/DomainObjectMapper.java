@@ -21,9 +21,19 @@ import org.jspecify.annotations.Nullable;
  * sub-representations) — otherwise typed value classes lose their identity and the visitor cannot
  * dispatch them correctly.
  *
- * <p>Property renaming and flat inlining are expressed with the Jackson-free annotations {@link
- * OutputProperty} and {@link OutputUnwrapped}; an implementation is expected to honor them (and
- * {@link OutputKeepIfEmpty}) when building the property map.
+ * <p>An implementation maps only <b>structure</b>: property renaming and flat inlining are
+ * expressed with the Jackson-free annotations {@link OutputProperty} and {@link OutputUnwrapped},
+ * which it is expected to honor. It should return <b>all</b> properties (including empty ones) —
+ * dropping empty values is the {@link OutputVisitor}'s responsibility (see {@link
+ * OutputVisitor#rendersEmpty(Object)}), so emptiness is decided uniformly for every value in the
+ * output tree, not just for domain objects.
+ *
+ * <p>The one emptiness-related duty of a mapper is to honor the <b>property-level</b> {@link
+ * OutputKeepIfEmpty}: a property (record component, field or accessor) carrying it must be kept even
+ * when empty. Because the visitor decides emptiness by value and cannot see the property, the mapper
+ * signals this by wrapping such a property's value in {@link KeepEmpty}, which the visitor never
+ * drops and unwraps transparently. (The type-level {@link OutputKeepIfEmpty} needs no wrapper — the
+ * visitor checks it on the value's own runtime class.)
  */
 @FunctionalInterface
 public interface DomainObjectMapper {

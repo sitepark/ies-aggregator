@@ -105,3 +105,6 @@ public void aggregate(Resolver source, OutputNode output) {
 - An OutputNode is **not a domain object** – it is generic and can hold arbitrary values.
 - An OutputNode is **neither a DOM nor a serialization format** – it only describes the abstract
   structure of the result.
+- An OutputNode **stores** whatever is written to it, empty or not – emptiness does not affect the
+  tree. Empty values (and nested nodes that become empty) are dropped later, when a
+  [Visitor renders the tree](visitor.md#dropping-empty-values-outputkeepifempty), not on write.

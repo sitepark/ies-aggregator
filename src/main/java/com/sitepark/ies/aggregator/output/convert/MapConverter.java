@@ -114,7 +114,7 @@ public final class MapConverter extends OutputVisitor {
     List<@Nullable Object> array = new ArrayList<>();
     putValue(array);
     this.stack.push(new ListContainer(array));
-    for (OutputListItem item : list.items()) {
+    for (OutputListItem item : nonEmptyItems(list)) {
       visitListItem(item);
     }
     this.stack.pop();
@@ -125,7 +125,7 @@ public final class MapConverter extends OutputVisitor {
     List<@Nullable Object> nested = new ArrayList<>();
     putValue(nested);
     this.stack.push(new ListContainer(nested));
-    for (Object item : collection) {
+    for (Object item : nonEmptyElements(collection)) {
       visitField(null, item);
     }
     this.stack.pop();
@@ -136,7 +136,7 @@ public final class MapConverter extends OutputVisitor {
     List<@Nullable Object> nested = new ArrayList<>();
     putValue(nested);
     this.stack.push(new ListContainer(nested));
-    for (Object item : array) {
+    for (Object item : nonEmptyElements(List.of(array))) {
       visitField(null, item);
     }
     this.stack.pop();
@@ -156,7 +156,7 @@ public final class MapConverter extends OutputVisitor {
     Map<@Nullable String, @Nullable Object> nested = new LinkedHashMap<>();
     putValue(nested);
     this.stack.push(new MapContainer(nested));
-    map.forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
+    nonEmptyMap(map).forEach((k, v) -> visitField(k == null ? null : k.toString(), v));
     this.stack.pop();
   }
 

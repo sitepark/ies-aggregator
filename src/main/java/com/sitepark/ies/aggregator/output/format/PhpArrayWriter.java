@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,7 +101,8 @@ public final class PhpArrayWriter extends OutputVisitor {
 
   @Override
   public void visitList(OutputList list) {
-    writeIndexed(list.items().size(), list.items()::forEach, this::visitListItem);
+    List<OutputListItem> items = nonEmptyItems(list);
+    writeIndexed(items.size(), items::forEach, this::visitListItem);
   }
 
   @Override
@@ -130,14 +132,15 @@ public final class PhpArrayWriter extends OutputVisitor {
 
   @Override
   public void visitMap(Map<?, ?> map) {
-    if (map.isEmpty()) {
+    Map<?, ?> entries = nonEmptyMap(map);
+    if (entries.isEmpty()) {
       write("[]");
       return;
     }
     write("[");
     this.indent++;
     boolean first = true;
-    for (Map.Entry<?, ?> entry : map.entrySet()) {
+    for (Map.Entry<?, ?> entry : entries.entrySet()) {
       if (!first) {
         write(",");
       }
@@ -156,27 +159,14 @@ public final class PhpArrayWriter extends OutputVisitor {
 
   @Override
   public void visitCollection(Collection<?> collection) {
-    Object[] items = collection.toArray();
-    writeIndexed(
-        items.length,
-        c -> {
-          for (Object item : items) {
-            c.accept(item);
-          }
-        },
-        item -> visitField(null, item));
+    List<Object> items = nonEmptyElements(collection);
+    writeIndexed(items.size(), items::forEach, item -> visitField(null, item));
   }
 
   @Override
   public void visitArray(Object[] array) {
-    writeIndexed(
-        array.length,
-        c -> {
-          for (Object item : array) {
-            c.accept(item);
-          }
-        },
-        item -> visitField(null, item));
+    List<Object> items = nonEmptyElements(List.of(array));
+    writeIndexed(items.size(), items::forEach, item -> visitField(null, item));
   }
 
   @Override
@@ -185,7 +175,7 @@ public final class PhpArrayWriter extends OutputVisitor {
   }
 
   private void writeAssociative(OutputNode node) {
-    Map<String, Object> entries = node.entries();
+    Map<String, Object> entries = nonEmptyEntries(node);
     if (entries.isEmpty()) {
       write("[]");
       return;

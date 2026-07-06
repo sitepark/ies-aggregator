@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,7 +101,7 @@ public final class JsonWriter extends OutputVisitor {
   public void visitList(OutputList list) {
     write('[');
     boolean first = true;
-    for (OutputListItem item : list.items()) {
+    for (OutputListItem item : nonEmptyItems(list)) {
       if (!first) {
         write(',');
       }
@@ -143,7 +144,7 @@ public final class JsonWriter extends OutputVisitor {
   public void visitMap(Map<?, ?> map) {
     write('{');
     boolean first = true;
-    for (Map.Entry<?, ?> entry : map.entrySet()) {
+    for (Map.Entry<?, ?> entry : nonEmptyMap(map).entrySet()) {
       if (!first) {
         write(',');
       }
@@ -158,12 +159,12 @@ public final class JsonWriter extends OutputVisitor {
 
   @Override
   public void visitCollection(Collection<?> collection) {
-    writeRawIterable(collection);
+    writeRawIterable(nonEmptyElements(collection));
   }
 
   @Override
   public void visitArray(Object[] array) {
-    writeRawArray(array);
+    writeRawIterable(nonEmptyElements(List.of(array)));
   }
 
   @Override
@@ -174,7 +175,7 @@ public final class JsonWriter extends OutputVisitor {
   private void writeJsonObject(OutputNode node) {
     write('{');
     boolean first = true;
-    for (Map.Entry<String, Object> entry : node.entries().entrySet()) {
+    for (Map.Entry<String, Object> entry : nonEmptyEntries(node).entrySet()) {
       if (!first) {
         write(',');
       }
@@ -187,19 +188,6 @@ public final class JsonWriter extends OutputVisitor {
   }
 
   private void writeRawIterable(Iterable<?> items) {
-    write('[');
-    boolean first = true;
-    for (Object item : items) {
-      if (!first) {
-        write(',');
-      }
-      visitField(null, item);
-      first = false;
-    }
-    write(']');
-  }
-
-  private void writeRawArray(Object[] items) {
     write('[');
     boolean first = true;
     for (Object item : items) {
