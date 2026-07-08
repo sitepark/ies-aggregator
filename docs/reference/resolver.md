@@ -26,27 +26,54 @@ aggregation code.
 - **Type-safe reading via `ResolvedValue`:** Values are returned via `value(key)` as a `ResolvedValue`
   and can be converted in a typed manner (`asText`, `asEnum`, `asInt`, …).
 - **Null-safe:** Even for missing keys, an empty (but valid) resolver or an
-  empty `ResolvedValue` is returned (`Resolver.EMPTY`).
+  empty `ResolvedValue` is returned (`Resolver.empty()`).
+- **Scope-aware / navigable:** Following a *link* via `resolve(key)` crosses a scope boundary into
+  the linked object. `root()` returns to the top of the current scope, `globalRoot()` to the top of
+  the outermost scope, and `path()` (a [`ResolverPath`](#navigation-and-scopes)) records the full,
+  step-by-step navigation history across every scope boundary crossed.
 
 ## Interface
 
 ```java
 public interface Resolver {
 
-    Resolver EMPTY = new EmptyResolver();
+    // Null-object factories
+    static Resolver empty();                   // shared, self-rooted empty resolver
+    static Resolver empty(ResolverPath path);  // empty resolver keeping the surrounding path
 
     boolean isEmpty();
 
-    Resolver resolve(String key);              // sub-resolver
+    Resolver resolve(String key);              // sub-resolver (may cross a link/scope boundary)
 
     List<Resolver> resolveList(String key);    // list of sub-resolvers
 
     ResolvedValue value(String key);           // typable value
 
+    ResolverPath path();                       // full navigation path (global root → here)
+
+    default Resolver root();                   // root of the current scope
+    default Resolver globalRoot();             // root of the outermost scope
+
     // Returns the first non-empty value from the given keys
     default ResolvedValue coalesce(String... keys);
 }
 ```
+
+## Navigation and scopes
+
+A resolver is a node in a tree of source data. Chaining `resolve(key)` navigates deeper; a field
+that references another CMS object is a **link**, and resolving it crosses a *scope boundary* — the
+returned resolver is the root of the linked object, and subsequent navigation is relative to it.
+
+- `root()` returns to the top of the **current** scope (the most recently entered linked object).
+- `globalRoot()` returns to the top of the **outermost** scope (the object the call chain started
+  with), regardless of how many link boundaries were crossed.
+- `path()` returns a `ResolverPath`: the ordered segments from the global root to this resolver. It
+  never resets — it keeps growing across every scope boundary — and is the underlying source for
+  both `root()` and `globalRoot()`.
+
+An empty resolver from a failed lookup still carries the surrounding `path()`, so callers can
+navigate back up the tree even after a missing key (`Resolver.empty(path)`).
 
 ## Example
 
@@ -70,6 +97,11 @@ public void example() {
     // Fallback across multiple keys – the first non-empty value wins
     Text title = resolver.coalesce("sp_title", "sp_headline").asText();
 
+    // Link navigation and returning to a scope root
+    Resolver author = resolver.resolve("author");        // crosses a link boundary into Author
+    Text city = author.resolve("address").root()         // → root of the Author scope
+                      .value("city").asText();
+    Resolver top = author.globalRoot();                  // → back to the original object
 }
 ```
 

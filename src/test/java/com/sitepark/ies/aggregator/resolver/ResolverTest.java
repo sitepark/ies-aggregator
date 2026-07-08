@@ -18,6 +18,11 @@ class ResolverTest {
       }
 
       @Override
+      public ResolverPath path() {
+        return ResolverPath.of(this);
+      }
+
+      @Override
       public List<Resolver> resolveList(String key) {
         return List.of();
       }

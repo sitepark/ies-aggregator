@@ -12,7 +12,7 @@ public interface RootResolverFactory {
    * Creates a new {@link Resolver} for the given object type.
    *
    * @param id of the article to aggregate the resource for
-   * @return a fresh ResolverContext instance
+   * @return a fresh {@link Resolver} instance, rooted via {@link ResolverPath#createRoot}
    */
   Resolver create(int id);
 }
