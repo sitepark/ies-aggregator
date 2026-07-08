@@ -29,6 +29,10 @@ public sealed interface Uri extends Emptiable permits PlainUri, TranslatableUri 
     return EMPTY;
   }
 
+  PlainUri toPlainUri();
+
+  Uri translatable();
+
   /**
    * Creates a non-translatable, verbatim {@link PlainUri} wrapping the given {@link URL}.
    *

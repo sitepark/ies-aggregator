@@ -32,6 +32,16 @@ public final class TranslatableText implements Text {
     return TranslatableText.of(sourceText, Format.TEXT);
   }
 
+  @Override
+  public PlainText toPlainText() {
+    return PlainText.of(this.sourceText);
+  }
+
+  @Override
+  public Text translatable() {
+    return this;
+  }
+
   /**
    * Creates a translatable text with the given format.
    *

@@ -101,3 +101,7 @@ method `translatable()`:
 TranslatableText label = source.resolve("field").value("title").asText().translatable();
 TranslatableUri link = Uri.of("https://example.com/foo/bar").translatable();
 ```
+
+Conversely, `toPlainText()` / `toPlainUri()` return the non-translatable representation of any
+`Text` / `Uri` — for a `PlainText`/`PlainUri` they return the instance itself, for a
+`TranslatableText`/`TranslatableUri` the underlying source value.

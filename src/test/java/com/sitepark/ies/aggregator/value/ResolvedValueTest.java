@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 class ResolvedValueTest {
@@ -447,7 +448,7 @@ class ResolvedValueTest {
   private static final StructuredValueParser FAILING_PARSER =
       new StructuredValueParser() {
         @Override
-        public <T> T parse(String raw, Class<T> type) {
+        public <T> T parse(@NonNull String raw, @NonNull Class<T> type) {
           throw new AssertionError("parser should not be invoked");
         }
       };
@@ -456,7 +457,7 @@ class ResolvedValueTest {
   private static final StructuredValueParser FIXED_MAP_PARSER =
       new StructuredValueParser() {
         @Override
-        public <T> T parse(String raw, Class<T> type) {
+        public <T> T parse(@NonNull String raw, @NonNull Class<T> type) {
           return type.cast(Map.of("foo", "bar"));
         }
       };
@@ -464,28 +465,28 @@ class ResolvedValueTest {
   @Test
   void asCastsAlreadyAssignablePayloadWithoutParsing() {
     Map<String, Object> payload = Map.of("a", 1);
-    assertThat(ResolvedValue.of(payload).as(Map.class, FAILING_PARSER))
+    assertThat(ResolvedValue.of(payload).as(Map.class, FAILING_PARSER, Map.of()))
         .as("as() should return an already-assignable payload as-is, without invoking the parser")
         .isSameAs(payload);
   }
 
   @Test
   void asParsesStringPayloadViaParser() {
-    assertThat(ResolvedValue.of("{\"foo\":\"bar\"}").as(Map.class, FIXED_MAP_PARSER))
+    assertThat(ResolvedValue.of("{\"foo\":\"bar\"}").as(Map.class, FIXED_MAP_PARSER, Map.of()))
         .as("as() should deserialize a String payload through the parser")
         .isEqualTo(Map.of("foo", "bar"));
   }
 
   @Test
   void asOnEmptyThrows() {
-    assertThatThrownBy(() -> ResolvedValue.empty().as(Map.class, FIXED_MAP_PARSER))
+    assertThat(ResolvedValue.empty().as(Map.class, FIXED_MAP_PARSER, Map.of()))
         .as("as() should reject an empty value")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isEqualTo(Map.of());
   }
 
   @Test
   void asRejectsPayloadThatIsNeitherAssignableNorString() {
-    assertThatThrownBy(() -> ResolvedValue.of(123).as(Map.class, FIXED_MAP_PARSER))
+    assertThatThrownBy(() -> ResolvedValue.of(123).as(Map.class, FIXED_MAP_PARSER, Map.of()))
         .as("as() should reject a payload that is neither assignable to the type nor a String")
         .isInstanceOf(IllegalArgumentException.class);
   }

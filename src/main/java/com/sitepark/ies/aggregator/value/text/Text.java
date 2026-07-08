@@ -37,4 +37,8 @@ public sealed interface Text extends Emptiable permits PlainText, TranslatableTe
   static PlainText empty() {
     return EMPTY;
   }
+
+  PlainText toPlainText();
+
+  Text translatable();
 }

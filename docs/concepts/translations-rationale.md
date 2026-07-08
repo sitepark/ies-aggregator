@@ -36,8 +36,10 @@ equality semantics (value vs. identity). This distinction is recorded in the
 It would have been natural to move the translation types out into a dedicated feature package (`translation`).
 **A deliberate decision was made against this** – for two reasons:
 
-1. **The fluent API inevitably couples.** `Text.translatable()` returns a `TranslatableText`,
-   `Uri.translatable()` a `TranslatableUri`. This means `Text`/`Uri` (in the `value` package) must know these
+1. **The fluent API inevitably couples.** `PlainText.translatable()` returns a `TranslatableText`,
+   `PlainUri.translatable()` a `TranslatableUri` (the sealed `Text`/`Uri` interfaces themselves declare
+   `Text translatable()` / `Uri translatable()`, which the `Translatable*` types return as `this`).
+   Either way, `Text`/`Uri` (in the `value` package) must know these
    types. If one moved them into a `translation` package, `value` would have to access it –
    while `TranslatableUri` conversely holds a `Uri`. Result: a **package cycle**
    `value ↔ translation`.

@@ -268,17 +268,14 @@ public final class ResolvedValue implements Emptiable {
       return defaultValue;
     }
     Object value = singleItemIfList();
-    if (value instanceof PlainText text) {
-      return text;
-    }
-    if (value instanceof TranslatableText translatableText) {
-      return translatableText.plain();
-    }
-    if (value instanceof String stringValue) {
-      return PlainText.of(stringValue);
-    }
-    throw new IllegalArgumentException(
-        "Value is not an string or Text ( " + value.getClass().getName() + ")");
+    return switch (value) {
+      case PlainText text -> text;
+      case TranslatableText translatableText -> translatableText.plain();
+      case String stringValue -> PlainText.of(stringValue);
+      case null, default ->
+          throw new IllegalArgumentException(
+              "Value is not an string or Text ( " + value.getClass().getName() + ")");
+    };
   }
 
   /**
@@ -407,12 +404,13 @@ public final class ResolvedValue implements Emptiable {
    *
    * @param <T> the target type
    * @param type the target type
+   * @param defaultValue the value to return when empty
    * @param parser the parser used to deserialize a string value
    * @throws IllegalArgumentException if empty, or the value can neither be cast nor parsed
    */
-  public <T> T as(Class<T> type, StructuredValueParser parser) {
+  public <T> T as(Class<T> type, StructuredValueParser parser, T defaultValue) {
     if (this.isEmpty()) {
-      throw new IllegalArgumentException(VALUE_NOT_SET);
+      return defaultValue;
     }
     Object value = singleItemIfList();
     if (type.isInstance(value)) {
@@ -435,7 +433,7 @@ public final class ResolvedValue implements Emptiable {
    */
   @SuppressWarnings("unchecked")
   public Map<String, Object> asMap(StructuredValueParser parser) {
-    return as(Map.class, parser);
+    return as(Map.class, parser, Map.of());
   }
 
   public ResolvedValue orElse(Supplier<ResolvedValue> other) {

@@ -20,6 +20,11 @@ public final class PlainUri implements Uri {
     this.originUri = originUri;
   }
 
+  @Override
+  public PlainUri toPlainUri() {
+    return this;
+  }
+
   /**
    * Creates a {@code PlainUri} wrapping the given {@link URL} using {@link URL#toURI()}.
    *
@@ -198,6 +203,7 @@ public final class PlainUri implements Uri {
     }
   }
 
+  @Override
   public TranslatableUri translatable() {
     return TranslatableUri.of(this);
   }

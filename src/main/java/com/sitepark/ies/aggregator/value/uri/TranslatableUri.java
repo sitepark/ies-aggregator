@@ -45,6 +45,16 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
     this.uri = uri;
   }
 
+  @Override
+  public PlainUri toPlainUri() {
+    return this.uri;
+  }
+
+  @Override
+  public Uri translatable() {
+    return this;
+  }
+
   /**
    * Creates a {@code TranslatableUri} from the given {@link URI}.
    *

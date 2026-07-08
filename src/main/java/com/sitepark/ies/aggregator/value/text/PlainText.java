@@ -39,7 +39,13 @@ public final class PlainText implements Text {
     return new PlainText(text);
   }
 
+  @Override
+  public PlainText toPlainText() {
+    return this;
+  }
+
   /** Returns a new {@link TranslatableText} with {@link TranslatableText.Format#TEXT} format. */
+  @Override
   public TranslatableText translatable() {
     return TranslatableText.of(this.text);
   }

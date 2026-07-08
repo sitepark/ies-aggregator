@@ -5,8 +5,8 @@ package com.sitepark.ies.aggregator.value;
  *
  * <p>The aggregator module ships no JSON deserializer of its own. Concrete implementations (e.g.
  * backed by Jackson) live as adapters outside this module and are passed to the typed {@code
- * ResolvedValue} accessors that need them ({@link ResolvedValue#as(Class, StructuredValueParser)},
- * {@link ResolvedValue#asMap(StructuredValueParser)}).
+ * ResolvedValue} accessors that need them ({@link ResolvedValue#as(Class, StructuredValueParser,
+ * Object)}, {@link ResolvedValue#asMap(StructuredValueParser)}).
  */
 @FunctionalInterface
 public interface StructuredValueParser {
