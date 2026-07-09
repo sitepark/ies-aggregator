@@ -5,7 +5,9 @@ import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.UriTarget;
 import java.util.Optional;
 
-/** Resolves the URI under which a {@link UriTarget} is accessible through a given {@link Channel}. */
+/**
+ * Resolves the URI under which a {@link UriTarget} is accessible through a given {@link Channel}.
+ */
 public interface ChannelUriProvider {
 
   /**
@@ -16,4 +18,12 @@ public interface ChannelUriProvider {
    * @return the resolved URI, or empty if no URI can be determined
    */
   Optional<PlainUri> resolveUri(Channel channel, UriTarget target);
+
+  /**
+   * Resolves the URI for the given target within the current channel.
+   *
+   * @param target what to resolve the URI for (e.g. a standalone object or an article media binary)
+   * @return the resolved URI, or empty if no URI can be determined
+   */
+  Optional<PlainUri> resolveUri(UriTarget target);
 }
