@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.output.collect;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
@@ -62,7 +63,7 @@ public final class TranslatableTextCollector extends OutputVisitor {
   }
 
   @Override
-  public void visitTranslatableSplitText(TranslatableSplitText value) {
+  public void visitTranslatableContainer(TranslatableContainer value) {
     this.collected.addAll(value.getTranslatableTextList());
   }
 }

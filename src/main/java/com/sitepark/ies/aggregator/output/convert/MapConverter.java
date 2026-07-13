@@ -8,6 +8,7 @@ import com.sitepark.ies.aggregator.output.OutputVisitor;
 import com.sitepark.ies.aggregator.output.format.RawPhpCode;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.PlainText;
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
@@ -207,7 +208,7 @@ public final class MapConverter extends OutputVisitor {
   }
 
   @Override
-  public void visitTranslatableSplitText(TranslatableSplitText value) {
+  public void visitTranslatableContainer(TranslatableContainer value) {
     putValue(value);
   }
 

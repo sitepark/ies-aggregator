@@ -63,6 +63,7 @@ public class TranslatableSplitText implements TranslatableContainer {
    *     language)
    * @return the rendered string
    */
+  @Override
   public String render(Translations translations) {
     StringBuilder sb = new StringBuilder();
     for (Object o : this.splittedText) {

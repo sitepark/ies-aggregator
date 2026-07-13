@@ -4,6 +4,7 @@ import com.sitepark.ies.aggregator.output.format.RawPhpCode;
 import com.sitepark.ies.aggregator.value.Emptiable;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.PlainText;
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.text.Translations;
@@ -275,7 +276,7 @@ public abstract class OutputVisitor {
       case PlainText t -> visitPlainText(t);
       case TranslatableUri u -> visitTranslatableUri(u);
       case PlainUri u -> visitPlainUri(u);
-      case TranslatableSplitText s -> visitTranslatableSplitText(s);
+      case TranslatableContainer c -> visitTranslatableContainer(c);
       case ResolvedValue r -> visitResolvedValue(r);
       case String s -> visitString(s);
       case Boolean b -> visitBoolean(b);
@@ -370,11 +371,16 @@ public abstract class OutputVisitor {
   }
 
   /**
-   * Called when the current value is a {@link TranslatableSplitText}. Default: renders it with the
-   * {@link #translations() translation table} and delegates to {@link #visitString}.
+   * Called when the current value is a {@link TranslatableContainer} (e.g. {@link
+   * TranslatableSplitText} or a domain-specific translatable value). Default: renders it with the
+   * {@link #translations() translation table} and re-dispatches the result through {@link
+   * #visitField}, so a container may render either a scalar (e.g. a {@code String}) or a structured
+   * output value.
+   *
+   * @param value the translatable container to render
    */
-  public void visitTranslatableSplitText(TranslatableSplitText value) {
-    visitString(value.render(this.translations));
+  public void visitTranslatableContainer(TranslatableContainer value) {
+    visitField(null, value.render(this.translations));
   }
 
   /**

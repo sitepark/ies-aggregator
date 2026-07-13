@@ -175,6 +175,7 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
    * @param translations the translation table (use {@link Translations#SOURCE} for the source
    *     language)
    */
+  @Override
   public String render(Translations translations) {
     return this.renderUriFor(translations).toString();
   }
