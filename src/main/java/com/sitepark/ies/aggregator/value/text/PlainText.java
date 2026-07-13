@@ -10,6 +10,10 @@ import java.util.Objects;
  * TranslatableText} via {@link #translatable()}.
  */
 public final class PlainText implements Text {
+
+  /** The empty text ({@code ""}). */
+  public static final PlainText EMPTY = new PlainText("");
+
   private final String text;
 
   /**

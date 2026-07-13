@@ -14,6 +14,9 @@ import java.net.URL;
  */
 public final class PlainUri implements Uri {
 
+  /** The empty URI ({@code ""}). */
+  public static final PlainUri EMPTY = new PlainUri(URI.create(""));
+
   private final URI originUri;
 
   PlainUri(URI originUri) {

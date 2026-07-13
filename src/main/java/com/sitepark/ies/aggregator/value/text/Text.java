@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.value.text;
 
 import com.sitepark.ies.aggregator.value.Emptiable;
+import java.util.function.Supplier;
 
 /**
  * A text value an aggregator writes into the output tree.
@@ -18,9 +19,6 @@ import com.sitepark.ies.aggregator.value.Emptiable;
  */
 public sealed interface Text extends Emptiable permits PlainText, TranslatableText {
 
-  /** Represents the empty text ({@code ""}). */
-  PlainText EMPTY = new PlainText("");
-
   /**
    * Creates a non-translatable, verbatim {@link PlainText}.
    *
@@ -35,10 +33,33 @@ public sealed interface Text extends Emptiable permits PlainText, TranslatableTe
   }
 
   static PlainText empty() {
-    return EMPTY;
+    return PlainText.EMPTY;
   }
 
   PlainText toPlainText();
 
   Text translatable();
+
+  /**
+   * Returns this text when it is non-empty, otherwise {@code other}.
+   *
+   * @param other the replacement text used when this text is empty; must not be {@code null}
+   * @return this text when non-empty, otherwise {@code other}
+   */
+  default Text orElse(Text other) {
+    return this.isEmpty() ? other : this;
+  }
+
+  /**
+   * Returns this text when it is non-empty, otherwise the text produced by {@code fallback}.
+   *
+   * <p>The fallback is only evaluated when this text is empty, so an expensive fallback (e.g.
+   * assembling a headline from a linked object) is skipped whenever a value is already present.
+   *
+   * @param fallback supplies the replacement text when this text is empty; must not be {@code null}
+   * @return this text when non-empty, otherwise {@code fallback.get()}
+   */
+  default Text orElse(Supplier<? extends Text> fallback) {
+    return this.isEmpty() ? fallback.get() : this;
+  }
 }
