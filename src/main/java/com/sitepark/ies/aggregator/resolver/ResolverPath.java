@@ -22,10 +22,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>A resolver's own path ends with a segment referring to that very resolver — a chicken-and-egg
  * situation, because the resolver needs its path at construction time. This is resolved with a
- * {@link Factory}: {@link #descend(String, Factory)}, {@link #enterScope(String, Factory)} and
- * {@link #createRoot(Factory)} build the (extended) path first, hand it to the factory to create
- * the resolver, and then bind the created resolver back into the path via a set-once holder. The
- * factory therefore receives a fully-built path and returns the resolver.
+ * {@link Factory}: {@link #descend(String, Factory)}, {@link #enterScope(String, Factory)}, {@link
+ * #enterRoot(Factory)} and {@link #createRoot(Factory)} build the (extended) path first, hand it to
+ * the factory to create the resolver, and then bind the created resolver back into the path via a
+ * set-once holder. The factory therefore receives a fully-built path and returns the resolver.
  *
  * <p><strong>Contract:</strong> a factory must only <em>store</em> the supplied path; it must not
  * query {@link #root()}, {@link #globalRoot()} or the segment resolvers while creating the resolver,
@@ -37,6 +37,8 @@ import org.jspecify.annotations.Nullable;
  * {@link Object#toString()} on a resolver (which could recurse back into its path).
  */
 public final class ResolverPath {
+
+  private static final String FACTORY_NOT_NULL = "factory must not be null";
 
   private final Supplier<Resolver> globalRoot;
 
@@ -95,7 +97,7 @@ public final class ResolverPath {
    * @return the created root resolver
    */
   public static Resolver createRoot(Factory factory) {
-    Objects.requireNonNull(factory, "factory must not be null");
+    Objects.requireNonNull(factory, FACTORY_NOT_NULL);
     Latch self = new Latch();
     ResolverPath path = new ResolverPath(self, self, List.of(new Segment(null, self)));
     return bind(self, factory, path);
@@ -111,7 +113,7 @@ public final class ResolverPath {
    * @return the created child resolver
    */
   public Resolver descend(@Nullable String key, Factory factory) {
-    Objects.requireNonNull(factory, "factory must not be null");
+    Objects.requireNonNull(factory, FACTORY_NOT_NULL);
     Latch self = new Latch();
     ResolverPath path = new ResolverPath(this.globalRoot, this.root, append(key, self));
     return bind(self, factory, path);
@@ -127,9 +129,33 @@ public final class ResolverPath {
    * @return the created child resolver
    */
   public Resolver enterScope(@Nullable String key, Factory factory) {
-    Objects.requireNonNull(factory, "factory must not be null");
+    Objects.requireNonNull(factory, FACTORY_NOT_NULL);
     Latch self = new Latch();
     ResolverPath path = new ResolverPath(this.globalRoot, self, append(key, self));
+    return bind(self, factory, path);
+  }
+
+  /**
+   * Creates a child resolver that starts a fresh root scope; the created child becomes both the new
+   * {@link #root()} and the new {@link #globalRoot()}, while the path keeps growing — the child is
+   * appended as a new segment to this path.
+   *
+   * <p>Unlike {@link #createRoot(Factory)}, which starts a brand-new, single-segment path, this
+   * method preserves the navigation history: the new root remains part of {@link #segments()}.
+   * Unlike {@link #enterScope(String, Factory)}, which inherits {@link #globalRoot()} from this path,
+   * it also resets {@link #globalRoot()} to the created child.
+   *
+   * <p>The appended segment carries no key ({@code null}), consistent with the root segment produced
+   * by {@link #of(Resolver)} and {@link #createRoot(Factory)}: a new root is not reached under a
+   * field name.
+   *
+   * @param factory creates the child resolver from its (extended) path
+   * @return the created child resolver
+   */
+  public Resolver enterRoot(Factory factory) {
+    Objects.requireNonNull(factory, FACTORY_NOT_NULL);
+    Latch self = new Latch();
+    ResolverPath path = new ResolverPath(self, self, append(null, self));
     return bind(self, factory, path);
   }
 

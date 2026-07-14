@@ -72,6 +72,11 @@ returned resolver is the root of the linked object, and subsequent navigation is
   never resets — it keeps growing across every scope boundary — and is the underlying source for
   both `root()` and `globalRoot()`.
 
+A resolver may also start a **fresh root**: crossing into a standalone, top-level object that
+becomes the new `globalRoot()` (not just the current-scope `root()`, as a plain link does), while
+`path()` keeps growing so the navigation history remains intact. This is the `enterRoot` case on
+`ResolverPath`, as opposed to the `enterScope` link boundary above.
+
 An empty resolver from a failed lookup still carries the surrounding `path()`, so callers can
 navigate back up the tree even after a missing key (`Resolver.empty(path)`).
 

@@ -84,6 +84,34 @@ class ResolverPathTest {
   }
 
   @Test
+  void enterRootMakesChildBothRootAndGlobalRoot() {
+    Resolver root = mock();
+    Resolver newRoot = mock();
+    ResolverPath childPath = enterRoot(ResolverPath.of(root), newRoot);
+
+    assertThat(childPath.root())
+        .as("enterRoot() should make the created child the new scope root")
+        .isSameAs(newRoot);
+    assertThat(childPath.globalRoot())
+        .as("enterRoot() should also make the created child the new global root")
+        .isSameAs(newRoot);
+  }
+
+  @Test
+  void enterRootAppendsSegmentWithNullKey() {
+    Resolver root = mock();
+    Resolver newRoot = mock();
+    ResolverPath childPath = enterRoot(ResolverPath.of(root), newRoot);
+
+    assertThat(childPath.size())
+        .as("enterRoot() should keep the navigation history by appending a segment")
+        .isEqualTo(2);
+    assertThat(childPath.current())
+        .as("The appended segment should carry the new root under a null key")
+        .isEqualTo(new Segment(null, newRoot));
+  }
+
+  @Test
   void pathGrowsAcrossMultipleScopesWithStableGlobalRoot() {
     Resolver root = mock();
     Resolver author = mock();
@@ -166,6 +194,16 @@ class ResolverPathTest {
     ResolverPath[] captured = new ResolverPath[1];
     parent.enterScope(
         key,
+        path -> {
+          captured[0] = path;
+          return child;
+        });
+    return captured[0];
+  }
+
+  private static ResolverPath enterRoot(ResolverPath parent, Resolver child) {
+    ResolverPath[] captured = new ResolverPath[1];
+    parent.enterRoot(
         path -> {
           captured[0] = path;
           return child;

@@ -84,8 +84,9 @@ public interface Resolver {
    * <p>Unlike {@link #root()} and {@link #globalRoot()}, which only expose the current and outermost
    * scope roots, the path records every step taken to reach this resolver and never resets — it
    * grows across every link/scope boundary crossed. Implementations extend their parent's path by
-   * one segment when they are created — see {@link ResolverPath#descend(String, ResolverPath.Factory)}
-   * and {@link ResolverPath#enterScope(String, ResolverPath.Factory)}.
+   * one segment when they are created — see {@link ResolverPath#descend(String, ResolverPath.Factory)},
+   * {@link ResolverPath#enterScope(String, ResolverPath.Factory)} and {@link
+   * ResolverPath#enterRoot(ResolverPath.Factory)}.
    *
    * @return this resolver's path; never {@code null}
    */
