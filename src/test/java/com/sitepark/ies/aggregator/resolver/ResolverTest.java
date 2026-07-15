@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.resolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import java.util.List;
@@ -37,6 +38,57 @@ class ResolverTest {
         return values.getOrDefault(key, ResolvedValue.empty());
       }
     };
+  }
+
+  /** Minimal {@link Resolver} whose {@link #resolve(String)} always yields the given target. */
+  private static Resolver resolverResolvingTo(Resolver target) {
+    return new Resolver() {
+      @Override
+      public boolean isEmpty() {
+        return false;
+      }
+
+      @Override
+      public ResolverPath path() {
+        return ResolverPath.of(this);
+      }
+
+      @Override
+      public List<Resolver> resolveList(String key) {
+        return List.of();
+      }
+
+      @Override
+      public Resolver resolve(String key) {
+        return target;
+      }
+
+      @Override
+      public ResolvedValue value(String key) {
+        return ResolvedValue.empty();
+      }
+    };
+  }
+
+  @Test
+  void resolveLinkReturnsTargetWhenItIsAnEntity() {
+    EntityResolver entity = mock(EntityResolver.class);
+    Resolver resolver = resolverResolvingTo(entity);
+
+    assertThat(resolver.resolveLink("link"))
+        .as("resolveLink() should return the resolved target when it is an entity")
+        .isSameAs(entity);
+  }
+
+  @Test
+  void resolveLinkReturnsEmptyEntityWhenTargetIsNotAnEntity() {
+    Resolver resolver = resolverResolvingTo(Resolver.empty());
+
+    EntityResolver linked = resolver.resolveLink("link");
+
+    assertThat(linked.isEmpty())
+        .as("resolveLink() should return an empty entity when the link cannot be followed")
+        .isTrue();
   }
 
   @Test

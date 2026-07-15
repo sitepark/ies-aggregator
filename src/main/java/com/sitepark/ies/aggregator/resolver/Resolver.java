@@ -169,6 +169,26 @@ public interface Resolver {
   Resolver resolve(String key);
 
   /**
+   * Follows a link field and returns the linked object as an {@link EntityResolver}.
+   *
+   * <p>Unlike {@link #resolve(String)}, which returns a generic {@link Resolver}, this method is
+   * meant for fields that <em>link</em> to another CMS object: the target of such a link is always
+   * an entity — it carries an {@link EntityResolver#entityId() id}, {@link
+   * EntityResolver#entityType() type} and {@link EntityResolver#entityName() name}. The returned
+   * resolver is never {@code null}; when the link is absent or cannot be followed, an empty {@link
+   * EntityResolver} is returned (test with {@link #isEmpty()}), so callers never need to cast or
+   * null-check.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the linked entity, or an empty {@link EntityResolver} if the link is absent
+   * @see EntityResolver#empty(ResolverPath)
+   */
+  default EntityResolver resolveLink(String key) {
+    Resolver target = resolve(key);
+    return target instanceof EntityResolver entity ? entity : EntityResolver.empty(target.path());
+  }
+
+  /**
    * Returns the value at the given key as a {@link ResolvedValue}.
    *
    * <p>If the key is absent, or the stored data cannot be represented as a value (e.g. it is a
