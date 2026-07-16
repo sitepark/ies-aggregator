@@ -153,10 +153,11 @@ set when no mapper is passed).
 
 ## Output-mapping annotations
 
-Three Jackson-free annotations in `com.sitepark.ies.aggregator.output` let value classes control
+Four Jackson-free annotations in `com.sitepark.ies.aggregator.output` let value classes control
 their output — **without depending on `com.fasterxml.jackson`**. `@OutputProperty` and
 `@OutputUnwrapped` shape the property map and are honored by the `DomainObjectMapper` (a Jackson-backed
-one via a custom `AnnotationIntrospector`, a hand-written one directly). `@OutputKeepIfEmpty` steers
+one via a custom `AnnotationIntrospector`, a hand-written one directly). `@OutputType` adds a
+synthetic type-discriminator property, honored by the mapper directly. `@OutputKeepIfEmpty` steers
 the visitor's empty-dropping: the type-level form is honored by the visitor itself, the property-level
 form is carried to it by the mapper (see below).
 
@@ -164,6 +165,7 @@ form is carried to it by the mapper (see below).
 |----------------------|-----------------------------------------------------------------|-------------------------------------|
 | `@OutputProperty`    | Rename the output key (when it differs from the declared name)  | component / field / accessor        |
 | `@OutputUnwrapped`   | Inline a property's own properties flat as siblings             | component / field / accessor        |
+| `@OutputType`        | Emit a polymorphic type discriminator as a synthetic property   | type                                |
 | `@OutputKeepIfEmpty` | Keep an otherwise-dropped empty property                        | type / component / field / accessor |
 
 They apply only while a `DomainObjectMapper` unwraps a domain object into its property map; values an
@@ -223,6 +225,28 @@ Notes:
 - **Primary use:** extensible output models — a value type exposes an `@OutputUnwrapped` slot so
   projects can add top-level fields without subclassing final records. See
   [Extending Assemblers](../how-to/assembler-customization.md).
+
+### Type discriminators: `@OutputType`
+
+Value types that share an output shape but must be told apart by consumers — the variants of a
+rich-text entity, the flavours of a link — carry a constant discriminator such as
+`"html.richText.internalLink"`. Rather than modelling it as a record component that every
+constructor threads through, declare it on the type with `@OutputType`
+(`com.sitepark.ies.aggregator.output.OutputType`):
+
+```java
+@OutputType("html.richText.internalLink")
+public record InternalLink(int start, int end, Link link, RichText inner) implements Entity {}
+```
+
+The `DomainObjectMapper` injects the discriminator as the **first** entry of the property map, under
+the key given by `key()` (default `"modelType"`) with the value of `value()` — so the example above
+renders as `{"modelType": "html.richText.internalLink", "start": …, "end": …, …}`.
+
+Unlike `@OutputProperty`/`@OutputUnwrapped`, this is **not** an `AnnotationIntrospector` concern: the
+discriminator is a synthetic property with no backing record component or accessor. A Jackson-backed
+`JacksonDomainObjectMapper` therefore honors it by reading the annotation off the value's runtime
+class directly (like the type-level `@OutputKeepIfEmpty`), not via a Jackson introspection hook.
 
 ### Dropping empty values: `@OutputKeepIfEmpty`
 
