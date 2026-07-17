@@ -14,6 +14,12 @@ import java.lang.annotation.Target;
  * leaves no dangling key. The optional {@link #prefix()} / {@link #suffix()} are applied to the
  * inlined keys.
  *
+ * <p>The value may also be a {@link java.util.Map} — whose entries are merged directly — or an
+ * {@link java.lang.Iterable} (e.g. a {@code List}), in which case each element is inlined flat in
+ * turn, recursively. A list slot therefore lets a value type carry <em>any number</em> of
+ * independent extension objects that all render as siblings; an empty list contributes nothing, and
+ * on a key collision the element inlined last wins.
+ *
  * <p>This is the Jackson-free counterpart to {@code @JsonUnwrapped}: it lets value classes express
  * inlining without depending on {@code com.fasterxml.jackson}. A Jackson-backed {@link
  * DomainObjectMapper} adapter can honor it via a custom {@code AnnotationIntrospector}.

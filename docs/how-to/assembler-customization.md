@@ -371,11 +371,12 @@ produces are **final Java records** — a customer override can return a record,
 field to an existing record type (records cannot be subclassed).
 
 To add project-specific fields **without changing the core record**, a value type exposes an
-extension slot annotated with `@OutputUnwrapped`. The `DomainObjectMapper` inlines its
-sub-properties **flat, at the top level** of the model (see
-[Visitor → Flattening properties](../reference/visitor.md)). The slot carries a typed object, so no
-`Map` is needed at the call site. Because the marker sits on the declaration, a `null` slot simply
-contributes nothing — no dangling `extension` key is rendered.
+extension slot annotated with `@OutputUnwrapped`. The slot is a `List<Object>`, and the
+`DomainObjectMapper` inlines **every element's** sub-properties **flat, at the top level** of the
+model (see [Visitor → Flattening properties](../reference/visitor.md)). Because it is a list, several
+independent modules can each append their own extension and have all of them rendered side by side;
+on a key collision the extension added last wins. An empty list contributes nothing — no dangling
+`extensions` key is rendered.
 
 ### Convention: an `Extensible` base interface
 
@@ -384,34 +385,53 @@ uniformly:
 
 ```java
 public interface Extensible {
-    Object extension();
+    List<Object> extensions();
 }
 ```
 
-A value record adds the slot as a component annotated `@OutputUnwrapped` — no key annotation,
-because the slot's own key is dropped during inlining and the component name is never rendered:
+A value record adds the slot as a component annotated `@OutputUnwrapped`, defensively copies the list
+in a compact constructor, and offers an `extend(Object)` wither returning an immutable copy with one
+more extension **appended** — no key annotation, because the slot's own key is dropped during
+inlining and the component name is never rendered:
 
 ```java
+@OutputType("content.linkList")
 public record LinkList(
-        String modelType,
         Text headline,
         String linkBoxType,
         List<Link> items,
-        @OutputUnwrapped Object extension)
+        @OutputUnwrapped List<Object> extensions)
         implements Extensible {
+
+    public LinkList {
+        extensions = List.copyOf(extensions);
+    }
+
+    /** Creates a link list without any customer extension. */
+    public LinkList(Text headline, String linkBoxType, List<Link> items) {
+        this(headline, linkBoxType, items, List.of());
+    }
+
+    /** Returns a copy with the given customer extension appended. */
+    public LinkList extend(Object extension) {
+        List<Object> combined = new ArrayList<>(this.extensions);
+        combined.add(extension);
+        return new LinkList(headline, linkBoxType, items, combined);
+    }
 }
 ```
 
-The built-in assembler passes `null` (contributes nothing — no dangling key):
+The built-in assembler uses the convenience constructor, so it starts with an empty extension list
+(contributes nothing — no dangling key):
 
 ```java
-return Optional.of(new LinkList("content.linkList", headline, boxType, items, null));
+return Optional.of(new LinkList(headline, boxType, items));
 ```
 
 ### Adding fields in a customer project
 
 Combine with Pattern 2: register an override under the same key with a higher priority, reuse the
-built-in implementation via delegation, and place a **typed** extension object into the slot:
+built-in implementation via delegation, and **append** a typed extension object with `extend(...)`:
 
 ```java
 public record LinkListBadge(String label, int count) {
@@ -430,21 +450,20 @@ public final class ProjectLinkListAssembler implements LinkListAssembler {
     @Override
     public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
         return this.delegate.assemble(source, options)
-                .map(list -> new LinkList(
-                        list.modelType(), list.headline(), list.linkBoxType(), list.items(),
-                        new LinkListBadge("new", list.items().size())));
+                .map(list -> list.extend(new LinkListBadge("new", list.items().size())));
     }
 }
 ```
 
-The model then renders with `label` and `count` as **top-level** fields next to `modelType`,
-`headline`, … instead of nested under an `extension` key.
+The model then renders with `label` and `count` as **top-level** fields next to `headline`, …
+instead of nested under an `extensions` key. Because the override *appends* instead of rebuilding the
+record, any extension a **lower**-priority assembler already attached survives — each layer adds to
+the list, and all layers are rolled out flat.
 
-> **Note:** the slot is typed `Object` here to accept any extension payload (as the removed
-> `Unwrapped` carrier did). `@OutputUnwrapped` on an `Object`/`Map` field is inlined by the
-> introspecting `JacksonDomainObjectMapper`, even though plain Jackson *serialization* only supports
-> it on concrete bean types. Projects that always use one payload type can declare that type
-> directly instead of `Object`.
+> **Note:** the slot is typed `List<Object>` so it accepts any mix of extension payloads. Each
+> element may be a record, a bean or a `Map`; `@OutputUnwrapped` on the list is inlined element-wise
+> by the introspecting `JacksonDomainObjectMapper`, even though plain Jackson *serialization* only
+> supports unwrapping on concrete bean types.
 
 ---
 

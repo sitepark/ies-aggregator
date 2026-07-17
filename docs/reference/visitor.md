@@ -199,7 +199,7 @@ property:
 ```java
 public record ContentImage(
     ImageDescription description,
-    @OutputUnwrapped Extension extension) {}   // inlined flat, no "extension" key
+    @OutputUnwrapped List<Object> extensions) {}   // each element inlined flat, no "extensions" key
 ```
 
 Flattening is **not** the visitor's job — the visitor only ever sees an already-flat property map.
@@ -218,13 +218,18 @@ Notes:
   every format visitor (`PhpArrayWriter`, `JsonWriter`, `MapConverter`, …) renders it automatically.
 - **Typed content, flat output.** The unwrapped property may be any domain object (resolved
   recursively) or a plain `Map`; its fields are rendered flat while keeping their typed values.
+- **Lists inline element-wise.** An `@OutputUnwrapped` value that is a `List` (any `Iterable`)
+  inlines *each element* flat, recursively — so an element may itself carry an `@OutputUnwrapped`
+  slot. This lets a model **accumulate any number of independent extension objects** and render all
+  of them as siblings. On a key collision the element inlined last wins. An empty list contributes
+  nothing.
 - **Prefix/suffix.** A configured `@OutputUnwrapped(prefix = …, suffix = …)` is applied to the
   inlined keys.
 - **Sibling keys.** Because the property's key is dropped, the inlined keys become siblings of the
   surrounding object's fields — the author is responsible for avoiding name collisions.
-- **Primary use:** extensible output models — a value type exposes an `@OutputUnwrapped` slot so
-  projects can add top-level fields without subclassing final records. See
-  [Extending Assemblers](../how-to/assembler-customization.md).
+- **Primary use:** extensible output models — a value type exposes an `@OutputUnwrapped List<Object>`
+  slot so several projects/modules can each append top-level fields without subclassing final
+  records. See [Extending Assemblers](../how-to/assembler-customization.md).
 
 ### Type discriminators: `@OutputType`
 
