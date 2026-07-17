@@ -99,11 +99,19 @@ public class CustomInternalLinkAssembler {
 LinkAssembler assembler = factory.create("link.internal", LinkAssembler.class);
 ```
 
-When there are multiple implementations of the same key, the implementation with the highest
-`priority` value wins - this allows project-specific libraries to replace built-in assemblers without
-changing the aggregation code.
+Two lookup modes exist:
 
-A complete example of this pattern (adding new types, overriding existing ones) can be found
+- `factory.create(key, type)` returns the **single** highest-priority implementation for a key — used
+  for genuine single-selection (e.g. picking one link *type*).
+- `factory.createChain(key, type)` returns an `AssemblerChain<T>` of **all** implementations for a
+  key, ordered by ascending `priority`. Its `fold` threads the assembled value through the chain,
+  passing each assembler's result as the `@Nullable previous` argument of the next (null for the
+  first); the built-in (`priority = 0`) produces the base value and higher-priority project
+  assemblers enrich or replace it. Two `@Assembler` attributes prune the chain: `chainRoot = true`
+  skips all lower-priority assemblers (fresh start), `chainBreak = true` skips all higher-priority
+  ones (guaranteed last).
+
+A complete example of both patterns (adding new types, chaining and pruning) can be found
 in [assembler-customization.md](../how-to/assembler-customization.md).
 
 ## Distinctions

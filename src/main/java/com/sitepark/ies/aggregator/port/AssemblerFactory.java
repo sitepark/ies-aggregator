@@ -38,4 +38,36 @@ public interface AssemblerFactory {
    *     resolved assembler is not assignable to {@code clazz}
    */
   <T> T create(String key, Class<T> clazz);
+
+  /**
+   * Creates the chain of assemblers registered for the given key, ordered for sequential execution.
+   *
+   * <p>Unlike {@link #create(String, Class)}, which selects a single winner by priority, this method
+   * returns <em>all</em> assemblers declaring the key and assignable to {@code clazz}, each as a
+   * fresh instance, ordered by ascending {@link Assembler#priority() priority}. Callers thread the
+   * assembled value through the chain: the first (lowest-priority, typically built-in) assembler
+   * produces the base value, and each following assembler receives the previous result and may
+   * enrich or replace it. Higher priority therefore means "runs later / has the last word".
+   *
+   * <p>Two {@code @Assembler} attributes prune the chain; pruned assemblers are neither executed nor
+   * instantiated:
+   *
+   * <ul>
+   *   <li>{@link Assembler#chainRoot() chainRoot} — the highest-priority root becomes the effective
+   *       start; all assemblers with a lower priority are dropped.
+   *   <li>{@link Assembler#chainBreak() chainBreak} — the lowest-priority break becomes the effective
+   *       end; all assemblers with a higher priority are dropped.
+   * </ul>
+   *
+   * <p>If a {@code chainBreak} sits below a {@code chainRoot} the resulting window is empty; the
+   * chain is then empty. An empty chain is a valid result — no exception is thrown when nothing is
+   * registered for the key.
+   *
+   * @param <T> the expected assembler type
+   * @param key the key identifying the assemblers to chain
+   * @param clazz the expected type of the assemblers; each resolved instance must be assignable to
+   *     this type
+   * @return the ordered chain of fresh assembler instances, possibly empty
+   */
+  <T> AssemblerChain<T> createChain(String key, Class<T> clazz);
 }

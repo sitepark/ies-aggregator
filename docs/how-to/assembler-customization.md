@@ -9,30 +9,45 @@ project without changes to the core code. Patterns 1 and 2 are based on `@Assemb
 | Pattern                                    | When to use                                                                                               |
 |--------------------------------------------|-----------------------------------------------------------------------------------------------------------|
 | **Pattern 1: Type-driven dispatching**     | Multiple implementations for different types; which one applies is only determined at runtime in the Resolver |
-| **Pattern 2: Direct override**             | Exactly one implementation; customer projects should be able to replace or extend it                      |
+| **Pattern 2: Assembler chain**             | One or more implementations per key; each runs in turn and may enrich or replace the previous result      |
 | **Pattern 3: Additional model fields**     | A value type must carry extra, project-specific fields without changing the core record                   |
 
 ---
 
-## Core principle: delegation, not inheritance
+## Core principle: chaining, not delegation
 
 All built-in assembler implementations are `final`. Projects **never extend an assembler to
-customize it** — they always **delegate**. An override implements the same *interface* as the
-built-in, registers it with a higher `@Assembler` priority, and calls the built-in implementation
-through an injected delegate.
+customize it** — instead, all assemblers registered under a key form a **chain**. The caller obtains
+the whole chain via `AssemblerFactory.createChain(key, type)` and threads the assembled value through
+it: the first assembler produces the base value, and every following assembler receives the previous
+result as its last `previous` parameter and returns the next result.
 
-This is not just a style rule; it is enforced by how the factory resolves implementations:
+- **Ordering is by priority, ascending.** The built-in (`priority = 0`) runs first and produces the
+  base value; a project assembler registered with a higher priority (e.g. `100`) runs afterwards and
+  receives the built-in's result as `previous`. Higher priority therefore means "runs later / has the
+  last word".
+- **Enrich or replace.** `previous` is a `@Nullable` value (null for the first assembler). One that
+  returns `Optional.ofNullable(previous).map(v -> v.extend(...))` (or a rebuilt copy) *enriches* the
+  value; one that ignores `previous` and returns its own value *replaces* it.
+- **Running the chain.** `createChain` returns an `AssemblerChain<T>` — iterate it, or (for a uniform
+  `assemble` shape) call `chain.fold((assembler, previous) -> assembler.assemble(..., previous))`,
+  which threads the value through and returns the final `Optional`.
+- **No delegate injection.** Because the previous result arrives as a parameter, an override never
+  injects the concrete `Default…` class and never re-enters the factory for the same key. The
+  extension point stays an **interface** (`LinkAssembler`, `LinkListAssembler`, …); the built-in is a
+  `final` implementation of it, and the interface is what `createChain` dispatches on.
+- **Pruning the chain.** Two `@Assembler` attributes skip assemblers that would otherwise run (they
+  are neither executed nor instantiated):
+  - `chainRoot = true` — this assembler builds a fresh value from scratch, so every assembler with a
+    **lower** priority is skipped. If several roots exist, the highest-priority one wins.
+  - `chainBreak = true` — this assembler must run last, so every assembler with a **higher** priority
+    is skipped. If several are marked, the lowest-priority one wins.
 
-- **The dispatch type must be an interface.** `AssemblerFactory.create(key, type)` selects
-  candidates by *assignability* to `type` (`type.isAssignableFrom(candidate)`) and picks the highest
-  `priority` for that `key`. If the dispatch type were a `final` concrete class, no override could
-  ever be assignable to it — the factory would never select it. Therefore every overridable assembler
-  is dispatched via an interface (e.g. `LinkAssembler`, `ImageAssembler`, `LinkListAssembler`), and
-  the built-in class (e.g. `DefaultLinkListAssembler`) is a `final` implementation of it.
-- **Never re-enter the factory for the same key.** An override must obtain the built-in instance by
-  **injecting the concrete `Default…` class directly** — not via `factory.create(sameKey, …)`, which
-  would resolve back to the override itself and recurse infinitely. Injecting the concrete class lets
-  the DI container (Guice) construct the built-in directly, bypassing key/priority resolution.
+  A `chainBreak` below a `chainRoot` leaves an empty window; the chain is then empty.
+
+> `AssemblerFactory.create(key, type)` still exists and returns the single highest-priority assembler.
+> It is used for genuine single-selection (e.g. resolving one link *type* in Pattern 1), not for
+> chaining.
 
 ---
 
@@ -80,12 +95,12 @@ sequenceDiagram
 
 ```java
 public interface LinkAssembler<T extends Link> {
-    Optional<T> assemble(Resolver source, LinkOptions options);
+    Optional<T> assemble(Resolver source, LinkOptions options, @Nullable T previous);
 }
 ```
 
-**`LinkAssemblerDispatcher`** — the central dispatcher. It reads the type from the Resolver,
-builds the key, and delegates to the factory:
+**`LinkAssemblerDispatcher`** — the central dispatcher. It reads the type from the Resolver, builds
+the key, and runs the chain registered for that type:
 
 ```java
 public class LinkAssemblerDispatcher {
@@ -97,11 +112,15 @@ public class LinkAssemblerDispatcher {
         this.assemblerFactory = assemblerFactory;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public Optional<? extends Link> assemble(Resolver source, LinkOptions options) {
         String linkType = source.value("sp_linkType").asString("internal");
-        LinkAssembler<?> assembler =
-                this.assemblerFactory.create("link." + linkType, LinkAssembler.class);
-        return assembler.assemble(source, options);
+        @Nullable Link link = null;
+        for (LinkAssembler assembler :
+                this.assemblerFactory.createChain("link." + linkType, LinkAssembler.class)) {
+            link = assembler.assemble(source, options, link).orElse(null);
+        }
+        return Optional.ofNullable(link);
     }
 }
 ```
@@ -119,8 +138,9 @@ public final class InternalLinkAssembler implements LinkAssembler<Link.InternalL
                           HeadlineAssembler headlineAssembler) { ...}
 
     @Override
-    public Optional<Link.InternalLink> assemble(Resolver source, LinkOptions options) {
-        // reads sp_link.link, sp_linkText, sp_linkNewWindow, ...
+    public Optional<Link.InternalLink> assemble(
+            Resolver source, LinkOptions options, Link.@Nullable InternalLink previous) {
+        // built-in producer: reads sp_link.link, sp_linkText, sp_linkNewWindow, ... (ignores previous)
     }
 }
 ```
@@ -184,7 +204,8 @@ public final class ExternalLinkAssembler implements LinkAssembler<Link.ExternalL
     }
 
     @Override
-    public Optional<Link.ExternalLink> assemble(Resolver source, LinkOptions options) {
+    public Optional<Link.ExternalLink> assemble(
+            Resolver source, LinkOptions options, Link.@Nullable ExternalLink previous) {
         String rawUrl = source.value("sp_externalUrl").asString("");
         if (rawUrl.isBlank()) {
             return Optional.empty();
@@ -205,61 +226,51 @@ further code change needed.
 
 ### Use case 2: Overriding an existing link type
 
-To replace a built-in implementation per project, the same key is used with a
-**higher priority**. The built-in `InternalLinkAssembler` has `priority = 0`
-(default). An override implementation uses `priority = 100`:
+To customize a built-in per project, register under the same key with a **higher priority**. The
+built-in `InternalLinkAssembler` has `priority = 0` (default); the project assembler uses
+`priority = 100` and runs after it in the chain, receiving the built-in's result as `previous`:
 
 ```java
 
 @Assembler(value = "link.internal", priority = 100)
 public final class ProjectInternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
-    private final ChannelUriProvider uriProvider;
-    private final ChannelProvider channelProvider;
-    private final HeadlineAssembler headlineAssembler;
     private final ProjectLinkEnricher enricher;    // project-specific extension
 
     @Inject
-    public ProjectInternalLinkAssembler(
-            ChannelUriProvider uriProvider,
-            ChannelProvider channelProvider,
-            HeadlineAssembler headlineAssembler,
-            ProjectLinkEnricher enricher) {
-        this.uriProvider = uriProvider;
-        this.channelProvider = channelProvider;
-        this.headlineAssembler = headlineAssembler;
+    public ProjectInternalLinkAssembler(ProjectLinkEnricher enricher) {
         this.enricher = enricher;
     }
 
     @Override
-    public Optional<Link.InternalLink> assemble(Resolver source, LinkOptions options) {
-        // custom logic, e.g. read additional fields or resolve the channel differently
-        ...
+    public Optional<Link.InternalLink> assemble(
+            Resolver source, LinkOptions options, Link.@Nullable InternalLink previous) {
+        // enrich the built-in's result...
+        return Optional.ofNullable(previous).map(link -> this.enricher.enrich(link, source));
     }
 }
 ```
 
-The `AssemblerFactory` automatically selects this class because its `priority` value is higher. The
-built-in implementation remains unchanged on the classpath but is no longer used.
-
-Both the built-in and the override are `final` and implement the shared `LinkAssembler` interface —
-there is no `extends`. The example above *replaces* the built-in entirely. If you only want to
-*extend* it (reuse the built-in result and enrich it), inject the built-in `InternalLinkAssembler`
-as a delegate and call it, exactly as shown for `DefaultLinkListAssembler` in Pattern 2.
+Because the override runs after the built-in and receives its result as `previous`, it neither
+injects the concrete `Default…` class nor re-enters the factory. To *replace* the built-in entirely
+instead of enriching it, ignore `previous` and build your own value — or mark the override
+`@Assembler(value = "link.internal", priority = 100, chainRoot = true)` so the built-in is not even
+executed.
 
 ---
 
-## Pattern 2: Direct override
+## Pattern 2: Assembler chain
 
 ### Overview
 
-There is exactly one assembler for a task — no type field in the Resolver, no dispatch. Nonetheless,
-customer projects can replace or extend the assembler without touching the Aggregator.
+There is one built-in assembler for a task — no type field in the Resolver, no dispatch. Customer
+projects can replace or extend it without touching the Aggregator by registering further assemblers
+under the same key; all of them run in a chain.
 
-The crucial difference from direct DI: the Aggregator does not inject the assembler itself,
-but the `AssemblerFactory`. For each aggregation run, it obtains a fresh instance by key. Which
-concrete class is returned is decided by the factory based on the registered
-`@Assembler` annotations and their priority.
+The Aggregator does not inject the assembler itself, but the `AssemblerFactory`. For each aggregation
+run it obtains the whole chain by key via `createChain` and threads the value through it. Which
+classes take part, and in which order, is decided by the factory from the registered `@Assembler`
+annotations and their priority.
 
 ### Setup
 
@@ -270,7 +281,8 @@ The extension point is the **`LinkListAssembler` interface**; the built-in **imp
 
 ```java
 public interface LinkListAssembler {
-    Optional<LinkList> assemble(Resolver source, LinkListOptions options);
+    Optional<LinkList> assemble(
+            Resolver source, LinkListOptions options, @Nullable LinkList previous);
 }
 
 @Assembler("linkList")
@@ -287,7 +299,9 @@ public final class DefaultLinkListAssembler implements LinkListAssembler {
     }
 
     @Override
-    public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
+    public Optional<LinkList> assemble(
+            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+        // built-in producer: ignores previous and builds the base value
         Text headline = source.value("sp_headline").asText(PlainText.EMPTY).translatable();
         String boxType = source.value("sp_linkBoxType").asString(options.box().defaultType());
         List<Link> items = resolveItemList(source, options.linkOptions());
@@ -299,7 +313,7 @@ public final class DefaultLinkListAssembler implements LinkListAssembler {
 }
 ```
 
-The **aggregator** obtains the assembler per run via the factory:
+The **aggregator** obtains the chain per run via the factory and folds the value through it:
 
 ```java
 public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOptions> {
@@ -314,38 +328,42 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
 
     @Override
     public void aggregate(Resolver source, OutputNode output) throws AggregatorException {
-        LinkListAssembler linkListAssembler =
-                this.assemblerFactory.create("linkList", LinkListAssembler.class);
-        linkListAssembler.assemble(source, this.options)
+        this.assemblerFactory
+                .createChain("linkList", LinkListAssembler.class)
+                .fold((assembler, previous) -> assembler.assemble(source, this.options, previous))
                 .ifPresent(linkList -> output.put("model", linkList));
     }
 }
 ```
 
+> `createChain` returns an `AssemblerChain<LinkListAssembler>`. Its `fold` threads the value through
+> the chain — starting from `null`, each assembler receives the previous result and returns the next.
+> Callers whose `assemble` has a different shape (extra parameters, no options) iterate the chain
+> instead.
+
 ### Override in a customer project
 
-An implementation of `LinkListAssembler` with a higher priority value automatically takes control —
-without any change to `LinkListAggregator`. Instead of inheriting from the built-in, it **injects
-`DefaultLinkListAssembler` as a delegate** and enriches its result:
+An implementation of `LinkListAssembler` with a higher priority runs after the built-in — without any
+change to `LinkListAggregator`. Instead of injecting the built-in as a delegate, it receives the
+built-in's result as `previous` and enriches it:
 
 ```java
 
 @Assembler(value = "linkList", priority = 100)
 public final class ProjectLinkListAssembler implements LinkListAssembler {
 
-    private final DefaultLinkListAssembler delegate;   // concrete built-in, injected directly
     private final ProjectTeaser teaser;
 
     @Inject
-    public ProjectLinkListAssembler(DefaultLinkListAssembler delegate, ProjectTeaser teaser) {
-        this.delegate = delegate;
+    public ProjectLinkListAssembler(ProjectTeaser teaser) {
         this.teaser = teaser;
     }
 
     @Override
-    public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
-        // call the built-in implementation and enrich the result, or replace it entirely
-        return this.delegate.assemble(source, options).map(list -> enrich(list, source));
+    public Optional<LinkList> assemble(
+            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+        // enrich the built-in's result, or ignore previous to replace it entirely
+        return Optional.ofNullable(previous).map(list -> enrich(list, source));
     }
 
     private LinkList enrich(LinkList list, Resolver source) {
@@ -355,10 +373,10 @@ public final class ProjectLinkListAssembler implements LinkListAssembler {
 }
 ```
 
-> **Do not** call `assemblerFactory.create("linkList", LinkListAssembler.class)` from inside the
-> override — it resolves back to this very class (highest priority) and recurses infinitely. Inject
-> the concrete `DefaultLinkListAssembler` instead; the DI container constructs it directly, bypassing
-> key/priority resolution.
+> The built-in's result arrives as `previous`, so the override neither injects `DefaultLinkListAssembler`
+> nor calls the factory — the chain has already run the built-in before this assembler. To skip the
+> built-in altogether (e.g. this override builds its own value from scratch), add `chainRoot = true`
+> to its `@Assembler`.
 
 ---
 
@@ -430,8 +448,8 @@ return Optional.of(new LinkList(headline, boxType, items));
 
 ### Adding fields in a customer project
 
-Combine with Pattern 2: register an override under the same key with a higher priority, reuse the
-built-in implementation via delegation, and **append** a typed extension object with `extend(...)`:
+Combine with Pattern 2: register an override under the same key with a higher priority and **append**
+a typed extension object to the `previous` value with `extend(...)`:
 
 ```java
 public record LinkListBadge(String label, int count) {
@@ -440,16 +458,10 @@ public record LinkListBadge(String label, int count) {
 @Assembler(value = "linkList", priority = 100)
 public final class ProjectLinkListAssembler implements LinkListAssembler {
 
-    private final DefaultLinkListAssembler delegate;
-
-    @Inject
-    public ProjectLinkListAssembler(DefaultLinkListAssembler delegate) {
-        this.delegate = delegate;
-    }
-
     @Override
-    public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
-        return this.delegate.assemble(source, options)
+    public Optional<LinkList> assemble(
+            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+        return Optional.ofNullable(previous)
                 .map(list -> list.extend(new LinkListBadge("new", list.items().size())));
     }
 }
@@ -471,9 +483,9 @@ the list, and all layers are rolled out flat.
 
 ### `AssemblerFactory` creates a fresh instance per call
 
-Every call to `assemblerFactory.create(key, clazz)` returns a **fresh instance**. Assemblers
-may therefore hold state in fields without having to worry about thread safety or run
-isolation.
+Both `assemblerFactory.create(key, clazz)` and every element of `createChain(key, clazz)` are
+**fresh instances**. Assemblers may therefore hold state in fields without having to worry about
+thread safety or run isolation.
 
 ### Dependency Injection via `@Inject`
 
