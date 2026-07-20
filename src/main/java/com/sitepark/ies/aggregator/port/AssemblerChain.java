@@ -1,5 +1,6 @@
 package com.sitepark.ies.aggregator.port;
 
+import com.sitepark.ies.aggregator.Assembler;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  * The ordered chain of assemblers registered under a key, as returned by {@link
  * AssemblerFactory#createChain}.
  *
- * <p>Assemblers run in ascending {@link com.sitepark.ies.aggregator.Assembler#priority() priority}
+ * <p>Assemblers run in ascending {@link com.sitepark.ies.aggregator.AssemblerBinding#priority() priority}
  * order. A value is threaded through the chain via {@link #fold}: the first assembler produces the
  * base value and each following assembler receives the previous result and may enrich or replace it.
  *
@@ -41,6 +42,30 @@ public final class AssemblerChain<T> implements Iterable<T> {
     @Nullable V value = null;
     for (T assembler : this.assemblers) {
       value = step.apply(assembler, value).orElse(null);
+    }
+    return Optional.ofNullable(value);
+  }
+
+  /**
+   * Threads a value through the chain, invoking each assembler with the given request.
+   *
+   * <p>Convenience over {@link #fold} for assemblers implementing {@link Assembler}: starting from
+   * {@code null}, each assembler receives the value produced so far via {@code previous} and returns
+   * the next value; the last assembler's result wins.
+   *
+   * @param <REQ> the request type carrying the assembler inputs
+   * @param <V> the assembled value type
+   * @param request the request passed to every assembler in the chain
+   * @return the value after the last assembler, or {@link Optional#empty()} for an empty chain
+   */
+  public <REQ, V> Optional<V> assemble(REQ request) {
+    @Nullable V value = null;
+    for (T assembler : this.assemblers) {
+      // A chain is always created from a Class<T> whose T extends Assembler<REQ, V>, and the caller
+      // passes the request matching this chain's key, so the cast holds.
+      @SuppressWarnings("unchecked")
+      Assembler<REQ, V> step = (Assembler<REQ, V>) assembler;
+      value = step.assemble(request, value).orElse(null);
     }
     return Optional.ofNullable(value);
   }
