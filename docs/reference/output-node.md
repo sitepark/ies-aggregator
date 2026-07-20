@@ -89,7 +89,7 @@ public void aggregate(Resolver source, OutputNode output) {
     output.put("headline", source.value("sp_headline").asText());
 
     // Complex domain object via an assembler
-    linkListAssembler.assemble(source)
+    linkListAssembler.assemble(LinkListRequest.of(source, options), null)
             .ifPresent(linkList -> output.put("linkList", linkList));
 
     // Nested sub-OutputNode (e.g. filled by a sub-aggregator)

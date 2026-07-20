@@ -96,7 +96,7 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
         LinkListAssembler linkListAssembler =
                 this.assemblerFactory.create("linkList", LinkListAssembler.class);
         linkListAssembler
-                .assemble(source, this.options)
+                .assemble(LinkListRequest.of(source, this.options), null)
                 .ifPresent(linkList -> output.put("model", linkList));
     }
 }

@@ -272,7 +272,7 @@ public class HeadlineAggregator implements Aggregator {
 ```
 
 To contribute reusable, type-driven value builders (and let projects override them), register an
-`@Assembler` instead — see [Extending Assemblers](assembler-customization.md).
+`@AssemblerBinding` instead — see [Extending Assemblers](assembler-customization.md).
 
 ---
 

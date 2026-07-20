@@ -3,7 +3,7 @@
 > **Type:** How-To
 
 This document describes three patterns that allow assemblers to be extended or overridden per
-project without changes to the core code. Patterns 1 and 2 are based on `@Assembler` and
+project without changes to the core code. Patterns 1 and 2 are based on `@AssemblerBinding` and
 `AssemblerFactory`; Pattern 3 adds project-specific fields to the produced model.
 
 | Pattern                                    | When to use                                                                                               |
@@ -29,14 +29,15 @@ result as its last `previous` parameter and returns the next result.
 - **Enrich or replace.** `previous` is a `@Nullable` value (null for the first assembler). One that
   returns `Optional.ofNullable(previous).map(v -> v.extend(...))` (or a rebuilt copy) *enriches* the
   value; one that ignores `previous` and returns its own value *replaces* it.
-- **Running the chain.** `createChain` returns an `AssemblerChain<T>` — iterate it, or (for a uniform
-  `assemble` shape) call `chain.fold((assembler, previous) -> assembler.assemble(..., previous))`,
-  which threads the value through and returns the final `Optional`.
+- **Running the chain.** `createChain` returns an `AssemblerChain<T>`. For the uniform
+  `assemble(REQ, previous)` shape, call `chain.assemble(request)`, which threads the value through
+  and returns the final `Optional`. A lower-level `fold` and direct iteration remain available for
+  generic (wildcard) chains such as `LinkAssembler`/`ImageAssembler`.
 - **No delegate injection.** Because the previous result arrives as a parameter, an override never
   injects the concrete `Default…` class and never re-enters the factory for the same key. The
   extension point stays an **interface** (`LinkAssembler`, `LinkListAssembler`, …); the built-in is a
   `final` implementation of it, and the interface is what `createChain` dispatches on.
-- **Pruning the chain.** Two `@Assembler` attributes skip assemblers that would otherwise run (they
+- **Pruning the chain.** Two `@AssemblerBinding` attributes skip assemblers that would otherwise run (they
   are neither executed nor instantiated):
   - `chainRoot = true` — this assembler builds a fresh value from scratch, so every assembler with a
     **lower** priority is skipped. If several roots exist, the highest-priority one wins.
@@ -64,7 +65,7 @@ The solution consists of three building blocks:
 | Building block            | Responsibility                                                            |
 |---------------------------|----------------------------------------------------------------------------|
 | **Type field in Resolver**| Determines at runtime which assembler is chosen                           |
-| **`@Assembler`**          | Registers a class under a unique key                                       |
+| **`@AssemblerBinding`**          | Registers a class under a unique key                                       |
 | **`AssemblerFactory`**    | Resolves the key, returns the implementation with the highest priority     |
 
 ### Architecture
@@ -82,21 +83,20 @@ sequenceDiagram
     D ->> R: value("sp_linkType").asString("internal")
     R -->> D: e.g. "internal" or "external"
     D ->> F: create("link.internal", LinkAssembler.class)
-    F ->> F: find all @Assembler("link.internal"),<br/>choose highest priority
+    F ->> F: find all @AssemblerBinding("link.internal"),<br/>choose highest priority
     F -->> D: matching Assembler instance
-    D ->> A: resolve(source, options)
+    D ->> A: assemble(request, previous)
     A -->> D: Optional[Link]
     D -->> LL: Optional[Link]
 ```
 
 ### Classes involved
 
-**`LinkAssembler<T extends Link>`** — the common interface of all Link assemblers:
+**`LinkAssembler<T extends Link>`** — the common interface of all Link assemblers. It extends the
+generic `Assembler<REQ, V>`, so the `assemble(request, previous)` method is inherited:
 
 ```java
-public interface LinkAssembler<T extends Link> {
-    Optional<T> assemble(Resolver source, LinkOptions options, @Nullable T previous);
-}
+public interface LinkAssembler<T extends Link> extends Assembler<LinkRequest, T> {}
 ```
 
 **`LinkAssemblerDispatcher`** — the central dispatcher. It reads the type from the Resolver, builds
@@ -115,10 +115,11 @@ public class LinkAssemblerDispatcher {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Optional<? extends Link> assemble(Resolver source, LinkOptions options) {
         String linkType = source.value("sp_linkType").asString("internal");
+        LinkRequest request = LinkRequest.of(source, options);
         @Nullable Link link = null;
         for (LinkAssembler assembler :
                 this.assemblerFactory.createChain("link." + linkType, LinkAssembler.class)) {
-            link = assembler.assemble(source, options, link).orElse(null);
+            link = assembler.assemble(request, link).orElse(null);
         }
         return Optional.ofNullable(link);
     }
@@ -130,7 +131,7 @@ public class LinkAssemblerDispatcher {
 
 ```java
 
-@Assembler("link.internal")
+@AssemblerBinding("link.internal")
 public final class InternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     @Inject
@@ -139,7 +140,8 @@ public final class InternalLinkAssembler implements LinkAssembler<Link.InternalL
 
     @Override
     public Optional<Link.InternalLink> assemble(
-            Resolver source, LinkOptions options, Link.@Nullable InternalLink previous) {
+            LinkRequest request, Link.@Nullable InternalLink previous) {
+        Resolver source = request.source();
         // built-in producer: reads sp_link.link, sp_linkText, sp_linkNewWindow, ... (ignores previous)
     }
 }
@@ -196,7 +198,7 @@ must match the pattern `"link." + sp_linkType`:
 
 ```java
 
-@Assembler("link.external")
+@AssemblerBinding("link.external")
 public final class ExternalLinkAssembler implements LinkAssembler<Link.ExternalLink> {
 
     @Inject
@@ -205,7 +207,8 @@ public final class ExternalLinkAssembler implements LinkAssembler<Link.ExternalL
 
     @Override
     public Optional<Link.ExternalLink> assemble(
-            Resolver source, LinkOptions options, Link.@Nullable ExternalLink previous) {
+            LinkRequest request, Link.@Nullable ExternalLink previous) {
+        Resolver source = request.source();
         String rawUrl = source.value("sp_externalUrl").asString("");
         if (rawUrl.isBlank()) {
             return Optional.empty();
@@ -232,7 +235,7 @@ built-in `InternalLinkAssembler` has `priority = 0` (default); the project assem
 
 ```java
 
-@Assembler(value = "link.internal", priority = 100)
+@AssemblerBinding(value = "link.internal", priority = 100)
 public final class ProjectInternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     private final ProjectLinkEnricher enricher;    // project-specific extension
@@ -244,9 +247,10 @@ public final class ProjectInternalLinkAssembler implements LinkAssembler<Link.In
 
     @Override
     public Optional<Link.InternalLink> assemble(
-            Resolver source, LinkOptions options, Link.@Nullable InternalLink previous) {
+            LinkRequest request, Link.@Nullable InternalLink previous) {
         // enrich the built-in's result...
-        return Optional.ofNullable(previous).map(link -> this.enricher.enrich(link, source));
+        return Optional.ofNullable(previous)
+                .map(link -> this.enricher.enrich(link, request.source()));
     }
 }
 ```
@@ -254,7 +258,7 @@ public final class ProjectInternalLinkAssembler implements LinkAssembler<Link.In
 Because the override runs after the built-in and receives its result as `previous`, it neither
 injects the concrete `Default…` class nor re-enters the factory. To *replace* the built-in entirely
 instead of enriching it, ignore `previous` and build your own value — or mark the override
-`@Assembler(value = "link.internal", priority = 100, chainRoot = true)` so the built-in is not even
+`@AssemblerBinding(value = "link.internal", priority = 100, chainRoot = true)` so the built-in is not even
 executed.
 
 ---
@@ -269,7 +273,7 @@ under the same key; all of them run in a chain.
 
 The Aggregator does not inject the assembler itself, but the `AssemblerFactory`. For each aggregation
 run it obtains the whole chain by key via `createChain` and threads the value through it. Which
-classes take part, and in which order, is decided by the factory from the registered `@Assembler`
+classes take part, and in which order, is decided by the factory from the registered `@AssemblerBinding`
 annotations and their priority.
 
 ### Setup
@@ -277,15 +281,12 @@ annotations and their priority.
 Using `LinkListAssembler` and `LinkListAggregator` as an example.
 
 The extension point is the **`LinkListAssembler` interface**; the built-in **implementation** is
-`final` and registered with `@Assembler`:
+`final` and registered with `@AssemblerBinding`:
 
 ```java
-public interface LinkListAssembler {
-    Optional<LinkList> assemble(
-            Resolver source, LinkListOptions options, @Nullable LinkList previous);
-}
+public interface LinkListAssembler extends Assembler<LinkListRequest, LinkList> {}
 
-@Assembler("linkList")
+@AssemblerBinding("linkList")
 public final class DefaultLinkListAssembler implements LinkListAssembler {
 
     private final LinkAssemblerDispatcher linkAssembler;
@@ -299,8 +300,9 @@ public final class DefaultLinkListAssembler implements LinkListAssembler {
     }
 
     @Override
-    public Optional<LinkList> assemble(
-            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+    public Optional<LinkList> assemble(LinkListRequest request, @Nullable LinkList previous) {
+        Resolver source = request.source();
+        LinkListOptions options = request.options();
         // built-in producer: ignores previous and builds the base value
         Text headline = source.value("sp_headline").asText(PlainText.EMPTY).translatable();
         String boxType = source.value("sp_linkBoxType").asString(options.box().defaultType());
@@ -330,16 +332,16 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
     public void aggregate(Resolver source, OutputNode output) throws AggregatorException {
         this.assemblerFactory
                 .createChain("linkList", LinkListAssembler.class)
-                .fold((assembler, previous) -> assembler.assemble(source, this.options, previous))
+                .assemble(LinkListRequest.of(source, this.options))
                 .ifPresent(linkList -> output.put("model", linkList));
     }
 }
 ```
 
-> `createChain` returns an `AssemblerChain<LinkListAssembler>`. Its `fold` threads the value through
-> the chain — starting from `null`, each assembler receives the previous result and returns the next.
-> Callers whose `assemble` has a different shape (extra parameters, no options) iterate the chain
-> instead.
+> `createChain` returns an `AssemblerChain<LinkListAssembler>`. Its `assemble(request)` threads the
+> value through the chain — starting from `null`, each assembler receives the previous result and
+> returns the next. Callers that need to vary the per-step invocation use the lower-level `fold`, and
+> generic wildcard chains (`LinkAssembler`/`ImageAssembler`) iterate the chain directly.
 
 ### Override in a customer project
 
@@ -349,7 +351,7 @@ built-in's result as `previous` and enriches it:
 
 ```java
 
-@Assembler(value = "linkList", priority = 100)
+@AssemblerBinding(value = "linkList", priority = 100)
 public final class ProjectLinkListAssembler implements LinkListAssembler {
 
     private final ProjectTeaser teaser;
@@ -360,10 +362,9 @@ public final class ProjectLinkListAssembler implements LinkListAssembler {
     }
 
     @Override
-    public Optional<LinkList> assemble(
-            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+    public Optional<LinkList> assemble(LinkListRequest request, @Nullable LinkList previous) {
         // enrich the built-in's result, or ignore previous to replace it entirely
-        return Optional.ofNullable(previous).map(list -> enrich(list, source));
+        return Optional.ofNullable(previous).map(list -> enrich(list, request.source()));
     }
 
     private LinkList enrich(LinkList list, Resolver source) {
@@ -376,7 +377,7 @@ public final class ProjectLinkListAssembler implements LinkListAssembler {
 > The built-in's result arrives as `previous`, so the override neither injects `DefaultLinkListAssembler`
 > nor calls the factory — the chain has already run the built-in before this assembler. To skip the
 > built-in altogether (e.g. this override builds its own value from scratch), add `chainRoot = true`
-> to its `@Assembler`.
+> to its `@AssemblerBinding`.
 
 ---
 
@@ -455,12 +456,11 @@ a typed extension object to the `previous` value with `extend(...)`:
 public record LinkListBadge(String label, int count) {
 }
 
-@Assembler(value = "linkList", priority = 100)
+@AssemblerBinding(value = "linkList", priority = 100)
 public final class ProjectLinkListAssembler implements LinkListAssembler {
 
     @Override
-    public Optional<LinkList> assemble(
-            Resolver source, LinkListOptions options, @Nullable LinkList previous) {
+    public Optional<LinkList> assemble(LinkListRequest request, @Nullable LinkList previous) {
         return Optional.ofNullable(previous)
                 .map(list -> list.extend(new LinkListBadge("new", list.items().size())));
     }

@@ -62,7 +62,7 @@ public class LinkListAggregator implements Aggregator {
     //                  RESOLVER         OUTPUTNODE
     //                  (Source)         (Target)
 
-    linkListAssembler.assemble(source)
+    linkListAssembler.assemble(LinkListRequest.of(source, options), null)
         //  ^^^^^^^^^
         //  ASSEMBLER returns a typed domain object
         .ifPresent(linkList -> output.put("linkList", linkList));

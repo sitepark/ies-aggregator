@@ -28,6 +28,11 @@ output context it is later embedded into.
   (`LinkAssembler` → `Link`, `LinkListAssembler` → `LinkList`).
 - **Returns typed result:** The result is a finished value object, typically as
   `Optional<T>` if it can legitimately be empty.
+- **Uniform signature:** Every assembler implements `Assembler<REQ, V>` with a single
+  `assemble(REQ request, @Nullable V previous)` method. `REQ` is a feature-specific *request* record
+  that bundles the assembler's inputs (the source resolver, field names, options); bundling keeps the
+  signature stable when further inputs are added later. `previous` carries the running value when
+  assemblers are chained (see below).
 - **Reusable:** Multiple aggregators can use the same Assembler.
 - **Composable:** Assemblers may use other Assemblers (e.g. `LinkListAssembler` uses the
   `LinkAssembler` for each element).
@@ -40,20 +45,26 @@ output context it is later embedded into.
 
 ```java
 
-@Assembler("linkList")
-public class LinkListAssembler {
+// The feature interface — all assemblers extend the generic Assembler<REQ, V>:
+public interface LinkListAssembler extends Assembler<LinkListRequest, LinkList> {}
+
+@AssemblerBinding("linkList")
+public class DefaultLinkListAssembler implements LinkListAssembler {
 
     private final LinkAssemblerDispatcher linkAssembler;
     private final AggregatorErrorHandler errorHandler;
 
     @Inject
-    public LinkListAssembler(
+    public DefaultLinkListAssembler(
             LinkAssemblerDispatcher linkAssembler, AggregatorErrorHandler errorHandler) {
         this.linkAssembler = linkAssembler;
         this.errorHandler = errorHandler;
     }
 
-    public Optional<LinkList> assemble(Resolver source, LinkListOptions options) {
+    @Override
+    public Optional<LinkList> assemble(LinkListRequest request, @Nullable LinkList previous) {
+        Resolver source = request.source();
+        LinkListOptions options = request.options();
 
         Text headline = source.value("sp_headline").asText().translatable();
         String boxType = source.value("sp_linkBoxType").asString(options.box().defaultType());
@@ -81,17 +92,17 @@ public class LinkListAssembler {
 }
 ```
 
-## Registration via `@Assembler` and `AssemblerFactory`
+## Registration via `@AssemblerBinding` and `AssemblerFactory`
 
-Assemblers are registered in the framework via the `@Assembler` annotation and retrieved via an
+Assemblers are registered in the framework via the `@AssemblerBinding` annotation and retrieved via an
 `AssemblerFactory`. This makes it possible to look up Assemblers by key and to control
 implementation-specific overrides with a priority value:
 
 ```java
 
-@Assembler("link.internal")              // unique key
-@Assembler(value = "link.internal", priority = 100) // overrides built-in assemblers
-public class CustomInternalLinkAssembler {
+@AssemblerBinding("link.internal")              // unique key
+@AssemblerBinding(value = "link.internal", priority = 100) // overrides built-in assemblers
+public class CustomInternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
     // ...
 }
 
@@ -104,12 +115,13 @@ Two lookup modes exist:
 - `factory.create(key, type)` returns the **single** highest-priority implementation for a key — used
   for genuine single-selection (e.g. picking one link *type*).
 - `factory.createChain(key, type)` returns an `AssemblerChain<T>` of **all** implementations for a
-  key, ordered by ascending `priority`. Its `fold` threads the assembled value through the chain,
-  passing each assembler's result as the `@Nullable previous` argument of the next (null for the
-  first); the built-in (`priority = 0`) produces the base value and higher-priority project
-  assemblers enrich or replace it. Two `@Assembler` attributes prune the chain: `chainRoot = true`
-  skips all lower-priority assemblers (fresh start), `chainBreak = true` skips all higher-priority
-  ones (guaranteed last).
+  key, ordered by ascending `priority`. Its `assemble(request)` threads the assembled value through
+  the chain, passing each assembler's result as the `@Nullable previous` argument of the next (null
+  for the first); the built-in (`priority = 0`) produces the base value and higher-priority project
+  assemblers enrich or replace it. (A lower-level `fold` is also available for callers that need to
+  vary the per-step invocation.) Two `@AssemblerBinding` attributes prune the chain: `chainRoot =
+  true` skips all lower-priority assemblers (fresh start), `chainBreak = true` skips all
+  higher-priority ones (guaranteed last).
 
 A complete example of both patterns (adding new types, chaining and pruning) can be found
 in [assembler-customization.md](../how-to/assembler-customization.md).
