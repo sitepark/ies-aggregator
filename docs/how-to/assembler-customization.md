@@ -219,7 +219,7 @@ public final class ExternalLinkAssembler implements LinkAssembler<Link.ExternalL
         Text label = source.value("sp_linkText").asText(PlainText.EMPTY).translatable();
         boolean newWindow = source.value("sp_linkNewWindow").asBoolean(true);
 
-        return Optional.of(new Link.ExternalLink("content.link.external", url, label, newWindow));
+        return Optional.of(Link.ExternalLink.of("content.link.external", url, label, newWindow));
     }
 }
 ```
@@ -311,7 +311,7 @@ public final class DefaultLinkListAssembler implements LinkListAssembler {
         if (items.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new LinkList("content.linkList", headline, boxType, items));
+        return Optional.of(LinkList.of("content.linkList", headline, boxType, items));
     }
 }
 ```
@@ -428,8 +428,8 @@ public record LinkList(
     }
 
     /** Creates a link list without any customer extension. */
-    public LinkList(Text headline, String linkBoxType, List<Link> items) {
-        this(headline, linkBoxType, items, List.of());
+    public static LinkList of(Text headline, String linkBoxType, List<Link> items) {
+        return new LinkList(headline, linkBoxType, items, List.of());
     }
 
     /** Returns a copy with the given customer extension appended. */
@@ -441,11 +441,11 @@ public record LinkList(
 }
 ```
 
-The built-in assembler uses the convenience constructor, so it starts with an empty extension list
+The built-in assembler uses `of(...)`, so it starts with an empty extension list
 (contributes nothing — no dangling key):
 
 ```java
-return Optional.of(new LinkList(headline, boxType, items));
+return Optional.of(LinkList.of(headline, boxType, items));
 ```
 
 ### Adding fields in a customer project

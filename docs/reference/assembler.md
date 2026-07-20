@@ -73,7 +73,7 @@ public class DefaultLinkListAssembler implements LinkListAssembler {
             return Optional.empty();
         }
 
-        return Optional.of(new LinkList("content.linkList", headline, boxType, items));
+        return Optional.of(LinkList.of("content.linkList", headline, boxType, items));
     }
 
     private List<Link> assembleItems(Resolver source, LinkOptions options) {
