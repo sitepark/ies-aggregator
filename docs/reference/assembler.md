@@ -135,7 +135,7 @@ Two `@AssemblerBinding` attributes drive this:
   scope root (`context.root()`, an `EntityResolver`, via `entityType()`).
 - `condition` — a `Class<? extends AssemblerCondition>` for rules a plain `objectTypes` match cannot
   express. The factory instantiates it via dependency injection (so it may declare its own
-  constructor dependencies) and calls `appliesTo(context)`. The default `AssemblerCondition.Always`
+  constructor dependencies) and calls `appliesTo(source)`. The default `AssemblerCondition.Always`
   always applies and is never instantiated.
 
 Both act as an **AND** — an assembler is eligible only when its `objectTypes` match *and* its

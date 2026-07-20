@@ -503,7 +503,7 @@ Two `@AssemblerBinding` attributes express the restriction; they combine as an *
   object types; empty (the default) is a wildcard that applies everywhere.
 - `condition` — the escape hatch for a rule `objectTypes` cannot express. It names an
   `AssemblerCondition` class that the factory instantiates via DI (so it may inject its own
-  dependencies) and asks via `appliesTo(context)`. The default `AssemblerCondition.Always` applies
+  dependencies) and asks via `appliesTo(source)`. The default `AssemblerCondition.Always` applies
   unconditionally and is never instantiated.
 
 Unrestricted assemblers (empty `objectTypes`, default `condition`) always apply, so a built-in
@@ -547,8 +547,8 @@ public final class CampaignActiveCondition implements AssemblerCondition {
     }
 
     @Override
-    public boolean appliesTo(Resolver context) {
-        return this.calendar.isActive(context.value("sp_campaign").asString(""));
+    public boolean appliesTo(Resolver source) {
+        return this.calendar.isActive(source.value("sp_campaign").asString(""));
     }
 }
 

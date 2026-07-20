@@ -16,10 +16,10 @@ public interface AssemblerCondition {
   /**
    * Decides whether the annotated assembler applies in the current scope.
    *
-   * @param context the resolver of the current aggregation scope
+   * @param source the resolver of the current aggregation scope
    * @return {@code true} if the assembler applies, {@code false} to exclude it
    */
-  boolean appliesTo(Resolver context);
+  boolean appliesTo(Resolver source);
 
   /**
    * The default condition: always applies. Serves as the {@link AssemblerBinding#condition()}
@@ -27,7 +27,7 @@ public interface AssemblerCondition {
    */
   final class Always implements AssemblerCondition {
     @Override
-    public boolean appliesTo(Resolver context) {
+    public boolean appliesTo(Resolver source) {
       return true;
     }
   }
