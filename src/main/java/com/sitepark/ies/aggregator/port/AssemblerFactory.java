@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.port;
 
 import com.sitepark.ies.aggregator.AssemblerBinding;
+import com.sitepark.ies.aggregator.resolver.Resolver;
 
 /**
  * Factory that creates a fresh assembler instance per aggregation run.
@@ -12,6 +13,13 @@ import com.sitepark.ies.aggregator.AssemblerBinding;
  * annotation on the implementing class. The same key may be declared by multiple implementations;
  * in that case the implementation with the highest {@link AssemblerBinding#priority() priority} wins. This
  * allows customer-specific libraries to override built-in assemblers without code changes.
+ *
+ * <p>The {@code (key, clazz, Resolver)} overloads additionally restrict the candidates to those
+ * applicable in the current aggregation scope, filtering by {@link AssemblerBinding#objectTypes()}
+ * (matched against the object type of the context's {@link Resolver#root() scope root}) and {@link
+ * AssemblerBinding#condition()} before priority ordering and chain pruning. The {@code (key, clazz)}
+ * forms apply no such restriction (equivalent to an empty context), so only unrestricted assemblers
+ * match.
  *
  * <p>The expected return type is passed explicitly as a {@link Class} so that the caller receives a
  * type-safe reference. The factory verifies at runtime that the resolved assembler is assignable to
@@ -37,7 +45,30 @@ public interface AssemblerFactory {
    * @throws IllegalArgumentException if no assembler is registered for the given key, or if the
    *     resolved assembler is not assignable to {@code clazz}
    */
-  <T> T create(String key, Class<T> clazz);
+  default <T> T create(String key, Class<T> clazz) {
+    return create(key, clazz, Resolver.empty());
+  }
+
+  /**
+   * Creates a new assembler instance for the given key, filtered by the current aggregation context.
+   *
+   * <p>Behaves like {@link #create(String, Class)} but additionally restricts the candidates to
+   * those applicable in {@code context}: an assembler is eligible only when its {@link
+   * AssemblerBinding#objectTypes() objectTypes} match the object type of {@code context}'s current
+   * scope (or are empty) and its {@link AssemblerBinding#condition() condition} applies. Among the
+   * eligible candidates the highest {@link AssemblerBinding#priority() priority} wins.
+   *
+   * @param <T> the expected assembler type
+   * @param key the key identifying the assembler to create
+   * @param clazz the expected type of the assembler; the resolved instance must be assignable to
+   *     this type
+   * @param context the resolver of the current aggregation scope; its {@link Resolver#root() scope
+   *     root} determines the object type used for filtering
+   * @return a fresh assembler instance of type {@code T}
+   * @throws IllegalArgumentException if no eligible assembler is registered for the given key, or if
+   *     the resolved assembler is not assignable to {@code clazz}
+   */
+  <T> T create(String key, Class<T> clazz, Resolver context);
 
   /**
    * Creates the chain of assemblers registered for the given key, ordered for sequential execution.
@@ -69,5 +100,33 @@ public interface AssemblerFactory {
    *     this type
    * @return the ordered chain of fresh assembler instances, possibly empty
    */
-  <T> AssemblerChain<T> createChain(String key, Class<T> clazz);
+  default <T> AssemblerChain<T> createChain(String key, Class<T> clazz) {
+    return createChain(key, clazz, Resolver.empty());
+  }
+
+  /**
+   * Creates the chain of assemblers registered for the given key, filtered by the current
+   * aggregation context.
+   *
+   * <p>Behaves like {@link #createChain(String, Class)} but first restricts the candidates to those
+   * applicable in {@code context}: an assembler is included only when its {@link
+   * AssemblerBinding#objectTypes() objectTypes} match the object type of {@code context}'s current
+   * scope (or are empty) and its {@link AssemblerBinding#condition() condition} applies. This
+   * filtering happens before the {@link AssemblerBinding#chainRoot() chainRoot}/{@link
+   * AssemblerBinding#chainBreak() chainBreak} pruning, so an excluded assembler never affects the
+   * chain window.
+   *
+   * <p>When {@code context} crosses a link boundary (its {@link Resolver#root() scope root} is the
+   * linked entity), the object type is that of the linked CMS object — assemblers run against a
+   * linked article are therefore filtered by the linked article's type.
+   *
+   * @param <T> the expected assembler type
+   * @param key the key identifying the assemblers to chain
+   * @param clazz the expected type of the assemblers; each resolved instance must be assignable to
+   *     this type
+   * @param context the resolver of the current aggregation scope; its {@link Resolver#root() scope
+   *     root} determines the object type used for filtering
+   * @return the ordered chain of fresh assembler instances, possibly empty
+   */
+  <T> AssemblerChain<T> createChain(String key, Class<T> clazz, Resolver context);
 }

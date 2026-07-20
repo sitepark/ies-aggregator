@@ -36,4 +36,22 @@ public @interface AssemblerBinding {
    * guaranteed to run last. If several are marked, the one with the lowest priority wins.
    */
   boolean chainBreak() default false;
+
+  /**
+   * Restricts this assembler to the given CMS object types. An empty array (the default) means the
+   * assembler applies to every object type. The object type is derived from the current resolver
+   * scope at selection time (see {@link
+   * com.sitepark.ies.aggregator.port.AssemblerFactory#createChain(String, Class,
+   * com.sitepark.ies.aggregator.resolver.Resolver)}).
+   */
+  String[] objectTypes() default {};
+
+  /**
+   * A custom applicability rule for rare cases that a simple {@link #objectTypes()} match cannot
+   * express. The factory instantiates the class via dependency injection and calls {@link
+   * AssemblerCondition#appliesTo}; the condition's own dependencies are supplied through its
+   * constructor. The default {@link AssemblerCondition.Always} always applies and is never
+   * instantiated.
+   */
+  Class<? extends AssemblerCondition> condition() default AssemblerCondition.Always.class;
 }

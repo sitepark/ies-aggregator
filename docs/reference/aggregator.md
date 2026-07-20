@@ -94,7 +94,7 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
     public void aggregate(Resolver source, OutputNode output) throws AggregatorException {
         output.put("collector", "manually");
         LinkListAssembler linkListAssembler =
-                this.assemblerFactory.create("linkList", LinkListAssembler.class);
+                this.assemblerFactory.create("linkList", LinkListAssembler.class, source);
         linkListAssembler
                 .assemble(LinkListRequest.of(source, this.options), null)
                 .ifPresent(linkList -> output.put("model", linkList));

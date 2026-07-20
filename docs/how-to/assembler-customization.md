@@ -2,15 +2,16 @@
 
 > **Type:** How-To
 
-This document describes three patterns that allow assemblers to be extended or overridden per
-project without changes to the core code. Patterns 1 and 2 are based on `@AssemblerBinding` and
+This document describes four patterns that allow assemblers to be extended or overridden per
+project without changes to the core code. Patterns 1, 2 and 4 are based on `@AssemblerBinding` and
 `AssemblerFactory`; Pattern 3 adds project-specific fields to the produced model.
 
-| Pattern                                    | When to use                                                                                               |
-|--------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| **Pattern 1: Type-driven dispatching**     | Multiple implementations for different types; which one applies is only determined at runtime in the Resolver |
-| **Pattern 2: Assembler chain**             | One or more implementations per key; each runs in turn and may enrich or replace the previous result      |
-| **Pattern 3: Additional model fields**     | A value type must carry extra, project-specific fields without changing the core record                   |
+| Pattern                                     | When to use                                                                                               |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| **Pattern 1: Type-driven dispatching**      | Multiple implementations for different types; which one applies is only determined at runtime in the Resolver |
+| **Pattern 2: Assembler chain**              | One or more implementations per key; each runs in turn and may enrich or replace the previous result      |
+| **Pattern 3: Additional model fields**      | A value type must carry extra, project-specific fields without changing the core record                   |
+| **Pattern 4: Context-restricted selection** | An assembler should apply only to certain CMS object types, or under a custom runtime condition           |
 
 ---
 
@@ -118,7 +119,7 @@ public class LinkAssemblerDispatcher {
         LinkRequest request = LinkRequest.of(source, options);
         @Nullable Link link = null;
         for (LinkAssembler assembler :
-                this.assemblerFactory.createChain("link." + linkType, LinkAssembler.class)) {
+                this.assemblerFactory.createChain("link." + linkType, LinkAssembler.class, source)) {
             link = assembler.assemble(request, link).orElse(null);
         }
         return Optional.ofNullable(link);
@@ -331,7 +332,7 @@ public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOpti
     @Override
     public void aggregate(Resolver source, OutputNode output) throws AggregatorException {
         this.assemblerFactory
-                .createChain("linkList", LinkListAssembler.class)
+                .createChain("linkList", LinkListAssembler.class, source)
                 .assemble(LinkListRequest.of(source, this.options))
                 .ifPresent(linkList -> output.put("model", linkList));
     }
@@ -476,6 +477,93 @@ the list, and all layers are rolled out flat.
 > element may be a record, a bean or a `Map`; `@OutputUnwrapped` on the list is inlined element-wise
 > by the introspecting `JacksonDomainObjectMapper`, even though plain Jackson *serialization* only
 > supports unwrapping on concrete bean types.
+
+---
+
+## Pattern 4: Context-restricted selection
+
+### Overview
+
+Patterns 1 and 2 decide *which* assembler runs from the key and priority alone. Pattern 4 adds a
+second axis: an assembler can declare that it applies only in **certain aggregation contexts** — most
+commonly for certain CMS **object types** (article types), or under a custom runtime rule. This is
+the typed equivalent of the old per-section-type customer extensions: a project drops in an assembler
+restricted to its own object types, and it is consulted only for those — the built-in stays the
+fallback everywhere else.
+
+Selection happens entirely in the `AssemblerFactory`. The caller passes the resolver the chain runs
+against as the context (`create(key, type, context)` / `createChain(key, type, context)`); the
+factory derives the object type from that resolver's current scope root
+(`context.root().entityType()`) and filters the candidates **before** priority ordering and
+`chainRoot`/`chainBreak` pruning. Nothing is threaded through the `assemble` methods themselves.
+
+Two `@AssemblerBinding` attributes express the restriction; they combine as an **AND**:
+
+- `objectTypes` — the declarative common case. A non-empty array restricts the assembler to those
+  object types; empty (the default) is a wildcard that applies everywhere.
+- `condition` — the escape hatch for a rule `objectTypes` cannot express. It names an
+  `AssemblerCondition` class that the factory instantiates via DI (so it may inject its own
+  dependencies) and asks via `appliesTo(context)`. The default `AssemblerCondition.Always` applies
+  unconditionally and is never instantiated.
+
+Unrestricted assemblers (empty `objectTypes`, default `condition`) always apply, so a built-in
+`priority = 0` producer remains the fallback for object types no project assembler covers.
+
+### Restricting by object type
+
+Combine with Pattern 2: register a project assembler under the same key with a higher priority and
+restrict it to the relevant object types. It runs — enriching the built-in's `previous` result —
+only when the aggregated object is of one of those types:
+
+```java
+
+@AssemblerBinding(value = "teaser", priority = 100, objectTypes = {"news", "press-release"})
+public final class NewsTeaserAssembler implements TeaserAssembler {
+
+    @Override
+    public Optional<Teaser> assemble(TeaserRequest request, @Nullable Teaser previous) {
+        // runs only for "news" / "press-release" objects; enriches the built-in teaser
+        return Optional.ofNullable(previous).map(teaser -> teaser.extend(new NewsBadge()));
+    }
+}
+```
+
+For every other object type only the wildcard built-in runs, unchanged.
+
+### Restricting by a custom condition
+
+When eligibility depends on something no static object-type list can capture, implement
+`AssemblerCondition`. It receives the current context resolver and returns whether the assembler
+applies; any collaborators it needs are injected through its constructor:
+
+```java
+public final class CampaignActiveCondition implements AssemblerCondition {
+
+    private final CampaignCalendar calendar;   // injected via DI
+
+    @Inject
+    public CampaignActiveCondition(CampaignCalendar calendar) {
+        this.calendar = calendar;
+    }
+
+    @Override
+    public boolean appliesTo(Resolver context) {
+        return this.calendar.isActive(context.value("sp_campaign").asString(""));
+    }
+}
+
+@AssemblerBinding(value = "teaser", priority = 100, condition = CampaignActiveCondition.class)
+public final class CampaignTeaserAssembler implements TeaserAssembler { /* ... */ }
+```
+
+### Across link boundaries
+
+The context is a `Resolver`, and `Resolver.root()` returns the root of the **current** scope — which
+changes when a link is followed (`resolveLink`). Callers that assemble a value from a *linked* article
+already pass that linked resolver, so the object-type filter uses the **linked** article's type. A
+teaser that resolves its target article and assembles the target's headline, image and text runs those
+sub-chains against the target resolver; an assembler restricted to `objectTypes = {"event"}` then
+applies exactly when the linked target is an event, regardless of the source object's type.
 
 ---
 

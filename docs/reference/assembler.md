@@ -123,8 +123,43 @@ Two lookup modes exist:
   true` skips all lower-priority assemblers (fresh start), `chainBreak = true` skips all
   higher-priority ones (guaranteed last).
 
-A complete example of both patterns (adding new types, chaining and pruning) can be found
-in [assembler-customization.md](../how-to/assembler-customization.md).
+### Context-aware selection (`objectTypes`, `condition`)
+
+Both lookup modes have a context-aware overload — `create(key, type, Resolver context)` and
+`createChain(key, type, Resolver context)` — that restricts the candidates to those applicable in
+the **current aggregation scope** *before* priority ordering and `chainRoot`/`chainBreak` pruning.
+Two `@AssemblerBinding` attributes drive this:
+
+- `objectTypes` — restricts the assembler to the given CMS object types. Empty (the default) means
+  it applies to every object type. The object type is derived from the context resolver's current
+  scope root (`context.root()`, an `EntityResolver`, via `entityType()`).
+- `condition` — a `Class<? extends AssemblerCondition>` for rules a plain `objectTypes` match cannot
+  express. The factory instantiates it via dependency injection (so it may declare its own
+  constructor dependencies) and calls `appliesTo(context)`. The default `AssemblerCondition.Always`
+  always applies and is never instantiated.
+
+Both act as an **AND** — an assembler is eligible only when its `objectTypes` match *and* its
+`condition` applies. The plain two-argument `create`/`createChain` pass an empty context, so only
+unrestricted assemblers (empty `objectTypes`, default `condition`) match; existing behaviour is
+unchanged until an assembler opts in.
+
+Because the scope root switches when a link is followed (`Resolver.resolveLink`), passing the linked
+resolver as the context filters by the **linked** object's type. Assemblers that run against a
+linked article (a teaser's target, a linked media article, …) are therefore selected by *that*
+article's type, not the source's.
+
+```java
+// Applies only to the "news" object type; enriches the built-in's result.
+@AssemblerBinding(value = "teaser", priority = 100, objectTypes = {"news"})
+public final class NewsTeaserAssembler implements TeaserAssembler { /* ... */ }
+
+// A rule objectTypes cannot express, decided at runtime from the resolver.
+@AssemblerBinding(value = "teaser", priority = 100, condition = CampaignActiveCondition.class)
+public final class CampaignTeaserAssembler implements TeaserAssembler { /* ... */ }
+```
+
+A complete example of all patterns (adding new types, chaining, pruning and context restriction) can
+be found in [assembler-customization.md](../how-to/assembler-customization.md).
 
 ## Distinctions
 
