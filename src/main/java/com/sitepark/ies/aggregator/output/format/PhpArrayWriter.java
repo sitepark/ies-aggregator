@@ -26,7 +26,8 @@ import java.util.Map;
  *   <li>{@link OutputList}, raw {@link Collection}, and {@code Object[]} become indexed PHP arrays.
  *       Single-item lists are written on one line without newlines or indentation.
  *   <li>{@link Map} is written as an associative PHP array.
- *   <li>{@link RawPhpCode} is written verbatim, without quoting.
+ *   <li>{@link RawPhpCode} is written verbatim, without quoting; {@link PlainCode} — the other kind
+ *       of {@link Code} — is quoted like a string.
  *   <li>Strings are wrapped in double quotes with escape sequences ({@code \\}, {@code \"}, {@code
  *       \b}, {@code \t}, {@code \n}, {@code \f}, {@code \r}, {@code \$}); remaining control
  *       characters below {@code 0x20} are escaped as {@code \xXX}.
@@ -126,8 +127,11 @@ public final class PhpArrayWriter extends OutputVisitor {
   }
 
   @Override
-  public void visitRawPhpCode(RawPhpCode value) {
-    write(value.code());
+  public void visitCode(Code value) {
+    switch (value) {
+      case RawPhpCode raw -> write(raw.code());
+      case PlainCode plain -> write(quote(plain.code()));
+    }
   }
 
   @Override

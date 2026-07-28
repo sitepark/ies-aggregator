@@ -33,4 +33,11 @@ class RawPhpCodeTest {
         .as("toString() should return the raw PHP code string verbatim")
         .isEqualTo("foo()");
   }
+
+  @Test
+  void rawCodeIsNeverEmpty() {
+    assertThat(new RawPhpCode("").isEmpty())
+        .as("RawPhpCode should never report empty, not even with an empty code string")
+        .isFalse();
+  }
 }

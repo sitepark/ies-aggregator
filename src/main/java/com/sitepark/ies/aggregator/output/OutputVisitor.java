@@ -1,5 +1,6 @@
 package com.sitepark.ies.aggregator.output;
 
+import com.sitepark.ies.aggregator.output.format.Code;
 import com.sitepark.ies.aggregator.output.format.RawPhpCode;
 import com.sitepark.ies.aggregator.value.Emptiable;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
@@ -121,7 +122,6 @@ public abstract class OutputVisitor {
       case CharSequence s -> s.isEmpty();
       case Number _ -> false;
       case Boolean _ -> false;
-      case RawPhpCode _ -> false;
       case OutputList l -> allRenderEmpty(l.items());
       case OutputNode n -> allRenderEmpty(n.entries().values());
       case Map<?, ?> m -> allRenderEmpty(m.values());
@@ -271,7 +271,7 @@ public abstract class OutputVisitor {
       case OutputObject o -> visitObject(o);
       case OutputList l -> visitList(l);
       case OutputListItem i -> visitListItem(i);
-      case RawPhpCode r -> visitRawPhpCode(r);
+      case Code c -> visitCode(c);
       case TranslatableText t -> visitTranslatableText(t);
       case PlainText t -> visitPlainText(t);
       case TranslatableUri u -> visitTranslatableUri(u);
@@ -396,11 +396,12 @@ public abstract class OutputVisitor {
   }
 
   /**
-   * Called when the current value is a {@link RawPhpCode}. Default: delegates to {@link
-   * #visitUnknown}.
+   * Called when the current value is a {@link Code} — either raw code or plain content. Default:
+   * delegates to {@link #visitString} with {@link Code#code()}, so it is rendered like any other
+   * string. A format that emits raw code verbatim overrides this and switches on the variant.
    */
-  public void visitRawPhpCode(RawPhpCode value) {
-    visitUnknown(value);
+  public void visitCode(Code value) {
+    visitString(value.code());
   }
 
   /**
