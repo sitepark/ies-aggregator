@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
  * indexing), or {@code null} if no text could be extracted.
  */
 public record Document(
+    int objectId,
     int id,
     String filename,
     String originFilename,

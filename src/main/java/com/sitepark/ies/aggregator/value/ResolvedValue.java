@@ -1,14 +1,12 @@
 package com.sitepark.ies.aggregator.value;
 
+import com.sitepark.ies.aggregator.value.media.Media;
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.Uri;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
@@ -308,6 +306,38 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
+   * Returns the value as a {@link Media} asset, or the {@link Media#empty() empty} media asset if
+   * empty.
+   *
+   * @throws IllegalArgumentException if not empty and the value is not a {@link Media} asset
+   */
+  public Media asMedia() {
+    return asMedia(Media.empty());
+  }
+
+  /**
+   * Returns the value as a {@link Media} asset, or {@code defaultValue} if empty.
+   *
+   * <p>Media assets are not parsed from raw payloads: the resolver layer supplies them as {@link
+   * Media} instances (see {@link com.sitepark.ies.aggregator.port.MediaProvider MediaProvider}), so
+   * any other payload type is rejected.
+   *
+   * @param defaultValue the value to return when empty
+   * @throws IllegalArgumentException if not empty and the value is not a {@link Media} asset
+   */
+  public Media asMedia(Media defaultValue) {
+    if (this.isEmpty()) {
+      return defaultValue;
+    }
+    Object value = singleItemIfList();
+    if (value instanceof Media media) {
+      return media;
+    }
+    throw new IllegalArgumentException(
+        "Value is not a media asset (" + value.getClass().getName() + ")");
+  }
+
+  /**
    * Returns the value as an enum constant of {@code enumClass}.
    *
    * @param <T> the enum type
@@ -399,14 +429,41 @@ public final class ResolvedValue implements Emptiable {
    * Returns the value as {@code type}.
    *
    * <p>If the value is already an instance of {@code type}, it is returned as-is. If it is a {@link
-   * String}, it is deserialized via {@code parser} (typically parsing embedded JSON). Otherwise an
+   * String}, it is deserialized via {@code parser} (typically parsing embedded JSON). Otherwise, an
+   * exception is thrown.
+   *
+   * @param <T> the target type
+   * @param type the target type
+   * @param parser the parser used to deserialize a string value
+   * @throws IllegalArgumentException if the value can neither be cast nor parsed
+   */
+  public <T> Optional<T> as(Class<T> type, StructuredValueParser parser) {
+    if (this.isEmpty()) {
+      return Optional.empty();
+    }
+    Object value = singleItemIfList();
+    if (type.isInstance(value)) {
+      return Optional.of(type.cast(value));
+    }
+    if (value instanceof String raw) {
+      return Optional.of(parser.parse(raw, type));
+    }
+    throw new IllegalArgumentException(
+        "Value cannot be converted to " + type.getName() + " (" + value.getClass().getName() + ")");
+  }
+
+  /**
+   * Returns the value as {@code type}.
+   *
+   * <p>If the value is already an instance of {@code type}, it is returned as-is. If it is a {@link
+   * String}, it is deserialized via {@code parser} (typically parsing embedded JSON). Otherwise, an
    * exception is thrown.
    *
    * @param <T> the target type
    * @param type the target type
    * @param defaultValue the value to return when empty
    * @param parser the parser used to deserialize a string value
-   * @throws IllegalArgumentException if empty, or the value can neither be cast nor parsed
+   * @throws IllegalArgumentException if the value can neither be cast nor parsed
    */
   public <T> T as(Class<T> type, StructuredValueParser parser, T defaultValue) {
     if (this.isEmpty()) {

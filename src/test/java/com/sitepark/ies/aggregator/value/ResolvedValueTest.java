@@ -3,6 +3,12 @@ package com.sitepark.ies.aggregator.value;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.sitepark.ies.aggregator.value.media.FocalPoint;
+import com.sitepark.ies.aggregator.value.media.Hash;
+import com.sitepark.ies.aggregator.value.media.HashAlgorithm;
+import com.sitepark.ies.aggregator.value.media.Image;
+import com.sitepark.ies.aggregator.value.media.ImageMetadata;
+import com.sitepark.ies.aggregator.value.media.Media;
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.Text;
 import java.util.List;
@@ -347,6 +353,60 @@ class ResolvedValueTest {
   void asTextRejectsUnsupportedPayload() {
     assertThatThrownBy(() -> ResolvedValue.of(123).asText(Text.empty()))
         .as("asText() should reject payloads that are neither Text nor String")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  // --- asMedia ------------------------------------------------------------
+
+  private static Image image() {
+    return new Image(
+        42,
+        7,
+        "logo.png",
+        "Logo.png",
+        "image/png",
+        1024L,
+        new Hash(HashAlgorithm.SHA_256, "abc"),
+        new ImageMetadata(null, null, null, null, null, FocalPoint.CENTER),
+        800,
+        600);
+  }
+
+  @Test
+  void asMediaReturnsMediaInstanceUnchanged() {
+    Image media = image();
+    assertThat(ResolvedValue.of(media).asMedia())
+        .as("asMedia() should return a wrapped Media as the same instance")
+        .isSameAs(media);
+  }
+
+  @Test
+  void asMediaUnwrapsSingleElementList() {
+    Image media = image();
+    assertThat(ResolvedValue.of(List.of(media)).asMedia())
+        .as("asMedia() should unwrap a single-element list")
+        .isSameAs(media);
+  }
+
+  @Test
+  void asMediaOnEmptyReturnsEmptyMedia() {
+    assertThat(ResolvedValue.empty().asMedia())
+        .as("asMedia() without default should return the empty media asset")
+        .isSameAs(Media.empty());
+  }
+
+  @Test
+  void asMediaWithDefaultReturnsDefaultWhenEmpty() {
+    Image def = image();
+    assertThat(ResolvedValue.empty().asMedia(def))
+        .as("asMedia(default) should return the default when empty")
+        .isSameAs(def);
+  }
+
+  @Test
+  void asMediaRejectsUnsupportedPayload() {
+    assertThatThrownBy(() -> ResolvedValue.of("logo.png").asMedia())
+        .as("asMedia() should reject payloads that are not a Media asset")
         .isInstanceOf(IllegalArgumentException.class);
   }
 

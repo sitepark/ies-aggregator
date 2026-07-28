@@ -2,6 +2,7 @@ package com.sitepark.ies.aggregator.value.media;
 
 /** An audio media asset, carrying its playback duration. */
 public record Audio(
+    int objectId,
     int id,
     String filename,
     String originFilename,

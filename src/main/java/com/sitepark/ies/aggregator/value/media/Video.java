@@ -2,6 +2,7 @@ package com.sitepark.ies.aggregator.value.media;
 
 /** A video media asset, carrying its pixel dimensions. */
 public record Video(
+    int objectId,
     int id,
     String filename,
     String originFilename,
