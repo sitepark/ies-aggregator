@@ -30,8 +30,8 @@ import java.util.Map;
  *   <li>{@link OutputList}, raw {@link Collection}, and {@code Object[]} become JSON arrays.
  *   <li>{@link Map} becomes a JSON object. Keys are converted to strings via {@code toString()}.
  *   <li>{@link PlainText}, {@link TranslatableText}, {@link PlainUri}, {@link TranslatableUri},
- *       {@link TranslatableSplitText}, and {@link RawPhpCode} are written as their {@code toString()}
- *       representation (a quoted JSON string).
+ *       {@link TranslatableSplitText}, and both kinds of {@link Code} ({@link RawPhpCode}, {@link
+ *       PlainCode}) are written as their {@code toString()} representation (a quoted JSON string).
  *   <li>{@link Number} and {@link Boolean} are written unquoted.
  *   <li>{@code null} is written as {@code null}.
  * </ul>
@@ -131,14 +131,10 @@ public final class JsonWriter extends OutputVisitor {
     write("null");
   }
 
-  // PlainText, TranslatableText, PlainUri, TranslatableUri and TranslatableSplitText use the
+  // PlainText, TranslatableText, PlainUri, TranslatableUri, TranslatableSplitText and Code use the
   // OutputVisitor defaults, which render via the translation table and delegate to visitString() —
-  // i.e. a quoted JSON string.
-
-  @Override
-  public void visitRawPhpCode(RawPhpCode value) {
-    writeQuoted(value.code());
-  }
+  // i.e. a quoted JSON string. Raw PHP code has no meaning in JSON and is quoted like any other
+  // string.
 
   @Override
   public void visitMap(Map<?, ?> map) {

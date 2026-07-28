@@ -28,15 +28,40 @@ representation.
 - **Format-specific:** One concrete subclass per output format (`PhpArrayWriter`, `JsonWriter`,
   `MapConverter`, `TranslatableTextCollector`).
 - **Type-safe per value class:** Dedicated methods for `PlainText`, `TranslatableText`,
-  `PlainUri`, `TranslatableUri`, `TranslatableSplitText`, `ResolvedValue`, `RawPhpCode` enable
+  `PlainUri`, `TranslatableUri`, `TranslatableSplitText`, `ResolvedValue`, `Code` enable
   format-specific handling – e.g. the `JsonWriter` renders a `TranslatableText`
   differently by default than the `PhpArrayWriter`.
+- **Granularity — per variant or per base type:** For a sealed value hierarchy, the cut is
+  deliberate and follows one rule:
+  - **One method per concrete variant** when the variants differ *semantically*.
+    `PlainText`/`TranslatableText` and `PlainUri`/`TranslatableUri` already have different
+    defaults (rendered through the translation table vs. verbatim), and visitors select along
+    exactly that axis — and along *opposite* ends of it: the `TranslatableTextCollector` overrides
+    only the translatable methods, the `AbsoluteUriCollector` only `visitPlainUri`. A subclass
+    therefore overrides just the variant it cares about, while the other keeps its correct default:
+    no `super` call to remember, no silently dropped output.
+  - **One method per base type** when only a *single format* distinguishes the variants. Both kinds
+    of `Code` share one default, so `visitCode(Code)` suffices and the `PhpArrayWriter` switches on
+    the variant itself (see *Raw PHP via marker* below) — the variant knowledge sits in the one
+    place that needs it.
 - **Sensible defaults:** Anyone who does not handle a value class explicitly gets a
   `toString()`-based fallback representation – subclasses override only what they really
   want to output differently.
 - **Raw PHP via marker:** The type-safe `RawPhpCode` marker replaces the former
   `:php` key suffix. Values of type `RawPhpCode` are emitted unchanged (without
   quoting) by the `PhpArrayWriter`; other visitors treat them as an opaque value.
+  Its base type `Code` (sealed: `RawPhpCode` | `PlainCode`) lets a model declare **one**
+  field that carries either raw PHP code or plain content — `Code.php("foo()")` is emitted
+  verbatim, `Code.of("foo()")` is quoted like any other string. Visitors see a single
+  `visitCode(Code)`; only the `PhpArrayWriter` switches on the variant (exhaustively, because
+  `Code` is sealed), every other format renders both as a quoted string:
+
+  ```java
+  public record Callback(Code handler) {}
+
+  Callback.of(Code.php("myHandler()"));  // "handler" => myHandler()
+  Callback.of(Code.of("myHandler"));     // "handler" => "myHandler"
+  ```
 - **Extensible:** Custom output formats or analyses are created by subclassing
   `OutputVisitor`.
 
@@ -272,7 +297,8 @@ A value counts as empty when it is:
   list, map or domain object whose children are all empty is itself dropped.
 
 Numbers and booleans — **including `0` and `false`** — and `RawPhpCode` never count as empty; they
-are meaningful values and are always kept.
+are meaningful values and are always kept. A `PlainCode`, in contrast, is empty when its content is
+empty, just like a `String`.
 
 To keep an otherwise-dropped empty value, opt out with `@OutputKeepIfEmpty`
 (`com.sitepark.ies.aggregator.output.OutputKeepIfEmpty`) **on the value's type** — the visitor checks
