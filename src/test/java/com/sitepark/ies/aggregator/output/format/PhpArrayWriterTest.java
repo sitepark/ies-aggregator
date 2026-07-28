@@ -125,6 +125,27 @@ class PhpArrayWriterTest {
   }
 
   @Test
+  void emptyPlainCodeIsDroppedWhileEmptyRawPhpCodeIsKept() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("plain", Code.of(""));
+    root.put("raw", Code.php(""));
+
+    assertThat(render(root))
+        .as("Empty PlainCode should be dropped, empty RawPhpCode should be kept")
+        .isEqualTo("[\n\t\"raw\" => \n]");
+  }
+
+  @Test
+  void plainCodeIsQuotedLikeAString() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("callable", Code.of("foo()"));
+
+    assertThat(render(root))
+        .as("PlainCode value should be quoted like any other string")
+        .isEqualTo("[\n\t\"callable\" => \"foo()\"\n]");
+  }
+
+  @Test
   void nestedObjectIncreasesIndentation() {
     OutputObject root = new OutputObject(null, null);
     root.node("meta").put("k", "v");

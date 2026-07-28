@@ -5,7 +5,7 @@ import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
-import com.sitepark.ies.aggregator.output.format.RawPhpCode;
+import com.sitepark.ies.aggregator.output.format.Code;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.PlainText;
 import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Map} / {@link List} structures.
  *
  * <p>Scalar value classes ({@link PlainText}, {@link TranslatableText}, {@link PlainUri}, {@link
- * TranslatableUri}, {@link TranslatableSplitText}, {@link RawPhpCode}) are kept as-is — their typed
+ * TranslatableUri}, {@link TranslatableSplitText}, {@link Code}) are kept as-is — their typed
  * identity is preserved rather than stringified. {@link ResolvedValue} is unwrapped to its inner
  * value, so the result of {@code resolvedValue.value()} appears in the map.
  */
@@ -213,7 +213,7 @@ public final class MapConverter extends OutputVisitor {
   }
 
   @Override
-  public void visitRawPhpCode(RawPhpCode value) {
+  public void visitCode(Code value) {
     putValue(value);
   }
 

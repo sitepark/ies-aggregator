@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputObject;
+import com.sitepark.ies.aggregator.output.format.PlainCode;
 import com.sitepark.ies.aggregator.output.format.RawPhpCode;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.Text;
@@ -106,6 +107,17 @@ class MapConverterTest {
 
     assertThat(new MapConverter().toMap(root).get("callable"))
         .as("RawPhpCode should remain a RawPhpCode instance")
+        .isSameAs(code);
+  }
+
+  @Test
+  void plainCodeIsKeptAsTypedObject() {
+    OutputObject root = new OutputObject(null, null);
+    PlainCode code = PlainCode.of("foo()");
+    root.put("callable", code);
+
+    assertThat(new MapConverter().toMap(root).get("callable"))
+        .as("PlainCode should remain a PlainCode instance")
         .isSameAs(code);
   }
 
