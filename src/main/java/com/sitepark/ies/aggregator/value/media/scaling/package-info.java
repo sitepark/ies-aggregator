@@ -5,7 +5,7 @@
  * <p>A caller expresses the wanted output sizes as {@link
  * com.sitepark.ies.aggregator.value.media.scaling.RequestedSize RequestedSize}s (each with optional
  * width/height, {@link com.sitepark.ies.aggregator.value.media.scaling.AspectRatio AspectRatio} and
- * {@link com.sitepark.ies.aggregator.value.media.scaling.Padding Padding}). Turned into concrete
+ * {@link com.sitepark.ies.aggregator.value.media.scaling.FitMode FitMode}). Turned into concrete
  * {@link com.sitepark.ies.aggregator.value.media.scaling.ComputedSize ComputedSize}s for a given
  * {@link com.sitepark.ies.aggregator.value.media.scaling.SourceImage SourceImage}, they are bundled
  * with a background color into {@link

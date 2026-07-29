@@ -8,7 +8,8 @@ import org.jspecify.annotations.Nullable;
  * @param size the target size to scale to
  * @param backgroundColor the padding background color as a hex string without a leading {@code #}
  *     (e.g. {@code "FFFFFF"}), or {@code null} to let the adapter apply its default ({@code
- *     FFFFFF}); only relevant when the size's padding is {@link Padding#YES} or {@link Padding#FIT}
+ *     FFFFFF}); only relevant when the size's fit mode pads, i.e. {@link FitMode#PAD} or {@link
+ *     FitMode#COVER_OR_PAD}
  */
 public record ScaleImageTarget(ComputedSize size, @Nullable String backgroundColor) {
 

@@ -12,14 +12,14 @@ import org.jspecify.annotations.Nullable;
  * @param width the requested width in pixels, or {@code null} if unspecified
  * @param height the requested height in pixels, or {@code null} if unspecified
  * @param aspectRatio the requested aspect ratio, or {@code null} to inherit the root aspect ratio
- * @param padding the requested padding mode, or {@code null} to inherit the root padding
+ * @param fitMode the requested fit mode, or {@code null} to inherit the root fit mode
  * @param blank whether a blank (transparent 1×1) placeholder is requested instead of a real scaling
  */
 public record RequestedSize(
     @Nullable Integer width,
     @Nullable Integer height,
     @Nullable AspectRatio aspectRatio,
-    @Nullable Padding padding,
+    @Nullable FitMode fitMode,
     boolean blank) {
 
   /** Creates a requested size. */
@@ -27,8 +27,8 @@ public record RequestedSize(
       @Nullable Integer width,
       @Nullable Integer height,
       @Nullable AspectRatio aspectRatio,
-      @Nullable Padding padding,
+      @Nullable FitMode fitMode,
       boolean blank) {
-    return new RequestedSize(width, height, aspectRatio, padding, blank);
+    return new RequestedSize(width, height, aspectRatio, fitMode, blank);
   }
 }
