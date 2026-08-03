@@ -118,7 +118,7 @@ public final class PhpArrayWriter extends OutputVisitor {
 
   @Override
   public void visitBoolean(Boolean value) {
-    write(value ? "true" : "false");
+    write(value.toString());
   }
 
   @Override

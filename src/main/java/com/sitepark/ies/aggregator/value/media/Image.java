@@ -2,6 +2,7 @@ package com.sitepark.ies.aggregator.value.media;
 
 /** A raster image media asset, carrying its pixel dimensions. */
 public record Image(
+    int objectId,
     int id,
     String filename,
     String originFilename,

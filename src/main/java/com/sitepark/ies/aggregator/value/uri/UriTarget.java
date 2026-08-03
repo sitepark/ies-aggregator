@@ -26,7 +26,7 @@ public sealed interface UriTarget {
    * @param mediaId the id of the uploaded media binary within that object
    * @return the URI target
    */
-  static UriTarget ofMedia(int objectId, int mediaId) {
+  static UriTarget.MediaTarget ofMedia(int objectId, int mediaId) {
     return new MediaTarget(objectId, mediaId);
   }
 
