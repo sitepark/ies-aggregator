@@ -14,7 +14,7 @@ external translation table.
 
 The tree itself is **immutable**: the translation does not live in the tree but in a separate
 `Translations` table per language. This makes it possible to render the same tree into any number of
-languages — even concurrently. *Why* the types must be immutable and identity-based is explained in
+languages — even concurrently. *Why* the types must be immutable and identity-keyed is explained in
 the concept document
 [Translatable values: immutability & identity](../concepts/translations-rationale.md).
 
@@ -53,7 +53,7 @@ identity in the table (or falls back to the `sourceText` if no entry exists).
 
 | Type                        | Package          | Purpose                                                                           |
 |-----------------------------|------------------|-----------------------------------------------------------------------------------|
-| `TranslatableText`          | `value`          | Immutable, identity-based source text (`Format.TEXT/HTML`)                        |
+| `TranslatableText`          | `value`          | Immutable source text used as a translation-table key (`Format.TEXT/HTML`)         |
 | `TranslatableUri`           | `value`          | URI with a segment-wise translatable path; renders the translated URL via `render(Translations)` |
 | `TranslatableSplitText`     | `value`          | Mixed text of fixed strings and embedded `TranslatableText` segments              |
 | `TranslatableContainer`     | `value`          | Contract: provides the contained texts via `getTranslatableTextList()` (pure query) |

@@ -12,9 +12,9 @@
  * <ul>
  *   <li>{@link com.sitepark.ies.aggregator.value.text text} — the sealed {@link
  *       com.sitepark.ies.aggregator.value.text.Text Text} interface and the translation subsystem
- *       (including the identity-based {@link
- *       com.sitepark.ies.aggregator.value.text.TranslatableText TranslatableText} and {@link
- *       com.sitepark.ies.aggregator.value.text.Translations Translations}).
+ *       (including {@link com.sitepark.ies.aggregator.value.text.TranslatableText TranslatableText}
+ *       and the identity-keyed {@link com.sitepark.ies.aggregator.value.text.Translations
+ *       Translations} table).
  *   <li>{@link com.sitepark.ies.aggregator.value.uri uri} — the sealed {@link
  *       com.sitepark.ies.aggregator.value.uri.Uri Uri} interface ({@link
  *       com.sitepark.ies.aggregator.value.uri.PlainUri PlainUri} / {@link

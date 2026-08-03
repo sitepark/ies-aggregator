@@ -20,17 +20,17 @@ import org.jspecify.annotations.Nullable;
  * translation service via {@link #fromIndexed(List, List, String)}. Use {@link #SOURCE} to render
  * the untranslated source language.
  *
+ * <p>The keying is by reference and independent of {@link TranslatableText}'s {@code equals}: an
+ * {@link IdentityHashMap} compares keys by reference in any case. Two value-equal source texts at
+ * different positions in the tree therefore remain separate slots and can be translated differently.
+ * The table itself is a render-time context rather than a value, so its own {@code equals}/{@code
+ * hashCode} are identity-based.
+ *
  * <p>This type lives in the {@code value.text} package — next to {@link TranslatableText}, the
  * identity key it is built around — to avoid a package cycle with the collecting and rendering
  * packages that depend on it.
- *
- * <p>Because this table is keyed by object identity (an {@link IdentityHashMap} over {@link
- * TranslatableText} instances), {@code equals}/{@code hashCode} are deliberately
- * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
- * be meaningless here.
  */
-// Identity-keyed by design: TranslatableText instances are looked up by reference, not value
-// (see class Javadoc). The IdentityHashMap usage is intentional, not the accidental misuse the
+// The IdentityHashMap usage is intentional (see class Javadoc), not the accidental misuse the
 // Error Prone check guards against.
 @SuppressWarnings("IdentityHashMapUsage")
 public final class Translations {

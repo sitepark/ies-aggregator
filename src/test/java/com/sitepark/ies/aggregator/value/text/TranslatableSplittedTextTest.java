@@ -4,9 +4,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
 
 class TranslatableSplittedTextTest {
+
+  @Test
+  void testEquals() {
+    EqualsVerifier.forClass(TranslatableSplitText.class)
+        .withNonnullFields("splittedText")
+        // The class is not final, so equals() cannot be strengthened against subclasses.
+        .suppress(Warning.STRICT_INHERITANCE)
+        .verify();
+  }
 
   @Test
   void emptyInstanceHasNoTranslatableTexts() {

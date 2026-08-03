@@ -6,30 +6,35 @@
 
 The practical application (collecting, translating, and rendering texts) is described in the
 [Translation Pipeline](../how-to/translations-pipeline.md). This document explains the two
-design decisions behind it: why the types are **immutable and identity-based** and
+design decisions behind it: why the types are **immutable and identity-keyed** and
 why they deliberately remain **in the `value` package**.
 
-## Why immutable and identity-based?
+## Why immutable and identity-keyed?
 
-The translation types are **immutable** and are used **by their object identity** –
-not by their value:
+The translation types are **immutable** and are keyed **by their object identity**:
 
 - The collector returns the same instances that are present in the tree. `Translations.fromIndexed(...)`
   maps exactly those instances to their translation; the writer reads through it during rendering.
 - If one worked with copies, the connection between "collected text" and "text in the
   tree" would be lost – the approach only works through identity.
+- Two occurrences of the *same* source text at different places in the tree are two separate
+  translation slots and may be translated differently.
 
-That is why `TranslatableText`, `TranslatableUri`, and `TranslatableSplitText` define **no**
-`equals`/`hashCode`: they are identity keys of the `Translations` table (an
-`IdentityHashMap`). Value equality would be misleading – two "equal" source texts at different
-places may be translated differently – and dangerous as an ordinary HashMap key.
-Reference identity is the correct semantics here.
+**The identity lives in the table, not in `equals`.** `Translations` is backed by an
+`IdentityHashMap`, which compares its keys by reference regardless of what `equals`/`hashCode` do –
+that is guaranteed by the JDK contract of that class. `TranslatableText.equals()` is therefore never
+consulted anywhere on the translation path.
 
-This distinguishes them from the **value-equal** objects `Text` and `Uri`, which possess value `equals`/
-`hashCode`. Both categories are immutable; the difference lies in the
-equality semantics (value vs. identity). This distinction is recorded in the
-[`package-info.java`](../../src/main/java/com/sitepark/ies/aggregator/value/package-info.java) of the
-`value` package.
+That is why the translatable types can define ordinary **value-based** `equals`/`hashCode`, like every
+other value object of the `value` package. Value equality is what callers and tests need in order to
+compare two instances (`assertThat(actual).isEqualTo(expected)`); it costs the translation mechanism
+nothing. Where the *slot* – rather than the value – matters, the distinction is made by reference:
+`==`, or `isNotSameAs` in a test.
+
+> **Do not manage translation slots in a value-hashing collection.** A `HashMap`, `HashSet` or
+> `Stream.distinct()` over these types collapses value-equal occurrences into one and would silently
+> merge their translations. Always go through `Translations` / an `IdentityHashMap`. The collector
+> deliberately appends to a plain `ArrayList` for the same reason.
 
 ## Deliberate decision: staying in the `value` package
 
@@ -52,6 +57,5 @@ A sub-package `value.translation` does not help: in Java, parent and child packa
 independent in dependency terms, so the cycle would remain.
 
 **Consequence:** The translation types together with `Translations`/`SourceText` stay with `Text`/`Uri` in the
-`value` package. The domain distinction "value-equal object vs. identity-based value"
-is made **via documentation** (`package-info.java`, this document), not enforced by package
-boundaries.
+`value` package. Their additional role as identity keys of the `Translations` table is recorded
+**via documentation** (`package-info.java`, this document), not enforced by package boundaries.

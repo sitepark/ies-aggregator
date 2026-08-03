@@ -86,6 +86,29 @@ class TranslatableTextCollectorTest {
   }
 
   @Test
+  void duplicateSourceTextsAreCollectedSeparately() {
+    OutputObject root = new OutputObject(null, null);
+    TranslatableText first = TranslatableText.of("same");
+    TranslatableText second = TranslatableText.of("same");
+    root.put("a", first);
+    root.node("meta").put("b", second);
+
+    List<TranslatableText> collected = new TranslatableTextCollector().collect(root);
+
+    assertThat(collected)
+        .as(
+            "Value-equal texts must not be deduplicated: each occurrence is its own translation"
+                + " slot")
+        .hasSize(2);
+    assertThat(collected.get(0))
+        .as("The first collected text should be the exact instance from the tree")
+        .isSameAs(first);
+    assertThat(collected.get(1))
+        .as("The second collected text should be the exact instance from the tree")
+        .isSameAs(second);
+  }
+
+  @Test
   void collectsFromTranslatableUriPath() {
     OutputObject root = new OutputObject(null, null);
     TranslatableUri uri = TranslatableUri.of(URI.create("https://example.com/foo/bar"));
