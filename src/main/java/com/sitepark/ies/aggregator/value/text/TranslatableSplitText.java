@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.value.text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A mixed-content value object that interleaves plain strings and {@link TranslatableText}
@@ -13,10 +14,10 @@ import java.util.List;
  * The {@link TranslatableContainer} implementation returns only the {@link TranslatableText}
  * segments so they can be collected for translation.
  *
- * <p>Because this container holds mutable, identity-keyed {@link TranslatableText} segments (see
- * {@link TranslatableText}), {@code equals}/{@code hashCode} are deliberately
- * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
- * be semantically wrong here.
+ * <p>{@code equals}/{@code hashCode} are <strong>value-based</strong> over the segment list, so
+ * instances can be compared and asserted on like any other value object. This does not affect
+ * translation: the embedded {@link TranslatableText} segments stay separate translation slots,
+ * because {@link Translations} keys them by object identity (see {@link TranslatableText}).
  */
 public class TranslatableSplitText implements TranslatableContainer {
   private final List<Object> splittedText = new ArrayList<>();
@@ -82,13 +83,12 @@ public class TranslatableSplitText implements TranslatableContainer {
   }
 
   @Override
-  public boolean equals(Object o) {
-    // Identity-based by design: see class Javadoc.
-    return this == o;
+  public boolean equals(@Nullable Object o) {
+    return (o instanceof TranslatableSplitText that) && this.splittedText.equals(that.splittedText);
   }
 
   @Override
   public int hashCode() {
-    return System.identityHashCode(this);
+    return this.splittedText.hashCode();
   }
 }

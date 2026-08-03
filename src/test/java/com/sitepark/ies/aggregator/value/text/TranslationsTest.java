@@ -51,7 +51,9 @@ class TranslationsTest {
     Translations table = Translations.fromIndexed(List.of(registered), List.of("translated"), "de");
 
     assertThat(table.translationFor(sameValueDifferentInstance))
-        .as("A distinct instance with equal source must not pick up the registered translation")
+        .as(
+            "Although both instances are value-equal, the table keys by reference, so a distinct"
+                + " instance must not pick up the registered translation")
         .isEqualTo("same");
   }
 

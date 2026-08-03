@@ -1,17 +1,23 @@
 package com.sitepark.ies.aggregator.value.text;
 
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+
 /**
- * An immutable, identity-based source text that can be translated.
+ * An immutable source text that can be translated.
  *
- * <p>Unlike {@link PlainText}, this type is used <em>by identity</em>: it is collected from the
- * output tree by a {@code TranslatableTextCollector} and serves as the key of an external
- * translation table (see {@code com.sitepark.ies.aggregator.output.collect.Translations}). The
- * instance itself only carries the source text and its {@link Format}; the translation lives
- * outside the tree.
+ * <p>Unlike {@link PlainText}, this type is used <em>as a translation key</em>: it is collected from
+ * the output tree by a {@code TranslatableTextCollector} and serves as the key of an external
+ * translation table ({@link Translations}). The instance itself only carries the source text and its
+ * {@link Format}; the translation lives outside the tree.
  *
- * <p>Because instances are used as identity keys, {@code equals}/{@code hashCode} are deliberately
- * <strong>identity-based</strong> (reference equality), not value-based: two distinct occurrences
- * of the same source text may be translated differently depending on their position in the tree.
+ * <p>{@code equals}/{@code hashCode} are <strong>value-based</strong> (source text and format), so
+ * instances can be compared like any other value object. {@link Translations} does not rely on them
+ * — it keys by reference — so two value-equal occurrences of the same source text remain separate
+ * translation slots and may be translated differently depending on their position in the tree. For
+ * that reason, never manage translation slots in a value-hashing collection ({@code HashMap}, {@code
+ * HashSet}, {@code Stream.distinct()}): it would collapse them into one. Always go through {@link
+ * Translations}.
  */
 public final class TranslatableText implements Text {
   private final Format format;
@@ -60,8 +66,11 @@ public final class TranslatableText implements Text {
 
   /**
    * Returns an independent copy carrying the same source text and format but with a fresh identity.
-   * Because this type is used by identity as a translation-table key, a copy is an independent
-   * translation slot: it can be translated separately from the instance it was copied from.
+   * Because {@link Translations} keys by identity, a copy is an independent translation slot: it can
+   * be translated separately from the instance it was copied from.
+   *
+   * <p>The copy is <em>value-equal</em> to its origin — {@code equals} cannot tell them apart. Use
+   * {@code ==} (or AssertJ's {@code isNotSameAs}) to distinguish translation slots.
    *
    * @return a copy with a new identity
    */
@@ -106,14 +115,15 @@ public final class TranslatableText implements Text {
   }
 
   @Override
-  public boolean equals(Object o) {
-    // Identity-based by design: see class Javadoc.
-    return this == o;
+  public boolean equals(@Nullable Object o) {
+    return (o instanceof TranslatableText that)
+        && this.sourceText.equals(that.sourceText)
+        && this.format == that.format;
   }
 
   @Override
   public int hashCode() {
-    return System.identityHashCode(this);
+    return Objects.hash(this.sourceText, this.format);
   }
 
   public enum Format {

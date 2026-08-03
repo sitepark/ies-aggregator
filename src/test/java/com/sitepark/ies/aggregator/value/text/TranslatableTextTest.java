@@ -3,9 +3,17 @@ package com.sitepark.ies.aggregator.value.text;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
 class TranslatableTextTest {
+
+  @Test
+  void testEquals() {
+    EqualsVerifier.forClass(TranslatableText.class)
+        .withNonnullFields("sourceText", "format")
+        .verify();
+  }
 
   @Test
   void nullSourceIsNormalizedToEmptyText() {
@@ -52,20 +60,6 @@ class TranslatableTextTest {
   }
 
   @Test
-  void copyCarriesSameSourceTextAndFormat() {
-    TranslatableText original = TranslatableText.of("<b>x</b>", TranslatableText.Format.HTML);
-
-    TranslatableText copy = original.copy();
-
-    assertThat(copy.getSourceText())
-        .as("Copy should carry the same source text")
-        .isEqualTo("<b>x</b>");
-    assertThat(copy.getFormat())
-        .as("Copy should carry the same format")
-        .isEqualTo(TranslatableText.Format.HTML);
-  }
-
-  @Test
   void copyHasIndependentIdentityAsTranslationKey() {
     TranslatableText original = TranslatableText.of("foo");
     TranslatableText copy = original.copy();
@@ -79,6 +73,38 @@ class TranslatableTextTest {
     assertThat(table.translationFor(copy))
         .as("Original and copy are distinct keys, so the copy keeps its own translation")
         .isEqualTo("copied");
+  }
+
+  @Test
+  void valueEqualTextsRemainSeparateTranslationKeys() {
+    TranslatableText first = TranslatableText.of("foo");
+    TranslatableText second = TranslatableText.of("foo");
+
+    Translations table = Translations.fromIndexed(List.of(first, second), List.of("A", "B"), "de");
+
+    assertThat(first)
+        .as("Two separately created texts with the same source are value-equal")
+        .isEqualTo(second);
+    assertThat(table.translationFor(first))
+        .as("Value-equal texts are still distinct table keys, so the first keeps its translation")
+        .isEqualTo("A");
+    assertThat(table.translationFor(second))
+        .as("Value-equal texts are still distinct table keys, so the second keeps its translation")
+        .isEqualTo("B");
+  }
+
+  @Test
+  void copyIsValueEqualButADistinctInstance() {
+    TranslatableText original = TranslatableText.of("<b>x</b>", TranslatableText.Format.HTML);
+
+    TranslatableText copy = original.copy();
+
+    assertThat(copy)
+        .as("A copy carries the same source text and format as its origin")
+        .isEqualTo(original);
+    assertThat(copy)
+        .as("A copy is a distinct instance, which is what makes it an independent translation slot")
+        .isNotSameAs(original);
   }
 
   @Test

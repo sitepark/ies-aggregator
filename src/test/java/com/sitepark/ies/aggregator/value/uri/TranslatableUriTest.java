@@ -6,9 +6,30 @@ import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.text.Translations;
 import java.net.URI;
 import java.util.List;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
 
 class TranslatableUriTest {
+
+  @Test
+  void testEquals() {
+    EqualsVerifier.forClass(TranslatableUri.class)
+        .withNonnullFields("uri")
+        // translatablePath, microsite and id are assigned after construction by initPath/copyTo
+        .suppress(Warning.NONFINAL_FIELDS)
+        .verify();
+  }
+
+  @Test
+  void uriParsedFromTheSameSourceIsValueEqual() {
+    TranslatableUri first = TranslatableUri.of(URI.create("https://example.com/foo/bar-42"));
+    TranslatableUri second = TranslatableUri.of(URI.create("https://example.com/foo/bar-42"));
+
+    assertThat(first)
+        .as("Two URIs parsed from the same source should be value-equal")
+        .isEqualTo(second);
+  }
 
   @Test
   void pathSegmentsAreExposedAsTranslatableTexts() {

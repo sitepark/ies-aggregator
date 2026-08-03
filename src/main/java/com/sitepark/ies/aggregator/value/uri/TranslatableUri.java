@@ -6,6 +6,7 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
@@ -24,10 +25,11 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Object IDs embedded as a trailing {@code -<id>} suffix are preserved across translations.
  *
- * <p>Because this URI holds mutable, identity-keyed {@link TranslatableText} path segments (see
- * {@link TranslatableText}), {@code equals}/{@code hashCode} are deliberately
- * <strong>identity-based</strong> (reference equality), not value-based: value-based equality would
- * be semantically wrong here.
+ * <p>{@code equals}/{@code hashCode} are <strong>value-based</strong> over the source URI, the
+ * translatable path segments, the microsite name and the object ID, so instances can be compared and
+ * asserted on like any other value object. This does not affect translation: the path segments stay
+ * separate translation slots, because {@link Translations} keys them by object identity (see {@link
+ * TranslatableText}).
  */
 public final class TranslatableUri implements Uri, TranslatableContainer {
 
@@ -234,13 +236,16 @@ public final class TranslatableUri implements Uri, TranslatableContainer {
   }
 
   @Override
-  public boolean equals(Object o) {
-    // Identity-based by design: see class Javadoc.
-    return this == o;
+  public boolean equals(@Nullable Object o) {
+    return (o instanceof TranslatableUri that)
+        && this.uri.equals(that.uri)
+        && Objects.equals(this.translatablePath, that.translatablePath)
+        && Objects.equals(this.microsite, that.microsite)
+        && this.id == that.id;
   }
 
   @Override
   public int hashCode() {
-    return System.identityHashCode(this);
+    return Objects.hash(this.uri, this.translatablePath, this.microsite, this.id);
   }
 }
