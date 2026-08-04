@@ -10,8 +10,9 @@ import com.sitepark.ies.aggregator.resolver.Resolver;
  * lifecycle hooks opts in by implementing one or more of the optional capability interfaces:
  *
  * <ul>
- *   <li>{@link SubAggregatorAware} — for hierarchical composition with sub-aggregators
  *   <li>{@link Configurable} — for typed {@link Configuration}
+ *   <li>{@link SubAggregatorAware} — for hierarchical composition with sub-aggregators
+ *   <li>{@link OptionsAware} — for runtime-specific {@link Options} per aggregation run
  * </ul>
  *
  * <p>The orchestrator invokes the lifecycle hooks (when present) in the order listed above before

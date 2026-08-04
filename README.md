@@ -52,9 +52,19 @@ flowchart LR
 In a typical aggregation, all roles work together:
 
 ```java
-public class LinkListAggregator implements Aggregator {
+public class LinkListAggregator implements Aggregator, OptionsAware<LinkListOptions> {
 
-  private final LinkListAssembler linkListAssembler;
+  private final AssemblerFactory assemblerFactory;
+  private LinkListOptions options;
+
+  public LinkListAggregator(AssemblerFactory assemblerFactory) {
+    this.assemblerFactory = assemblerFactory;
+  }
+
+  @Override
+  public void setOptions(LinkListOptions options) {
+    this.options = options;
+  }
 
   @Override
   public void aggregate(Resolver source, OutputNode output) {
@@ -62,7 +72,12 @@ public class LinkListAggregator implements Aggregator {
     //                  RESOLVER         OUTPUTNODE
     //                  (Source)         (Target)
 
-    linkListAssembler.assemble(LinkListRequest.of(source, options), null)
+    LinkListAssembler linkListAssembler =
+        this.assemblerFactory.create("linkList", LinkListAssembler.class, source);
+    //       ^^^^^^^^^^^^^^^^
+    //       ASSEMBLERFACTORY resolves the key to an implementation and returns a fresh instance
+
+    linkListAssembler.assemble(LinkListRequest.of(source, this.options), null)
         //  ^^^^^^^^^
         //  ASSEMBLER returns a typed domain object
         .ifPresent(linkList -> output.put("linkList", linkList));
@@ -71,6 +86,15 @@ public class LinkListAggregator implements Aggregator {
   }
 }
 ```
+
+An Aggregator never receives an Assembler directly — it receives the
+[`AssemblerFactory`](docs/reference/assembler.md#registration-via-assemblerbinding-and-assemblerfactory)
+and looks the Assembler up by key per aggregation run. That indirection is what makes an Assembler
+replaceable: a customer-specific implementation registers under the same key with a higher priority
+and wins, without the Aggregator changing. Passing `source` along lets the factory additionally
+restrict the candidates to those applicable in the current scope. Where several implementations are
+meant to build on each other instead of overriding, `createChain(key, type, source)` returns the
+whole chain (see [Assembler customization](docs/how-to/assembler-customization.md)).
 
 Assemblers are optional: for simple fields, an Aggregator can read directly from the Resolver and
 write to the OutputNode. Only when constructing a value involves multiple steps (several fields,
