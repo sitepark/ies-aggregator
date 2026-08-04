@@ -12,6 +12,7 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.lang.reflect.Array;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -122,6 +123,7 @@ public abstract class OutputVisitor {
       case CharSequence s -> s.isEmpty();
       case Number _ -> false;
       case Boolean _ -> false;
+      case Instant _ -> false;
       case OutputList l -> allRenderEmpty(l.items());
       case OutputNode n -> allRenderEmpty(n.entries().values());
       case Map<?, ?> m -> allRenderEmpty(m.values());
@@ -281,6 +283,7 @@ public abstract class OutputVisitor {
       case String s -> visitString(s);
       case Boolean b -> visitBoolean(b);
       case Number n -> visitNumber(n);
+      case Instant i -> visitInstant(i);
       case Map<?, ?> m -> visitMap(m);
       case Collection<?> c -> visitCollection(c);
       case Object[] a -> visitArray(a);
@@ -424,6 +427,18 @@ public abstract class OutputVisitor {
    * @param value the boolean value
    */
   public void visitBoolean(Boolean value) {}
+
+  /**
+   * Called when the current value is an {@link Instant}. Default: delegates to {@link
+   * #visitString(String)} with the ISO-8601 representation of the instant. Formats that expect a
+   * different representation override this — the {@code PhpArrayWriter} writes epoch seconds as a
+   * bare number.
+   *
+   * @param value the instant value
+   */
+  public void visitInstant(Instant value) {
+    visitString(value.toString());
+  }
 
   /** Called for {@code null} values. Default implementation is a no-op. */
   public void visitNull() {}

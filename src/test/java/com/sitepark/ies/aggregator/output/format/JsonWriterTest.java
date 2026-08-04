@@ -15,6 +15,7 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.io.StringWriter;
 import java.net.URI;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,16 @@ class JsonWriterTest {
     assertThat(render(root))
         .as("Scalars should render as their JSON value form, comma-separated, without spaces")
         .isEqualTo("{\"name\":\"Alice\",\"age\":42,\"active\":true}");
+  }
+
+  @Test
+  void instantRendersAsIso8601String() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("lastModified", Instant.ofEpochSecond(1_700_000_000L));
+
+    assertThat(render(root))
+        .as("Instant should render as a quoted ISO-8601 string, not as epoch seconds")
+        .isEqualTo("{\"lastModified\":\"2023-11-14T22:13:20Z\"}");
   }
 
   @OutputKeepIfEmpty

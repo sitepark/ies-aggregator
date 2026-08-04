@@ -10,6 +10,7 @@ import com.sitepark.ies.aggregator.output.format.RawPhpCode;
 import com.sitepark.ies.aggregator.value.ResolvedValue;
 import com.sitepark.ies.aggregator.value.text.Text;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,17 @@ class MapConverterTest {
     assertThat(new MapConverter().toMap(root))
         .as("Scalar fields should be preserved as-is in the resulting map")
         .isEqualTo(expected);
+  }
+
+  @Test
+  void instantIsKeptAsTypedObject() {
+    OutputObject root = new OutputObject(null, null);
+    Instant lastModified = Instant.ofEpochSecond(1_700_000_000L);
+    root.put("lastModified", lastModified);
+
+    assertThat(new MapConverter().toMap(root))
+        .as("Instant should stay an Instant instead of being stringified or converted to seconds")
+        .isEqualTo(Map.of("lastModified", lastModified));
   }
 
   @Test
