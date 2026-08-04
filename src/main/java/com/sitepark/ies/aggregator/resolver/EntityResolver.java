@@ -24,11 +24,11 @@ public interface EntityResolver extends Resolver {
   /**
    * Returns an empty entity resolver that is its own root.
    *
-   * <p>Unlike {@link #empty(ResolverPath)}, which keeps the navigation path of a surrounding object,
-   * the returned resolver starts a fresh path: it is its own {@link Resolver#root() root} and {@link
-   * Resolver#globalRoot() global root}. This is the null-object for a root lookup that yielded
-   * nothing — see {@link com.sitepark.ies.aggregator.port.RootResolverProvider}, whose methods return
-   * it when no object matches the given id or anchor.
+   * <p>Unlike {@link #empty(ResolverPath)}, which keeps the navigation path of a surrounding
+   * object, the returned resolver starts a fresh path: it is its own {@link Resolver#root() root}
+   * and {@link Resolver#globalRoot() global root}. This is the null-object for a root lookup that
+   * yielded nothing — see {@link com.sitepark.ies.aggregator.port.RootResolverProvider}, whose
+   * methods return it when no object matches the given id or anchor.
    *
    * @return an empty, self-rooted entity resolver
    */
@@ -41,6 +41,8 @@ public interface EntityResolver extends Resolver {
   String entityType();
 
   String entityName();
+
+  String entityAnchor();
 
   @Nullable GroupResolver parentGroup();
 
