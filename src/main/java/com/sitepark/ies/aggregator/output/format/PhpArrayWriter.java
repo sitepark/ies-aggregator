@@ -11,6 +11,7 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,9 @@ import java.util.Map;
  *       \b}, {@code \t}, {@code \n}, {@code \f}, {@code \r}, {@code \$}); remaining control
  *       characters below {@code 0x20} are escaped as {@code \xXX}.
  *   <li>{@link Number} and {@link Boolean} are written unquoted.
+ *   <li>{@link Instant} is written unquoted as epoch seconds — the PHP timestamp representation
+ *       expected by {@code date()}, {@code strtotime()} and friends. Sub-second precision is
+ *       truncated.
  *   <li>{@code null} is written as {@code null}.
  * </ul>
  *
@@ -119,6 +123,11 @@ public final class PhpArrayWriter extends OutputVisitor {
   @Override
   public void visitBoolean(Boolean value) {
     write(value.toString());
+  }
+
+  @Override
+  public void visitInstant(Instant value) {
+    write(String.valueOf(value.getEpochSecond()));
   }
 
   @Override

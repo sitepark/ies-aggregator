@@ -13,6 +13,7 @@ import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,8 +30,9 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Scalar value classes ({@link PlainText}, {@link TranslatableText}, {@link PlainUri}, {@link
  * TranslatableUri}, {@link TranslatableSplitText}, {@link Code}) are kept as-is — their typed
- * identity is preserved rather than stringified. {@link ResolvedValue} is unwrapped to its inner
- * value, so the result of {@code resolvedValue.value()} appears in the map.
+ * identity is preserved rather than stringified. The same holds for {@link Instant}, which stays an
+ * {@code Instant} instead of being converted to a string or epoch seconds. {@link ResolvedValue} is
+ * unwrapped to its inner value, so the result of {@code resolvedValue.value()} appears in the map.
  */
 public final class MapConverter extends OutputVisitor {
 
@@ -179,6 +181,11 @@ public final class MapConverter extends OutputVisitor {
 
   @Override
   public void visitBoolean(Boolean value) {
+    putValue(value);
+  }
+
+  @Override
+  public void visitInstant(Instant value) {
     putValue(value);
   }
 

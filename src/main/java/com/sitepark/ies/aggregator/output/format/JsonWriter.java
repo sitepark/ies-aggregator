@@ -33,6 +33,8 @@ import java.util.Map;
  *       {@link TranslatableSplitText}, and both kinds of {@link Code} ({@link RawPhpCode}, {@link
  *       PlainCode}) are written as their {@code toString()} representation (a quoted JSON string).
  *   <li>{@link Number} and {@link Boolean} are written unquoted.
+ *   <li>{@link java.time.Instant} is written as a quoted ISO-8601 string (unlike the {@link
+ *       PhpArrayWriter}, which emits epoch seconds).
  *   <li>{@code null} is written as {@code null}.
  * </ul>
  *

@@ -13,6 +13,7 @@ import com.sitepark.ies.aggregator.value.text.Translations;
 import com.sitepark.ies.aggregator.value.uri.TranslatableUri;
 import java.io.StringWriter;
 import java.net.URI;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,36 @@ class PhpArrayWriterTest {
     assertThat(render(root))
         .as("Boolean should be written as bare true/false")
         .isEqualTo("[\n\t\"active\" => true\n]");
+  }
+
+  @Test
+  void instantIsWrittenAsEpochSeconds() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("lastModified", Instant.ofEpochSecond(1_700_000_000L));
+
+    assertThat(render(root))
+        .as("Instant should be written as bare epoch seconds")
+        .isEqualTo("[\n\t\"lastModified\" => 1700000000\n]");
+  }
+
+  @Test
+  void instantSubSecondPrecisionIsTruncated() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("lastModified", Instant.ofEpochSecond(1_700_000_000L, 750_000_000L));
+
+    assertThat(render(root))
+        .as("Nanosecond part of an Instant should be truncated, not rounded")
+        .isEqualTo("[\n\t\"lastModified\" => 1700000000\n]");
+  }
+
+  @Test
+  void epochInstantIsKeptAsZero() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("lastModified", Instant.EPOCH);
+
+    assertThat(render(root))
+        .as("Instant at epoch should be kept as 0, not dropped as empty")
+        .isEqualTo("[\n\t\"lastModified\" => 0\n]");
   }
 
   @Test

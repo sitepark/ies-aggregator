@@ -62,6 +62,12 @@ representation.
   Callback.of(Code.php("myHandler()"));  // "handler" => myHandler()
   Callback.of(Code.of("myHandler"));     // "handler" => "myHandler"
   ```
+- **Timestamps per format:** An `Instant` field is dispatched to `visitInstant(Instant)`. The
+  `PhpArrayWriter` emits it as **bare epoch seconds** — the timestamp form PHP's `date()`/
+  `strtotime()` expect (sub-second precision is truncated) — while the default renders the ISO-8601
+  string, so the `JsonWriter` writes `"2023-11-14T22:13:20Z"` and the `MapConverter` keeps the
+  `Instant` object itself. Like numbers and booleans, an `Instant` never counts as empty:
+  `Instant.EPOCH` renders as `0` instead of being dropped.
 - **Extensible:** Custom output formats or analyses are created by subclassing
   `OutputVisitor`.
 
@@ -296,7 +302,8 @@ A value counts as empty when it is:
 - a **container that becomes empty after pruning** — evaluated **recursively**, so a nested object,
   list, map or domain object whose children are all empty is itself dropped.
 
-Numbers and booleans — **including `0` and `false`** — and `RawPhpCode` never count as empty; they
+Numbers, booleans and `Instant` — **including `0`, `false` and `Instant.EPOCH`** — and `RawPhpCode`
+never count as empty; they
 are meaningful values and are always kept. A `PlainCode`, in contrast, is empty when its content is
 empty, just like a `String`.
 
