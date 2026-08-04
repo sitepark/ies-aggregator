@@ -118,6 +118,11 @@ public final class EmptyEntityResolver implements EntityResolver {
     return "";
   }
 
+  @Override
+  public String entityAnchor() {
+    return "";
+  }
+
   /**
    * Returns {@code null}; an empty entity has no parent group.
    *
