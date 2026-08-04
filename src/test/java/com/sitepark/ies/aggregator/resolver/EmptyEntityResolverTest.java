@@ -138,6 +138,37 @@ class EmptyEntityResolverTest {
         .isNotEqualTo("not a resolver");
   }
 
+  @Test
+  void emptyRootIsEmpty() {
+    assertThat(EntityResolver.emptyRoot().isEmpty())
+        .as("A self-rooted empty entity resolver should report itself as empty")
+        .isTrue();
+  }
+
+  @Test
+  void emptyRootIsItsOwnRootAndGlobalRoot() {
+    EntityResolver resolver = EntityResolver.emptyRoot();
+
+    assertThat(resolver.root())
+        .as("A self-rooted empty entity resolver should be its own root")
+        .isSameAs(resolver);
+    assertThat(resolver.globalRoot())
+        .as("A self-rooted empty entity resolver should be its own global root")
+        .isSameAs(resolver);
+  }
+
+  @Test
+  void emptyRootStartsAFreshPath() {
+    EntityResolver resolver = EntityResolver.emptyRoot();
+
+    assertThat(resolver.path().size())
+        .as("The path of a self-rooted empty entity resolver should consist of a single segment")
+        .isOne();
+    assertThat(resolver.path().current().resolver())
+        .as("The only path segment should point back at the resolver itself")
+        .isSameAs(resolver);
+  }
+
   /**
    * Builds a two-level path whose {@link ResolverPath#globalRoot()} is {@code globalRoot} and whose
    * {@link ResolverPath#root()} is {@code root}, by entering a scope and capturing the resulting

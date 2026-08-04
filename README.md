@@ -41,6 +41,7 @@ flowchart LR
 | Question                                                              | Answer                                     |
 |-----------------------------------------------------------------------|--------------------------------------------|
 | How do I get individual values from a source?                         | **Resolver**                               |
+| How do I read another object that is not linked from the current one? | **RootResolverProvider** (see [Resolver](docs/reference/resolver.md#obtaining-a-root-resolver)) |
 | How do I build a typed value object (e.g. `Link`)?                    | **Assembler**                              |
 | How do I write results into the target structure?                     | **Aggregator** + **OutputNode**            |
 | How do I structure the data hierarchy to be generated?                | **OutputNode** (optionally with sub-aggregators) |

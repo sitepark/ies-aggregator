@@ -369,7 +369,8 @@ class ResolvedValueTest {
         new Hash(HashAlgorithm.SHA_256, "abc"),
         new ImageMetadata(null, null, null, null, null, FocalPoint.CENTER),
         800,
-        600);
+        600,
+        null);
   }
 
   @Test

@@ -17,6 +17,11 @@
  * com.sitepark.ies.aggregator.value.media.GenericMetadata GenericMetadata} for the shared fields
  * and {@link com.sitepark.ies.aggregator.value.media.ImageMetadata ImageMetadata}, which adds an
  * image {@link com.sitepark.ies.aggregator.value.media.FocalPoint FocalPoint}.
+ *
+ * <p>The focal point is descriptive data an editor states, so it belongs to the metadata. The {@link
+ * com.sitepark.ies.aggregator.value.media.ColorSwatch ColorSwatch} of an {@link
+ * com.sitepark.ies.aggregator.value.media.Image Image} is not: like the pixel dimensions it is
+ * derived from the binary itself and therefore sits on the asset.
  */
 @NullMarked
 package com.sitepark.ies.aggregator.value.media;

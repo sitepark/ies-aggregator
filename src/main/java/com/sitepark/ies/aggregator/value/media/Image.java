@@ -1,6 +1,11 @@
 package com.sitepark.ies.aggregator.value.media;
 
-/** A raster image media asset, carrying its pixel dimensions. */
+import org.jspecify.annotations.Nullable;
+
+/**
+ * A raster image media asset, carrying its pixel dimensions and the colors extracted from it — the
+ * swatch is {@code null} if none were extracted.
+ */
 public record Image(
     int objectId,
     int id,
@@ -11,5 +16,6 @@ public record Image(
     Hash hash,
     ImageMetadata metadata,
     int width,
-    int height)
+    int height,
+    @Nullable ColorSwatch colorSwatch)
     implements Media {}
