@@ -80,6 +80,58 @@ becomes the new `globalRoot()` (not just the current-scope `root()`, as a plain 
 An empty resolver from a failed lookup still carries the surrounding `path()`, so callers can
 navigate back up the tree even after a missing key (`Resolver.empty(path)`).
 
+## Obtaining a root resolver
+
+There are three ways to get hold of a resolver:
+
+1. The `source` resolver the framework hands to an [Aggregator](aggregator.md) or
+   [Assembler](assembler.md) — the object currently being aggregated.
+2. `resolve(key)` / `resolveLink(key)` — navigating along the fields of that object.
+3. The **`RootResolverProvider`** port — for an object that is *not* reachable from the current one,
+   e.g. a portal page configured by anchor.
+
+The port is injected like any other (`ChannelProvider`, `MediaProvider`, …) via `@Inject`:
+
+```java
+public interface RootResolverProvider {
+
+    EntityResolver getById(int id);          // address by object id
+
+    EntityResolver getByAnchor(String anchor); // address by anchor, e.g. "hauptseite"
+}
+```
+
+Its contract:
+
+- **Fresh root:** the returned resolver starts a brand-new resolver tree — it is its own `root()` and
+  `globalRoot()`, and its `path()` begins fresh. It inherits neither the scope nor the path of the
+  caller, so navigating up from it never leads back into the calling object.
+- **Always an `EntityResolver`:** the target of a root lookup is an object, so it carries
+  `entityId()`, `entityType()` and `entityName()`.
+- **Null-safe:** an unknown id or anchor is a normal case (deleted object, misspelled anchor in an
+  editorial field), not an error. Both methods then return an empty, self-rooted `EntityResolver`
+  (`EntityResolver.emptyRoot()`) — never `null`, never an exception. Test with `isEmpty()`.
+- **Anchors over ids:** an anchor is the stable, human-readable alias of an object. Prefer it for
+  objects referenced from configuration, because it survives copying and re-importing while an id
+  does not.
+
+```java
+// A portal page configured by anchor, not reachable via a link of the current object
+EntityResolver portal = this.rootResolverProvider.getByAnchor("hauptseite");
+if (!portal.isEmpty()) {
+    Text title = portal.value("sp_title").asText();
+}
+```
+
+`RootResolverProvider` is not to be confused with `RootResolverFactory`:
+
+| | `RootResolverFactory` | `RootResolverProvider` |
+|---------------|-------------------------------------------------------------|--------------------------------------------|
+| Caller        | the IES runtime — starts a generation run                   | aggregation code — *during* a run          |
+| Addressing    | by id only                                                  | by id **or** anchor                        |
+| Path          | standalone, or anchored into an existing path (`enterRoot`)  | always standalone                          |
+| Unknown target| not part of the contract                                    | empty, self-rooted `EntityResolver`        |
+
 ## Example
 
 ```java
@@ -117,3 +169,5 @@ public void example() {
 - A resolver is **not** an aggregator – it produces no output, but serves as a read source.
 - In method signatures, a resolver typically appears as the parameter `source` – its
   **role** is that of a data source, its **capability** is that of a resolver.
+- A root resolver from the [`RootResolverProvider`](#obtaining-a-root-resolver) is **not** a
+  sub-resolver – it inherits neither the scope nor the path of the code that requested it.

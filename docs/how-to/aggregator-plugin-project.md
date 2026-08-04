@@ -252,13 +252,18 @@ package com.sitepark.custom;
 import com.sitepark.ies.aggregator.Aggregator;
 import com.sitepark.ies.aggregator.AggregatorException;
 import com.sitepark.ies.aggregator.output.OutputNode;
+import com.sitepark.ies.aggregator.port.RootResolverProvider;
+import com.sitepark.ies.aggregator.resolver.EntityResolver;
 import com.sitepark.ies.aggregator.resolver.Resolver;
 import jakarta.inject.Inject;
 
 public class HeadlineAggregator implements Aggregator {
 
+    private final RootResolverProvider rootResolverProvider;
+
     @Inject
-    HeadlineAggregator() {
+    HeadlineAggregator(RootResolverProvider rootResolverProvider) {
+        this.rootResolverProvider = rootResolverProvider;
     }
 
     @Override
@@ -267,9 +272,20 @@ public class HeadlineAggregator implements Aggregator {
         if (!headline.isBlank()) {
             output.put("headline", headline);
         }
+
+        // A second object, addressed by anchor instead of by a link of the current object
+        EntityResolver portal = this.rootResolverProvider.getByAnchor("hauptseite");
+        if (!portal.isEmpty()) {
+            output.put("portalTitle", portal.value("sp_title").asString(""));
+        }
     }
 }
 ```
+
+Every port of the API can be injected this way. `RootResolverProvider` is the entry point to an
+object that the current one does not link to — it always returns a fresh root and an empty
+`EntityResolver` for an unknown id or anchor, see
+[Obtaining a root resolver](../reference/resolver.md#obtaining-a-root-resolver).
 
 To contribute reusable, type-driven value builders (and let projects override them), register an
 `@AssemblerBinding` instead — see [Extending Assemblers](assembler-customization.md).
