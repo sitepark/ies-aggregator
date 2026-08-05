@@ -136,8 +136,7 @@ public class LinkAssemblerDispatcher {
 public final class InternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     @Inject
-    InternalLinkAssembler(ChannelUriProvider uriProvider, ChannelProvider channelProvider,
-                          HeadlineAssembler headlineAssembler) { ...}
+    InternalLinkAssembler(Channel channel, HeadlineAssembler headlineAssembler) { ...}
 
     @Override
     public Optional<Link.InternalLink> assemble(

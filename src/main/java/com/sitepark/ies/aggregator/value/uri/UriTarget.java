@@ -1,8 +1,8 @@
 package com.sitepark.ies.aggregator.value.uri;
 
 /**
- * Describes what a {@link com.sitepark.ies.aggregator.port.ChannelUriProvider ChannelUriProvider}
- * should resolve a URI for.
+ * Describes what a {@link com.sitepark.ies.aggregator.port.Channel Channel} should resolve a URI
+ * for.
  *
  * <p>The port resolves URIs by <em>data</em>, not by API surface: new resolution cases are added as
  * new {@code UriTarget} variants rather than as new port methods.

@@ -91,7 +91,7 @@ There are three ways to get hold of a resolver:
    e.g. a portal page configured by anchor. It is also what the IES runtime uses to start a
    generation run.
 
-It is injected like any other dependency (`ChannelProvider`, `MediaProvider`, …) via `@Inject`:
+It is injected like any other dependency (`Channel`, `MediaProvider`, …) via `@Inject`:
 
 ```java
 public interface RootResolverFactory {
