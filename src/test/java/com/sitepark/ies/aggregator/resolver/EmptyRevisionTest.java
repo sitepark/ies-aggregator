@@ -12,8 +12,10 @@ class EmptyRevisionTest {
   }
 
   @Test
-  void byIsNull() {
-    assertThat(Revision.empty().by()).as("An empty revision should have no editor").isNull();
+  void byIsTheEmptyEditor() {
+    assertThat(Revision.empty().by())
+        .as("An empty revision has no editor and should expose the empty editor")
+        .isSameAs(Editor.empty());
   }
 
   @Test

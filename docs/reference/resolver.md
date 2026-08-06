@@ -100,7 +100,8 @@ access. That matters for values that are expensive to produce — `Revision.by()
 whose `id()` is cheap while `name()` is resolved only when it is actually read, so a template that
 never prints the editor never pays for the lookup. Missing data is never `null` at the descriptor
 level: an empty resolver returns `EntityDescriptor.empty()` / `GroupDescriptor.empty()`, whose fields
-are neutral and whose revisions are `Revision.empty()`.
+are neutral and whose revisions are `Revision.empty()` — with `Editor.empty()` as the editor. Only
+`Revision.at()` is `@Nullable`, since a timestamp has no meaningful neutral value.
 
 New master data fields are added to the descriptor, not as new methods on the resolver.
 
