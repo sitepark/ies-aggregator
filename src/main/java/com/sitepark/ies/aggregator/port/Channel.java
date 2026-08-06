@@ -7,9 +7,9 @@ import java.util.Optional;
 /**
  * A publication channel through which CMS objects are accessible via URL.
  *
- * <p>Instances are channel-bound: every method answers for <em>this</em> channel. The injected
- * instance is always the currently active channel; other channels are reached by navigation ({@link
- * #primary(int)}, {@link #get(int)}).
+ * <p>Instances are channel-bound: every method answers for <em>this</em> channel. An injected {@code
+ * Channel} is always the currently active one, which covers the common case without a lookup. Other
+ * channels are obtained from {@link ChannelProvider}.
  */
 public interface Channel {
 
@@ -42,20 +42,4 @@ public interface Channel {
    * @return the resolved URI, or empty if no URI can be determined
    */
   Optional<PlainUri> resolveUri(UriTarget target);
-
-  /**
-   * The primary (default) publication channel of the given object.
-   *
-   * @param objectId the id of the object
-   * @return the object's primary channel, or empty if the object has none
-   */
-  Optional<Channel> primary(int objectId);
-
-  /**
-   * The publication channel with the given id.
-   *
-   * @param channelId the channel id
-   * @return the channel, or empty if no channel with that id is configured
-   */
-  Optional<Channel> get(int channelId);
 }

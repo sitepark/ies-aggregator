@@ -287,6 +287,11 @@ object that the current one does not link to — it always returns a fresh root 
 `EntityResolver` for an unknown id or anchor, see
 [Obtaining a root resolver](../reference/resolver.md#obtaining-a-root-resolver).
 
+Two ports carry the publication channel: an injected `Channel` is always the **currently active**
+channel — enough to ask whether an object is published (`isPublished(objectId)`) or which URI it is
+accessible under (`resolveUri(target)`). Only to reach a *different* channel is `ChannelProvider`
+needed, which hands out a channel by id or the primary channel of an object.
+
 To contribute reusable, type-driven value builders (and let projects override them), register an
 `@AssemblerBinding` instead — see [Extending Assemblers](assembler-customization.md).
 
