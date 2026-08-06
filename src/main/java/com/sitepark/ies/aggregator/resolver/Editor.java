@@ -9,6 +9,19 @@ package com.sitepark.ies.aggregator.resolver;
 public interface Editor {
 
   /**
+   * Returns the editor that carries no data.
+   *
+   * <p>The null object for an unknown editor: {@link #id()} and {@link #name()} are empty. Returned
+   * by {@link Revision#by()} when the action never happened or the editor is unknown, so callers can
+   * stay on the {@code Editor} type without null-checking it.
+   *
+   * @return the empty editor
+   */
+  static Editor empty() {
+    return EmptyEditor.INSTANCE;
+  }
+
+  /**
    * The id of the editor.
    *
    * <p>Cheap to read: implementations must not resolve anything here.

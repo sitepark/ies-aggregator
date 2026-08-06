@@ -25,12 +25,12 @@ final class EmptyRevision implements Revision {
   }
 
   /**
-   * Returns {@code null}; an empty revision has no editor.
+   * Returns the empty editor; an empty revision has no editor.
    *
-   * @return {@code null}
+   * @return {@link Editor#empty()}
    */
   @Override
-  public @Nullable Editor by() {
-    return null;
+  public Editor by() {
+    return Editor.empty();
   }
 }

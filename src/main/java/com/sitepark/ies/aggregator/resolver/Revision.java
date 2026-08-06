@@ -37,7 +37,8 @@ public interface Revision {
   /**
    * The editor who performed this revision.
    *
-   * @return the editor, or {@code null} if the action never happened or the editor is unknown
+   * @return the editor; never {@code null}, {@link Editor#empty()} if the action never happened or
+   *     the editor is unknown
    */
-  @Nullable Editor by();
+  Editor by();
 }
