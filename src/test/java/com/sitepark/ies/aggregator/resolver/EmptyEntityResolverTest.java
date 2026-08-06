@@ -16,24 +16,10 @@ class EmptyEntityResolverTest {
   }
 
   @Test
-  void entityIdIsZero() {
-    assertThat(EntityResolver.empty(pathOf(mock(), mock())).entityId())
-        .as("An empty entity should have id 0")
-        .isZero();
-  }
-
-  @Test
-  void entityTypeIsEmpty() {
-    assertThat(EntityResolver.empty(pathOf(mock(), mock())).entityType())
-        .as("An empty entity should have an empty type")
-        .isEmpty();
-  }
-
-  @Test
-  void entityNameIsEmpty() {
-    assertThat(EntityResolver.empty(pathOf(mock(), mock())).entityName())
-        .as("An empty entity should have an empty name")
-        .isEmpty();
+  void entityIsTheEmptyDescriptor() {
+    assertThat(EntityResolver.empty(pathOf(mock(), mock())).entity())
+        .as("An empty entity resolver should expose the empty entity descriptor")
+        .isSameAs(EntityDescriptor.empty());
   }
 
   @Test

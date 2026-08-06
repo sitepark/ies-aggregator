@@ -16,31 +16,10 @@ class EmptyGroupResolverTest {
   }
 
   @Test
-  void entityIdIsZero() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entityId())
-        .as("An empty group should have id 0")
-        .isZero();
-  }
-
-  @Test
-  void entityTypeIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entityType())
-        .as("An empty group should have an empty type")
-        .isEmpty();
-  }
-
-  @Test
-  void entityNameIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entityName())
-        .as("An empty group should have an empty name")
-        .isEmpty();
-  }
-
-  @Test
-  void entityAnchorIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entityAnchor())
-        .as("An empty group should have an empty anchor")
-        .isEmpty();
+  void entityIsTheEmptyGroupDescriptor() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entity())
+        .as("An empty group resolver should expose the empty group descriptor")
+        .isSameAs(GroupDescriptor.empty());
   }
 
   @Test
@@ -58,45 +37,31 @@ class EmptyGroupResolverTest {
   }
 
   @Test
-  void groupSubGroupsIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).groupSubGroups())
+  void subGroupsIsEmpty() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).subGroups())
         .as("An empty group should have no sub-groups")
         .isEmpty();
   }
 
   @Test
-  void groupEntitiesIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).groupEntities())
+  void entitiesIsEmpty() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).entities())
         .as("An empty group should contain no entities")
         .isEmpty();
   }
 
   @Test
-  void groupChildrenIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).groupChildren())
+  void childrenIsEmpty() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).children())
         .as("An empty group should have no children")
         .isEmpty();
   }
 
   @Test
-  void isNotARootSiteGroup() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).isRootSiteGroup())
-        .as("An empty group should not be a site root group")
-        .isFalse();
-  }
-
-  @Test
-  void isNotAMicrositeRootSiteGroup() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).isMicrositeRootSiteGroup())
-        .as("An empty group should not be a microsite root group")
-        .isFalse();
-  }
-
-  @Test
-  void langIsEmpty() {
-    assertThat(GroupResolver.empty(pathOf(mock(), mock())).lang())
-        .as("An empty group should have an empty language")
-        .isEmpty();
+  void isPathRootBecauseItHasNoParentGroup() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).isPathRoot())
+        .as("An empty group has no parent group and is therefore the root of its path")
+        .isTrue();
   }
 
   @Test

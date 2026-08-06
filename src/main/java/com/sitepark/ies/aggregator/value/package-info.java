@@ -3,7 +3,6 @@
  *
  * <p>This package holds the cross-cutting value objects with value-based {@code equals}/{@code
  * hashCode}: {@link com.sitepark.ies.aggregator.value.ResolvedValue ResolvedValue}, {@link
- * com.sitepark.ies.aggregator.value.Channel Channel}, {@link
  * com.sitepark.ies.aggregator.value.Publication Publication} and the {@link
  * com.sitepark.ies.aggregator.value.NamedEnum NamedEnum} mixin.
  *

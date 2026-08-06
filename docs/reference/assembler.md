@@ -132,7 +132,7 @@ Two `@AssemblerBinding` attributes drive this:
 
 - `objectTypes` — restricts the assembler to the given CMS object types. Empty (the default) means
   it applies to every object type. The object type is derived from the context resolver's current
-  scope root (`context.root()`, an `EntityResolver`, via `entityType()`).
+  scope root (`context.root()`, an `EntityResolver`, via `entity().type()`).
 - `condition` — a `Class<? extends AssemblerCondition>` for rules a plain `objectTypes` match cannot
   express. The factory instantiates it via dependency injection (so it may declare its own
   constructor dependencies) and calls `appliesTo(source)`. The default `AssemblerCondition.Always`

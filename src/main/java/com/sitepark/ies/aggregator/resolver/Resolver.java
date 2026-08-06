@@ -173,8 +173,8 @@ public interface Resolver {
    *
    * <p>Unlike {@link #resolve(String)}, which returns a generic {@link Resolver}, this method is
    * meant for fields that <em>link</em> to another CMS object: the target of such a link is always
-   * an entity — it carries an {@link EntityResolver#entityId() id}, {@link
-   * EntityResolver#entityType() type} and {@link EntityResolver#entityName() name}. The returned
+   * an entity — it carries master data such as {@link EntityDescriptor#id() id}, {@link
+   * EntityDescriptor#type() type} and {@link EntityDescriptor#name() name}. The returned
    * resolver is never {@code null}; when the link is absent or cannot be followed, an empty {@link
    * EntityResolver} is returned (test with {@link #isEmpty()}), so callers never need to cast or
    * null-check.

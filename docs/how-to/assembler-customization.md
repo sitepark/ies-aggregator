@@ -136,8 +136,7 @@ public class LinkAssemblerDispatcher {
 public final class InternalLinkAssembler implements LinkAssembler<Link.InternalLink> {
 
     @Inject
-    InternalLinkAssembler(ChannelUriProvider uriProvider, ChannelProvider channelProvider,
-                          HeadlineAssembler headlineAssembler) { ...}
+    InternalLinkAssembler(Channel channel, HeadlineAssembler headlineAssembler) { ...}
 
     @Override
     public Optional<Link.InternalLink> assemble(
@@ -494,7 +493,7 @@ fallback everywhere else.
 Selection happens entirely in the `AssemblerFactory`. The caller passes the resolver the chain runs
 against as the context (`create(key, type, context)` / `createChain(key, type, context)`); the
 factory derives the object type from that resolver's current scope root
-(`context.root().entityType()`) and filters the candidates **before** priority ordering and
+(`context.root().entity().type()`) and filters the candidates **before** priority ordering and
 `chainRoot`/`chainBreak` pruning. Nothing is threaded through the `assemble` methods themselves.
 
 Two `@AssemblerBinding` attributes express the restriction; they combine as an **AND**:
