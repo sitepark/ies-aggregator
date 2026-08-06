@@ -11,9 +11,8 @@ import org.jspecify.annotations.Nullable;
  * <p>This class implements the <em>Null Object</em> pattern for links: it is returned by {@link
  * Resolver#resolveLink(String)} when a link field is absent or cannot be followed, so callers can
  * stay on the {@link EntityResolver} type without casting or null-checking. All lookups return
- * defaults or empty results and all entity attributes are neutral ({@link #entityId()} is {@code
- * 0}, {@link #entityType()}/{@link #entityName()} are empty, {@link #parentGroup()} is {@code
- * null}).
+ * defaults or empty results, {@link #entity()} is {@link EntityDescriptor#empty()} and {@link
+ * #parentGroup()} is {@code null}.
  *
  * <p>Like {@link EmptyResolver}, it carries the {@link #path()} of the object in which the link
  * lookup failed, so callers can still navigate back up the tree via {@link #root()} / {@link
@@ -89,38 +88,13 @@ public final class EmptyEntityResolver implements EntityResolver {
   }
 
   /**
-   * Returns {@code 0}; an empty entity has no id.
+   * Returns the empty descriptor; an empty entity has no master data.
    *
-   * @return {@code 0}
+   * @return {@link EntityDescriptor#empty()}
    */
   @Override
-  public int entityId() {
-    return 0;
-  }
-
-  /**
-   * Returns the empty string; an empty entity has no type.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String entityType() {
-    return "";
-  }
-
-  /**
-   * Returns the empty string; an empty entity has no name.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String entityName() {
-    return "";
-  }
-
-  @Override
-  public String entityAnchor() {
-    return "";
+  public EntityDescriptor entity() {
+    return EntityDescriptor.empty();
   }
 
   /**

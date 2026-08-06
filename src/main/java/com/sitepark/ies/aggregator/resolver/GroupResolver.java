@@ -2,6 +2,13 @@ package com.sitepark.ies.aggregator.resolver;
 
 import java.util.List;
 
+/**
+ * An {@link EntityResolver} whose current scope is a group.
+ *
+ * <p>{@link #entity()} narrows to {@link GroupDescriptor}, so the group-specific master data is
+ * reached through the same object as the shared entity fields. The methods declared here navigate to
+ * the entities below the group.
+ */
 public interface GroupResolver extends EntityResolver {
 
   /**
@@ -34,19 +41,45 @@ public interface GroupResolver extends EntityResolver {
     return (GroupResolver) ResolverPath.createRoot(GroupResolver::empty);
   }
 
-  List<GroupResolver> groupSubGroups();
+  /**
+   * The master data of the group this resolver reads from.
+   *
+   * <p>Narrows {@link EntityResolver#entity()} to {@link GroupDescriptor}, which adds the
+   * group-specific fields to the shared entity fields.
+   *
+   * @return the group descriptor; never {@code null}, {@link GroupDescriptor#empty()} if this
+   *     resolver is empty
+   */
+  @Override
+  GroupDescriptor entity();
 
-  List<EntityResolver> groupEntities();
+  /**
+   * The groups directly below this group.
+   *
+   * @return the sub-groups; never {@code null}, empty if the group has none
+   */
+  List<GroupResolver> subGroups();
 
-  List<EntityResolver> groupChildren();
+  /**
+   * The entities directly below this group, without its sub-groups.
+   *
+   * @return the entities; never {@code null}, empty if the group has none
+   */
+  List<EntityResolver> entities();
 
-  boolean isRootSiteGroup();
+  /**
+   * Everything directly below this group — its sub-groups and its entities.
+   *
+   * @return the children; never {@code null}, empty if the group has none
+   */
+  List<EntityResolver> children();
 
-  boolean isMicrositeRootSiteGroup();
-
-  String lang();
-
-  default boolean isGroupPathRoot() {
+  /**
+   * Whether this group is the topmost group of its path.
+   *
+   * @return {@code true} if the group has no parent group
+   */
+  default boolean isPathRoot() {
     return parentGroup() == null;
   }
 }

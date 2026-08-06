@@ -11,10 +11,9 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>This class implements the <em>Null Object</em> pattern for group lookups: it is returned when
  * a group cannot be found, so callers can stay on the {@link GroupResolver} type without casting or
- * null-checking. All lookups return defaults or empty results, all entity attributes are neutral
- * ({@link #entityId()} is {@code 0}, {@link #entityType()}/{@link #entityName()}/{@link
- * #entityAnchor()} are empty, {@link #parentGroup()} is {@code null}) and the group itself has no
- * children, no language and is neither a site nor a microsite root.
+ * null-checking. All lookups return defaults or empty results, {@link #entity()} is {@link
+ * GroupDescriptor#empty()}, {@link #parentGroup()} is {@code null} and the group itself has no
+ * children.
  *
  * <p>Like {@link EmptyEntityResolver}, it carries the {@link #path()} it was created with, so
  * callers can still navigate back up the tree via {@link #root()} / {@link #globalRoot()}.
@@ -89,43 +88,13 @@ public final class EmptyGroupResolver implements GroupResolver {
   }
 
   /**
-   * Returns {@code 0}; an empty group has no id.
+   * Returns the empty group descriptor; an empty group has no master data.
    *
-   * @return {@code 0}
+   * @return {@link GroupDescriptor#empty()}
    */
   @Override
-  public int entityId() {
-    return 0;
-  }
-
-  /**
-   * Returns the empty string; an empty group has no type.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String entityType() {
-    return "";
-  }
-
-  /**
-   * Returns the empty string; an empty group has no name.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String entityName() {
-    return "";
-  }
-
-  /**
-   * Returns the empty string; an empty group has no anchor.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String entityAnchor() {
-    return "";
+  public GroupDescriptor entity() {
+    return GroupDescriptor.empty();
   }
 
   /**
@@ -154,7 +123,7 @@ public final class EmptyGroupResolver implements GroupResolver {
    * @return an empty, unmodifiable list
    */
   @Override
-  public List<GroupResolver> groupSubGroups() {
+  public List<GroupResolver> subGroups() {
     return List.of();
   }
 
@@ -164,7 +133,7 @@ public final class EmptyGroupResolver implements GroupResolver {
    * @return an empty, unmodifiable list
    */
   @Override
-  public List<EntityResolver> groupEntities() {
+  public List<EntityResolver> entities() {
     return List.of();
   }
 
@@ -174,38 +143,8 @@ public final class EmptyGroupResolver implements GroupResolver {
    * @return an empty, unmodifiable list
    */
   @Override
-  public List<EntityResolver> groupChildren() {
+  public List<EntityResolver> children() {
     return List.of();
-  }
-
-  /**
-   * Returns {@code false}; an empty group is not a site root group.
-   *
-   * @return {@code false}
-   */
-  @Override
-  public boolean isRootSiteGroup() {
-    return false;
-  }
-
-  /**
-   * Returns {@code false}; an empty group is not a microsite root group.
-   *
-   * @return {@code false}
-   */
-  @Override
-  public boolean isMicrositeRootSiteGroup() {
-    return false;
-  }
-
-  /**
-   * Returns the empty string; an empty group has no language.
-   *
-   * @return the empty string
-   */
-  @Override
-  public String lang() {
-    return "";
   }
 
   /**

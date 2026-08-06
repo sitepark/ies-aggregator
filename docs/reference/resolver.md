@@ -59,6 +59,51 @@ public interface Resolver {
 }
 ```
 
+## Entities and groups
+
+When the current scope is a CMS entity, the resolver is an `EntityResolver`; for a group it is a
+`GroupResolver`. Both split their additional API along one line: **master data lives in a descriptor,
+navigation stays on the resolver.**
+
+```java
+public interface EntityResolver extends Resolver {
+    EntityDescriptor entity();                 // master data of the entity read from
+    @Nullable GroupResolver parentGroup();     // navigation
+    List<GroupResolver> parentGroupPath();
+}
+
+public interface EntityDescriptor {
+    static EntityDescriptor empty();
+
+    int id();
+    String type();
+    String name();
+    String anchor();
+    Revision created();                        // Revision: at() + by(), see below
+    Revision changed();
+}
+
+public interface GroupResolver extends EntityResolver {
+    @Override
+    GroupDescriptor entity();                  // narrowed: adds the group-specific fields
+
+    List<GroupResolver> subGroups();            // navigation
+    List<EntityResolver> entities();
+    List<EntityResolver> children();
+
+    default boolean isPathRoot();
+}
+```
+
+A descriptor is a **view, not a snapshot**: obtaining it resolves nothing, every field is read on
+access. That matters for values that are expensive to produce — `Revision.by()` yields an `Editor`
+whose `id()` is cheap while `name()` is resolved only when it is actually read, so a template that
+never prints the editor never pays for the lookup. Missing data is never `null` at the descriptor
+level: an empty resolver returns `EntityDescriptor.empty()` / `GroupDescriptor.empty()`, whose fields
+are neutral and whose revisions are `Revision.empty()`.
+
+New master data fields are added to the descriptor, not as new methods on the resolver.
+
 ## Navigation and scopes
 
 A resolver is a node in a tree of source data. Chaining `resolve(key)` navigates deeper; a field
@@ -116,8 +161,8 @@ Its contract:
 - **Or a root within an existing path:** the overloads taking a `ResolverPath` make the created
   resolver a new `globalRoot()` too, but append it to the given path (`enterRoot`) so the
   navigation history is preserved.
-- **Typed target:** `createByEntity…` returns an `EntityResolver` (`entityId()`, `entityType()`,
-  `entityName()`, `entityAnchor()`), `createByGroup…` a `GroupResolver`.
+- **Typed target:** `createByEntity…` returns an `EntityResolver` (master data via `entity()`),
+  `createByGroup…` a `GroupResolver`.
 - **Null-safe:** an unknown id or anchor is a normal case (deleted object, misspelled anchor in an
   editorial field), not an error — never `null`, never an exception. Test with `isEmpty()`. The
   standalone methods return an empty, self-rooted resolver of the requested type
