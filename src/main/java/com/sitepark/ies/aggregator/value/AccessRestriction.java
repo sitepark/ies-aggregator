@@ -19,10 +19,29 @@ public record AccessRestriction(Mode mode, List<String> groups) {
   }
 
   /** How the named groups are to be read. */
-  public enum Mode {
+  public enum Mode implements NamedEnum {
+
     /** Only members of the named groups may see the object. */
-    ALLOW,
+    ALLOW("allow"),
+
     /** Members of the named groups may not see the object; everyone else may. */
-    DENY
+    DENY("deny");
+
+    private final String name;
+
+    Mode(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String getName() {
+      return this.name;
+    }
+
+    /** The stable name, so a mode written straight to the output reads as {@link #getName()}. */
+    @Override
+    public String toString() {
+      return this.name;
+    }
   }
 }
