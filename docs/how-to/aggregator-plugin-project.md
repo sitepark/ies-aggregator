@@ -292,6 +292,11 @@ channel — enough to ask whether an object is published (`isPublished(objectId)
 accessible under (`resolveUri(target)`) or which character encoding it publishes in (`encoding()`). Only to reach a *different* channel is `ChannelProvider`
 needed, which hands out a channel by id or the primary channel of an object.
 
+`ObjectTypeConfigProvider` answers how an object's *type* is configured — `EntityDescriptor.type()`
+says which type an object has, this says what that type is set up to do. The configuration keys
+belong to the CMS distribution, so the caller names a type of its own to bind them to and unknown
+keys are ignored.
+
 To contribute reusable, type-driven value builders (and let projects override them), register an
 `@AssemblerBinding` instead — see [Extending Assemblers](assembler-customization.md).
 
