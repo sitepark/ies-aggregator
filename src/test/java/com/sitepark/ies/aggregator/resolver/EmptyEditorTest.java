@@ -17,6 +17,25 @@ class EmptyEditorTest {
   }
 
   @Test
+  void anchorIsEmpty() {
+    assertThat(Editor.empty().anchor()).as("An empty editor should have an empty anchor").isEmpty();
+  }
+
+  @Test
+  void firstNameIsEmpty() {
+    assertThat(Editor.empty().firstName())
+        .as("An empty editor should have an empty given name")
+        .isEmpty();
+  }
+
+  @Test
+  void lastNameIsEmpty() {
+    assertThat(Editor.empty().lastName())
+        .as("An empty editor should have an empty family name")
+        .isEmpty();
+  }
+
+  @Test
   void emptyIsAlwaysTheSameInstance() {
     assertThat(Editor.empty())
         .as("The empty editor is stateless and should be shared")

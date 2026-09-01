@@ -18,8 +18,8 @@ public interface EntityDescriptor {
    *
    * <p>Returned by {@link EntityResolver#entity()} of an empty resolver, so callers can stay on the
    * {@code EntityDescriptor} type without null-checking it: {@link #id()} is {@code 0}, {@link
-   * #type()}/{@link #name()}/{@link #anchor()} are empty and both revisions are {@link
-   * Revision#empty()}.
+   * #type()}/{@link #qualifiedId()}/{@link #version()}/{@link #name()}/{@link #anchor()} are empty
+   * and both revisions are {@link Revision#empty()}.
    *
    * @return the empty descriptor
    */
@@ -33,6 +33,28 @@ public interface EntityDescriptor {
    * @return the entity id, or {@code 0} if the entity is empty
    */
   int id();
+
+  /**
+   * The id of the entity as the source system writes it, qualified by everything that {@link #id()}
+   * drops — the client the entity belongs to and its object type.
+   *
+   * <p>Where {@link #id()} is the plain number that identifies the entity within its repository,
+   * this is the form a consumer stores to address the very same entity again from outside, and the
+   * form that appears in exported data. Its syntax belongs to the source system and is opaque here.
+   *
+   * @return the qualified id, or the empty string if the entity is empty
+   */
+  String qualifiedId();
+
+  /**
+   * The revision of the entity, identifying the state its data is in.
+   *
+   * <p>Changes with every edit, so a consumer can tell two states of the same entity apart — for
+   * cache keys, for instance. Opaque and only comparable for equality; no ordering is implied.
+   *
+   * @return the version, or the empty string if unknown
+   */
+  String version();
 
   /**
    * The object type of the entity, e.g. {@code content} or {@code group}.

@@ -11,9 +11,9 @@ public interface Editor {
   /**
    * Returns the editor that carries no data.
    *
-   * <p>The null object for an unknown editor: {@link #id()} and {@link #name()} are empty. Returned
-   * by {@link Revision#by()} when the action never happened or the editor is unknown, so callers can
-   * stay on the {@code Editor} type without null-checking it.
+   * <p>The null object for an unknown editor: every field is empty. Returned by {@link
+   * Revision#by()} when the action never happened or the editor is unknown, so callers can stay on
+   * the {@code Editor} type without null-checking it.
    *
    * @return the empty editor
    */
@@ -31,6 +31,15 @@ public interface Editor {
   String id();
 
   /**
+   * The anchor of the editor — the stable, human-readable address of the user account.
+   *
+   * <p>Resolved on access, like {@link #name()}.
+   *
+   * @return the anchor, or the empty string if the editor has none or cannot be resolved
+   */
+  String anchor();
+
+  /**
    * The display name of the editor.
    *
    * <p>Resolved on access, not when the surrounding {@link EntityDescriptor} is created — looking up
@@ -40,4 +49,24 @@ public interface Editor {
    * @return the display name, or the empty string if it cannot be resolved
    */
   String name();
+
+  /**
+   * The given name of the editor.
+   *
+   * <p>Resolved on access, like {@link #name()}. Kept apart from {@link #lastName()} because
+   * consumers order and abbreviate the two parts differently; {@link #name()} is the ready-made
+   * display form for everyone else.
+   *
+   * @return the given name, or the empty string if it cannot be resolved
+   */
+  String firstName();
+
+  /**
+   * The family name of the editor.
+   *
+   * <p>Resolved on access, like {@link #name()}.
+   *
+   * @return the family name, or the empty string if it cannot be resolved
+   */
+  String lastName();
 }

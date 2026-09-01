@@ -12,6 +12,20 @@ class EmptyGroupDescriptorTest {
   }
 
   @Test
+  void qualifiedIdIsEmpty() {
+    assertThat(GroupDescriptor.empty().qualifiedId())
+        .as("An empty group should have an empty qualified id")
+        .isEmpty();
+  }
+
+  @Test
+  void versionIsEmpty() {
+    assertThat(GroupDescriptor.empty().version())
+        .as("An empty group should have an empty version")
+        .isEmpty();
+  }
+
+  @Test
   void typeIsEmpty() {
     assertThat(GroupDescriptor.empty().type())
         .as("An empty group should have an empty type")
