@@ -22,12 +22,42 @@ final class EmptyEditor implements Editor {
   }
 
   /**
+   * Returns the empty string; an empty editor has no anchor.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String anchor() {
+    return "";
+  }
+
+  /**
    * Returns the empty string; an empty editor has no name.
    *
    * @return the empty string
    */
   @Override
   public String name() {
+    return "";
+  }
+
+  /**
+   * Returns the empty string; an empty editor has no given name.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String firstName() {
+    return "";
+  }
+
+  /**
+   * Returns the empty string; an empty editor has no family name.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String lastName() {
     return "";
   }
 }
