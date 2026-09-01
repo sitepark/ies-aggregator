@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.output.convert;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.format.PlainCode;
@@ -38,6 +39,22 @@ class MapConverterTest {
     assertThat(new MapConverter().toMap(root))
         .as("Empty object should produce empty map")
         .isEmpty();
+  }
+
+  @Test
+  void policyKeepsConfiguredEmptyTypeInTheMap() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("headline", Text.empty());
+    root.put("blank", "");
+    Map<String, Object> expected = new LinkedHashMap<>();
+    expected.put("headline", Text.empty());
+
+    MapConverter converter =
+        new MapConverter(DomainObjectMapper.NONE, EmptyValuePolicy.keepTypes(Text.class));
+
+    assertThat(converter.toMap(root))
+        .as("An empty value of a type the policy keeps should stay in the map while others drop")
+        .isEqualTo(expected);
   }
 
   @Test

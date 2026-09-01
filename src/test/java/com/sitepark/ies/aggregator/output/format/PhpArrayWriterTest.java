@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.output.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
 import com.sitepark.ies.aggregator.output.OutputObject;
@@ -143,6 +144,25 @@ class PhpArrayWriterTest {
     assertThat(render(root))
         .as("Null and empty fields should be dropped from the output")
         .isEqualTo("[\n\t\"name\" => \"Alice\"\n]");
+  }
+
+  @Test
+  void policyKeepsConfiguredEmptyTypeWhileOtherEmptiesDrop() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("headline", Text.empty());
+    root.put("blank", "");
+
+    StringWriter sw = new StringWriter();
+    root.accept(
+        new PhpArrayWriter(
+            sw,
+            DomainObjectMapper.NONE,
+            Translations.SOURCE,
+            EmptyValuePolicy.keepTypes(Text.class)));
+
+    assertThat(sw.toString())
+        .as("An empty value of a type the policy keeps should be rendered while others drop")
+        .isEqualTo("[\n\t\"headline\" => \"\"\n]");
   }
 
   @Test

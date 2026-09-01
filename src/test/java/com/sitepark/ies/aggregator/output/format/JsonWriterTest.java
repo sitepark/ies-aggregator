@@ -3,6 +3,7 @@ package com.sitepark.ies.aggregator.output.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.KeepEmpty;
 import com.sitepark.ies.aggregator.output.OutputKeepIfEmpty;
 import com.sitepark.ies.aggregator.output.OutputList;
@@ -53,6 +54,14 @@ class JsonWriterTest {
   private static String render(OutputObject root, Translations translations) {
     StringWriter sw = new StringWriter();
     JsonWriter writer = new JsonWriter(sw, translations);
+    root.accept(writer);
+    return sw.toString();
+  }
+
+  private static String render(OutputObject root, EmptyValuePolicy emptyValuePolicy) {
+    StringWriter sw = new StringWriter();
+    JsonWriter writer =
+        new JsonWriter(sw, DomainObjectMapper.NONE, Translations.SOURCE, emptyValuePolicy);
     root.accept(writer);
     return sw.toString();
   }
@@ -147,6 +156,53 @@ class JsonWriterTest {
     assertThat(render(root))
         .as("An empty value whose type is @OutputKeepIfEmpty must be kept while other empties drop")
         .isEqualTo("{\"flag\":\"kept\"}");
+  }
+
+  @Test
+  void policyKeepsConfiguredEmptyTypeWhileOtherEmptiesDrop() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("headline", Text.empty());
+    root.put("blank", "");
+
+    assertThat(render(root, EmptyValuePolicy.keepTypes(Text.class)))
+        .as("An empty value of a type the policy keeps should be rendered while others drop")
+        .isEqualTo("{\"headline\":\"\"}");
+  }
+
+  @Test
+  void policyKeepsAncestorsOfAKeptEmptyValue() {
+    OutputObject root = new OutputObject(null, null);
+    root.node("meta").put("headline", Text.empty());
+
+    assertThat(render(root, EmptyValuePolicy.keepTypes(Text.class)))
+        .as("A node containing only a kept empty value must survive the recursive pruning")
+        .isEqualTo("{\"meta\":{\"headline\":\"\"}}");
+  }
+
+  @Test
+  void keepAllPolicyRendersEveryEmptyValue() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+    root.put("missing", null);
+    root.put("blank", "");
+    root.put("tags", List.of());
+    root.put("emptyText", Text.empty());
+
+    assertThat(render(root, EmptyValuePolicy.KEEP_ALL))
+        .as("KEEP_ALL should render every empty value instead of dropping it")
+        .isEqualTo(
+            "{\"name\":\"Alice\",\"missing\":null,\"blank\":\"\",\"tags\":[],\"emptyText\":\"\"}");
+  }
+
+  @Test
+  void dropAllPolicyDropsTypeKeepIfEmptyValue() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+    root.put("flag", new KeptFlag());
+
+    assertThat(render(root, EmptyValuePolicy.DROP_ALL))
+        .as("DROP_ALL should drop even an @OutputKeepIfEmpty type")
+        .isEqualTo("{\"name\":\"Alice\"}");
   }
 
   @Test

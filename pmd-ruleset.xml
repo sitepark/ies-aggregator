@@ -14,6 +14,13 @@
     </properties>
   </rule>
 
+  <!-- The central visitor dispatches on every supported value type, so it references them all. -->
+  <rule ref="category/java/design.xml/CouplingBetweenObjects">
+    <properties>
+      <property name="threshold" value="25"/>
+    </properties>
+  </rule>
+
   <!-- Empty catch blocks are allowed when the intent is documented with a comment. -->
   <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
     <properties>
@@ -47,6 +54,8 @@
     <exclude name="LawOfDemeter"/>
     <!-- Requires an explicit package list to do anything; unconfigured it is dropped with a warning. -->
     <exclude name="LoosePackageCoupling"/>
+    <!-- Configured separately above. -->
+    <exclude name="CouplingBetweenObjects"/>
   </rule>
 
   <!-- Error Prone -->

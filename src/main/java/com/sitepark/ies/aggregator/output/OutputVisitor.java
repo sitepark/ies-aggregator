@@ -47,15 +47,17 @@ import org.jspecify.annotations.Nullable;
  * <p><b>Empty values are dropped.</b> While iterating a container (object fields, list items, map
  * entries, collection/array elements, and unwrapped domain-object properties) the visitor omits
  * every value that {@link #rendersEmpty renders empty} — recursively, so a nested node that becomes
- * empty after its own empties are removed is dropped as well. A value whose type carries {@link
- * OutputKeepIfEmpty} is always kept. This is the single place where output emptiness is decided;
- * {@link DomainObjectMapper} implementations only map structure (renaming/unwrapping), not
- * emptiness.
+ * empty after its own empties are removed is dropped as well. Which empty values survive anyway is
+ * the one configurable part of that rule: the {@link EmptyValuePolicy} decides it by the value's
+ * runtime class, defaulting to {@link EmptyValuePolicy#ANNOTATED} (the type-level {@link
+ * OutputKeepIfEmpty}). This is the single place where output emptiness is decided; {@link
+ * DomainObjectMapper} implementations only map structure (renaming/unwrapping), not emptiness.
  */
 public abstract class OutputVisitor {
 
   private final DomainObjectMapper domainObjectMapper;
   private final Translations translations;
+  private final EmptyValuePolicy emptyValuePolicy;
 
   /** Creates a visitor without a domain object mapper, rendering the source language. */
   protected OutputVisitor() {
@@ -72,6 +74,19 @@ public abstract class OutputVisitor {
   }
 
   /**
+   * Creates a visitor with the given domain object mapper and empty-value policy, rendering the
+   * source language.
+   *
+   * @param domainObjectMapper the mapper for unwrapping domain objects; must not be {@code null}
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway; must not be
+   *     {@code null}
+   */
+  protected OutputVisitor(
+      DomainObjectMapper domainObjectMapper, EmptyValuePolicy emptyValuePolicy) {
+    this(domainObjectMapper, Translations.SOURCE, emptyValuePolicy);
+  }
+
+  /**
    * Creates a visitor with the given domain object mapper and translation table.
    *
    * @param domainObjectMapper the mapper for unwrapping domain objects; must not be {@code null}
@@ -79,8 +94,25 @@ public abstract class OutputVisitor {
    *     (use {@link Translations#SOURCE} for the source language)
    */
   protected OutputVisitor(DomainObjectMapper domainObjectMapper, Translations translations) {
+    this(domainObjectMapper, translations, EmptyValuePolicy.ANNOTATED);
+  }
+
+  /**
+   * Creates a visitor with the given domain object mapper, translation table and empty-value policy.
+   *
+   * @param domainObjectMapper the mapper for unwrapping domain objects; must not be {@code null}
+   * @param translations the translation table applied while rendering; must not be {@code null}
+   *     (use {@link Translations#SOURCE} for the source language)
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway; must not be
+   *     {@code null} (use {@link EmptyValuePolicy#ANNOTATED} for the default behavior)
+   */
+  protected OutputVisitor(
+      DomainObjectMapper domainObjectMapper,
+      Translations translations,
+      EmptyValuePolicy emptyValuePolicy) {
     this.domainObjectMapper = Objects.requireNonNull(domainObjectMapper);
     this.translations = Objects.requireNonNull(translations);
+    this.emptyValuePolicy = Objects.requireNonNull(emptyValuePolicy);
   }
 
   /** Returns the configured domain object mapper. */
@@ -91,6 +123,11 @@ public abstract class OutputVisitor {
   /** Returns the translation table applied while rendering. */
   protected final Translations translations() {
     return this.translations;
+  }
+
+  /** Returns the policy deciding which empty values are rendered anyway. */
+  protected final EmptyValuePolicy emptyValuePolicy() {
+    return this.emptyValuePolicy;
   }
 
   /**
@@ -104,17 +141,19 @@ public abstract class OutputVisitor {
    * {@code Text} or {@code Uri}). Numbers and booleans — including {@code 0}/{@code false} — and
    * {@link RawPhpCode} are never empty.
    *
-   * <p>A value whose runtime class carries {@link OutputKeepIfEmpty} is never treated as empty, so
-   * instances of that type are always rendered.
+   * <p>A value the configured {@link EmptyValuePolicy} keeps is never treated as empty, so instances
+   * of that class are always rendered; a {@code null} is kept when the policy {@link
+   * EmptyValuePolicy#keepNull() keeps nulls}. The default policy {@link EmptyValuePolicy#ANNOTATED}
+   * keeps the types carrying {@link OutputKeepIfEmpty} and drops {@code null}.
    *
    * @param value the value to inspect; may be {@code null}
    * @return {@code true} if the value should be dropped from the output
    */
   protected final boolean rendersEmpty(@Nullable Object value) {
     if (value == null) {
-      return true;
+      return !this.emptyValuePolicy.keepNull();
     }
-    if (value.getClass().isAnnotationPresent(OutputKeepIfEmpty.class)) {
+    if (this.emptyValuePolicy.keepIfEmpty(value.getClass())) {
       return false;
     }
     return switch (value) {

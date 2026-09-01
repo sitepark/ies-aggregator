@@ -189,8 +189,8 @@ their output — **without depending on `com.fasterxml.jackson`**. `@OutputPrope
 `@OutputUnwrapped` shape the property map and are honored by the `DomainObjectMapper` (a Jackson-backed
 one via a custom `AnnotationIntrospector`, a hand-written one directly). `@OutputType` adds a
 synthetic type-discriminator property, honored by the mapper directly. `@OutputKeepIfEmpty` steers
-the visitor's empty-dropping: the type-level form is honored by the visitor itself, the property-level
-form is carried to it by the mapper (see below).
+the visitor's empty-dropping: the type-level form is honored by the visitor's default
+`EmptyValuePolicy.ANNOTATED`, the property-level form is carried to it by the mapper (see below).
 
 | Annotation           | Purpose                                                         | Applies to                          |
 |----------------------|-----------------------------------------------------------------|-------------------------------------|
@@ -308,8 +308,8 @@ are meaningful values and are always kept. A `PlainCode`, in contrast, is empty 
 empty, just like a `String`.
 
 To keep an otherwise-dropped empty value, opt out with `@OutputKeepIfEmpty`
-(`com.sitepark.ies.aggregator.output.OutputKeepIfEmpty`) **on the value's type** — the visitor checks
-it on the value's runtime class:
+(`com.sitepark.ies.aggregator.output.OutputKeepIfEmpty`) **on the value's type** — the visitor's
+default `EmptyValuePolicy` checks it on the value's runtime class:
 
 ```java
 @OutputKeepIfEmpty
@@ -331,3 +331,43 @@ carries this decision to the visitor by wrapping the kept property's value in `K
 (`com.sitepark.ies.aggregator.output.KeepEmpty`). The visitor never treats a `KeepEmpty` as empty
 and unwraps it transparently, so the empty value is rendered while the single recursive emptiness
 rule stays in one place.
+
+### Configuring which empties survive: `EmptyValuePolicy`
+
+The annotations above require access to the value class. Where that is not possible — a value type
+from another module, or a consumer that relies on a key being present for **backwards
+compatibility** — the decision is configured from outside, at the visitor, with an
+`EmptyValuePolicy` (`com.sitepark.ies.aggregator.output.EmptyValuePolicy`). It is a strategy over the
+value's **runtime class**:
+
+```java
+EmptyValuePolicy policy =
+    EmptyValuePolicy.ANNOTATED.or(EmptyValuePolicy.keepTypes(Text.class, Uri.class));
+
+new JsonWriter(writer, mapper, translations, policy);   // empty Text/Uri values are rendered
+new MapConverter(mapper, policy);                       // same for the converter and the collectors
+```
+
+- `EmptyValuePolicy.ANNOTATED` is the **default** — used by every constructor that takes no policy —
+  and reproduces the behavior described above: types carrying `@OutputKeepIfEmpty` are kept,
+  everything else is dropped when empty.
+- `EmptyValuePolicy.keepTypes(…)` matches **assignable**, so naming an interface of a sealed
+  hierarchy (`Text`, `Uri`, `Media`, `Code`) covers all of its variants. Without arguments it keeps
+  nothing.
+- `or(…)` combines policies. The two extremes: `EmptyValuePolicy.KEEP_ALL` renders **every** empty
+  value — `null` included — so the output mirrors the tree as built (a fixed set of keys regardless
+  of content); `EmptyValuePolicy.DROP_ALL` drops every empty value, even an annotated one.
+- A `null` carries no class, so `keepIfEmpty(Class)` cannot decide it. That decision is the separate,
+  defaulted `keepNull()` — `false` for every policy except `KEEP_ALL`. A single `null` that must be
+  rendered is better expressed per occurrence with `KeepEmpty`.
+- Because emptiness is evaluated recursively, a kept empty value makes its container non-empty: the
+  **ancestors** of a kept value survive the pruning as well, so `{"meta":{"headline":""}}` is
+  rendered rather than dropped as an empty branch.
+
+The three levels are complementary:
+
+| Level                 | Decides by         | Configured where                        |
+|-----------------------|--------------------|-----------------------------------------|
+| `EmptyValuePolicy`    | value class        | at the visitor, from outside            |
+| `@OutputKeepIfEmpty`  | value class        | on the type (honored by the default policy) |
+| `KeepEmpty`           | single occurrence  | by the `DomainObjectMapper` (property-level annotation) |
