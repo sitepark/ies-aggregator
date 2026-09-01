@@ -1,5 +1,6 @@
 package com.sitepark.ies.aggregator.port;
 
+import com.sitepark.ies.aggregator.value.AccessRestriction;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.UriTarget;
 import java.util.Optional;
@@ -44,6 +45,17 @@ public interface Channel {
    * @return {@code true} if the object is published in this channel
    */
   boolean isPublished(int objectId);
+
+  /**
+   * The access restriction the given object is under in this channel.
+   *
+   * <p>Publication is not the same as visibility: an object can be published and still be readable
+   * only by certain groups. A consumer that generates output for a channel needs both.
+   *
+   * @param objectId the id of the object to check
+   * @return the restriction, or empty if the object is unrestricted — the normal case
+   */
+  Optional<AccessRestriction> accessRestriction(int objectId);
 
   /**
    * Resolves the URI under which the given target is accessible in this channel.
