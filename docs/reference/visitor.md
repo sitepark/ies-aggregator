@@ -79,6 +79,7 @@ representation.
 | `JsonWriter`                | `output.format`  | Compact JSON into a `Writer`                        | REST/frontends/logging                   |
 | `MapConverter`              | `output.convert` | `Map<String, Object>` / `List<Map<String, Object>>` | Interop with map-based APIs              |
 | `TranslatableTextCollector` | `output.collect` | `List<TranslatableText>`                            | Translation pipeline                     |
+| `AbsoluteUriCollector`      | `output.collect` | `List<PlainUri>`                                    | Link checking                            |
 
 ## Invocation: one core, two entry points
 

@@ -20,7 +20,8 @@ import java.util.List;
  * {@code TranslatableText} references. It is the index bridge of the translation lifecycle: extract
  * the source texts (with {@code SourceText.of}), send them to a translation service, and map the
  * index-corresponding result back via {@code Translations.fromIndexed} (see {@code
- * docs/translations.md}). The collector is language-agnostic and does not mutate the tree.
+ * docs/how-to/translations-pipeline.md}). The collector is language-agnostic and does not mutate
+ * the tree.
  */
 public final class TranslatableTextCollector extends OutputVisitor {
 
