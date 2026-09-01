@@ -28,6 +28,16 @@ public interface Channel {
   String name();
 
   /**
+   * The character encoding the content of this channel is published in.
+   *
+   * <p>A property of the channel, not of a single resource: a consumer that reads generated output
+   * needs it to decode the bytes, and two channels of the same installation may differ.
+   *
+   * @return the encoding name, e.g. {@code UTF-8}
+   */
+  String encoding();
+
+  /**
    * Whether the object with the given id is published in this channel.
    *
    * @param objectId the id of the object to check
