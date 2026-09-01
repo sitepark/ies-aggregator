@@ -23,6 +23,26 @@ final class EmptyEntityDescriptor implements EntityDescriptor {
   }
 
   /**
+   * Returns the empty string; an empty entity has no qualified id.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String qualifiedId() {
+    return "";
+  }
+
+  /**
+   * Returns the empty string; an empty entity has no version.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String version() {
+    return "";
+  }
+
+  /**
    * Returns the empty string; an empty entity has no type.
    *
    * @return the empty string

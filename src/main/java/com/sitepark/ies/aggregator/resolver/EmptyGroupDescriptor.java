@@ -23,6 +23,26 @@ final class EmptyGroupDescriptor implements GroupDescriptor {
   }
 
   /**
+   * Returns the empty string; an empty group has no qualified id.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String qualifiedId() {
+    return "";
+  }
+
+  /**
+   * Returns the empty string; an empty group has no version.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String version() {
+    return "";
+  }
+
+  /**
    * Returns the empty string; an empty group has no type.
    *
    * @return the empty string

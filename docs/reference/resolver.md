@@ -76,6 +76,8 @@ public interface EntityDescriptor {
     static EntityDescriptor empty();
 
     int id();
+    String qualifiedId();                      // id as the source system writes it
+    String version();                          // revision of the entity's data
     String type();
     String name();
     String anchor();

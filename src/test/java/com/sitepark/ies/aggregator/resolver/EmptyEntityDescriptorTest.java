@@ -12,6 +12,20 @@ class EmptyEntityDescriptorTest {
   }
 
   @Test
+  void qualifiedIdIsEmpty() {
+    assertThat(EntityDescriptor.empty().qualifiedId())
+        .as("An empty entity should have an empty qualified id")
+        .isEmpty();
+  }
+
+  @Test
+  void versionIsEmpty() {
+    assertThat(EntityDescriptor.empty().version())
+        .as("An empty entity should have an empty version")
+        .isEmpty();
+  }
+
+  @Test
   void typeIsEmpty() {
     assertThat(EntityDescriptor.empty().type())
         .as("An empty entity should have an empty type")
