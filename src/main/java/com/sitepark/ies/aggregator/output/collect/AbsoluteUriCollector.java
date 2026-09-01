@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.output.collect;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
@@ -35,6 +36,18 @@ public final class AbsoluteUriCollector extends OutputVisitor {
    */
   public AbsoluteUriCollector(DomainObjectMapper domainObjectMapper) {
     super(domainObjectMapper);
+  }
+
+  /**
+   * Creates a collector with the given domain object mapper and empty-value policy.
+   *
+   * @param domainObjectMapper the mapper for unwrapping domain objects
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway (use {@link
+   *     EmptyValuePolicy#ANNOTATED} for the default behavior)
+   */
+  public AbsoluteUriCollector(
+      DomainObjectMapper domainObjectMapper, EmptyValuePolicy emptyValuePolicy) {
+    super(domainObjectMapper, emptyValuePolicy);
   }
 
   /**

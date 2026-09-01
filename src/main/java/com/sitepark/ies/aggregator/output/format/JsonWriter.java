@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.output.format;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
@@ -85,7 +86,25 @@ public final class JsonWriter extends OutputVisitor {
    */
   public JsonWriter(
       Writer writer, DomainObjectMapper domainObjectMapper, Translations translations) {
-    super(domainObjectMapper, translations);
+    this(writer, domainObjectMapper, translations, EmptyValuePolicy.ANNOTATED);
+  }
+
+  /**
+   * Creates a writer with a custom domain object mapper, translation table and empty-value policy.
+   *
+   * @param writer the target writer
+   * @param domainObjectMapper the mapper for unwrapping domain objects
+   * @param translations the translation table (use {@link Translations#SOURCE} for the source
+   *     language)
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway (use {@link
+   *     EmptyValuePolicy#ANNOTATED} for the default behavior)
+   */
+  public JsonWriter(
+      Writer writer,
+      DomainObjectMapper domainObjectMapper,
+      Translations translations,
+      EmptyValuePolicy emptyValuePolicy) {
+    super(domainObjectMapper, translations, emptyValuePolicy);
     this.writer = writer;
   }
 

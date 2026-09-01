@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.output.convert;
 
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
+import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
 import com.sitepark.ies.aggregator.output.OutputObject;
@@ -52,6 +53,17 @@ public final class MapConverter extends OutputVisitor {
    */
   public MapConverter(DomainObjectMapper domainObjectMapper) {
     super(domainObjectMapper);
+  }
+
+  /**
+   * Creates a converter with the given domain object mapper and empty-value policy.
+   *
+   * @param domainObjectMapper the mapper for unwrapping domain objects
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway (use {@link
+   *     EmptyValuePolicy#ANNOTATED} for the default behavior)
+   */
+  public MapConverter(DomainObjectMapper domainObjectMapper, EmptyValuePolicy emptyValuePolicy) {
+    super(domainObjectMapper, emptyValuePolicy);
   }
 
   /**
