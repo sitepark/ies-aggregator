@@ -288,8 +288,9 @@ object that the current one does not link to — it always returns a fresh root 
 [Obtaining a root resolver](../reference/resolver.md#obtaining-a-root-resolver).
 
 Two ports carry the publication channel: an injected `Channel` is always the **currently active**
-channel — enough to ask whether an object is published (`isPublished(objectId)`), which URI it is
-accessible under (`resolveUri(target)`) or which character encoding it publishes in (`encoding()`). Only to reach a *different* channel is `ChannelProvider`
+channel — enough to ask whether an object is published (`isPublished(objectId)`), who may see it
+there (`accessRestriction(objectId)`), which URI it is accessible under (`resolveUri(target)`) or
+which character encoding it publishes in (`encoding()`). Only to reach a *different* channel is `ChannelProvider`
 needed, which hands out a channel by id or the primary channel of an object.
 
 `ObjectTypeConfigProvider` answers how an object's *type* is configured — `EntityDescriptor.type()`
