@@ -81,6 +81,7 @@ public interface EntityDescriptor {
     String type();
     String name();
     String anchor();
+    String filename();                         // published file name, "" for a pool
     Revision created();                        // Revision: at() + by(), see below
     Revision changed();
 }

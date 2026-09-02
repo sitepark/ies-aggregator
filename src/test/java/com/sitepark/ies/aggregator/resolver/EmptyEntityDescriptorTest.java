@@ -47,6 +47,13 @@ class EmptyEntityDescriptorTest {
   }
 
   @Test
+  void filenameIsEmpty() {
+    assertThat(EntityDescriptor.empty().filename())
+        .as("An empty entity should have an empty file name")
+        .isEmpty();
+  }
+
+  @Test
   void createdIsTheEmptyRevision() {
     assertThat(EntityDescriptor.empty().created())
         .as("An empty entity was never created and should expose the empty revision")

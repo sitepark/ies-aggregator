@@ -63,6 +63,16 @@ final class EmptyGroupDescriptor implements GroupDescriptor {
   }
 
   /**
+   * Returns the empty string; a group is not published as a file.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String filename() {
+    return "";
+  }
+
+  /**
    * Returns the empty string; an empty group has no anchor.
    *
    * @return the empty string

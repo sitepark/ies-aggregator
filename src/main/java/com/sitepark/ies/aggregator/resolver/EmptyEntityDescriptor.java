@@ -53,6 +53,16 @@ final class EmptyEntityDescriptor implements EntityDescriptor {
   }
 
   /**
+   * Returns the empty string; an empty entity has no file name.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String filename() {
+    return "";
+  }
+
+  /**
    * Returns the empty string; an empty entity has no name.
    *
    * @return the empty string
