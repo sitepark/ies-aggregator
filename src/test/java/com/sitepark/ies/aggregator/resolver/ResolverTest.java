@@ -92,6 +92,15 @@ class ResolverTest {
   }
 
   @Test
+  void resolveUserAnswersTheEmptyUserByDefault() {
+    Resolver resolver = resolverWith(Map.of());
+
+    assertThat(resolver.resolveUser("sp_webaccount"))
+        .as("resolveUser() should answer the empty user for a source that has no user links")
+        .isEqualTo(User.empty());
+  }
+
+  @Test
   void coalesceReturnsFirstNonEmptyValue() {
     Resolver resolver = resolverWith(Map.of("b", ResolvedValue.of("second")));
 

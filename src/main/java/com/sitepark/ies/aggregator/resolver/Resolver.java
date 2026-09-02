@@ -189,6 +189,23 @@ public interface Resolver {
   }
 
   /**
+   * Follows a link field that points at a user account.
+   *
+   * <p>Separate from {@link #resolveLink(String)} because a user is not an entity of the content
+   * repository: it has no object type, no pool path and nothing to navigate into. What a consumer
+   * wants of it is the handful of fields {@link User} carries, so that is what comes back.
+   *
+   * <p>Never {@code null}: a source that has no notion of user links, or a link that is absent or
+   * cannot be followed, answers {@link User#empty()}.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the linked user, or {@link User#empty()} if there is none
+   */
+  default User resolveUser(String key) {
+    return User.empty();
+  }
+
+  /**
    * Returns the value at the given key as a {@link ResolvedValue}.
    *
    * <p>If the key is absent, or the stored data cannot be represented as a value (e.g. it is a
