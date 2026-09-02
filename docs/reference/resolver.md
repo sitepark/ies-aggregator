@@ -107,6 +107,15 @@ are neutral and whose revisions are `Revision.empty()` — with `Editor.empty()`
 
 New master data fields are added to the descriptor, not as new methods on the resolver.
 
+A field that links to a **user account** is followed with `resolveUser(key)` rather than
+`resolveLink(key)`. A user is not an entity of the content repository — no object type, no pool
+path, nothing to navigate into — so it answers an `Editor`, the same type a `Revision` names as
+its author:
+
+```java
+Editor account = resolver.resolveUser("sp_webaccount");
+```
+
 ## Navigation and scopes
 
 A resolver is a node in a tree of source data. Chaining `resolve(key)` navigates deeper; a field

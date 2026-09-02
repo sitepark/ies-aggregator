@@ -1,10 +1,14 @@
 package com.sitepark.ies.aggregator.resolver;
 
 /**
- * The user who performed a {@link Revision} of an entity.
+ * A user of the system, as far as generated output is concerned.
  *
- * <p>Deliberately minimal: only the data a template or assembler needs to attribute a change. It is
- * not a security principal — permissions, roles and authentication live outside this API.
+ * <p>Reached in two ways: as the one who performed a {@link Revision} of an entity, and as the
+ * target of a field linking to a user account ({@link Resolver#resolveUser(String)}). Both want the
+ * same handful of fields, so both answer this type.
+ *
+ * <p>Deliberately minimal: only the data a template or assembler needs to name a person. It is not
+ * a security principal — permissions, roles and authentication live outside this API.
  */
 public interface Editor {
 
