@@ -78,6 +78,17 @@ public interface EntityDescriptor {
   String anchor();
 
   /**
+   * The file name the entity is published under, without a path.
+   *
+   * <p>Not every entity has one: it belongs to what the CMS publishes as a file, so a pool answers
+   * the empty string. Consumers use it where the name of the published file carries meaning of its
+   * own — an error page named {@code 404}, say.
+   *
+   * @return the file name, or the empty string if the entity is not published as a file
+   */
+  String filename();
+
+  /**
    * When the entity was created, and by whom.
    *
    * @return the creating revision; never {@code null}, {@link Revision#empty()} if unknown

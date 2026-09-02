@@ -47,6 +47,13 @@ class EmptyGroupDescriptorTest {
   }
 
   @Test
+  void filenameIsEmpty() {
+    assertThat(GroupDescriptor.empty().filename())
+        .as("An empty group should have an empty file name")
+        .isEmpty();
+  }
+
+  @Test
   void createdIsTheEmptyRevision() {
     assertThat(GroupDescriptor.empty().created())
         .as("An empty group was never created and should expose the empty revision")
