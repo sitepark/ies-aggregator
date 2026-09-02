@@ -36,6 +36,7 @@ classDiagram
     class OutputNode {
         <<abstract>>
         +put(String, Object)
+        +putIfAbsent(String, Object)
         +has(String) boolean
         +get(String) Object
         +getString(String) String

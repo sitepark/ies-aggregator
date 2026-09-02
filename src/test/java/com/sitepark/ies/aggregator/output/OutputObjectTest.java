@@ -118,6 +118,41 @@ class OutputObjectTest {
   }
 
   @Test
+  void putIfAbsentKeepsTheValueThatIsAlreadyThere() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+
+    root.putIfAbsent("name", "Bob");
+
+    assertThat(root.get("name"))
+        .as("putIfAbsent() should leave an occupied field to its first writer")
+        .isEqualTo("Alice");
+  }
+
+  @Test
+  void putIfAbsentFillsAFreeField() {
+    OutputObject root = new OutputObject(null, null);
+
+    root.putIfAbsent("name", "Bob");
+
+    assertThat(root.get("name"))
+        .as("putIfAbsent() should write into a field nothing has claimed")
+        .isEqualTo("Bob");
+  }
+
+  @Test
+  void putIfAbsentTreatsAnEmptyValueAsPresent() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "");
+
+    root.putIfAbsent("name", "Bob");
+
+    assertThat(root.get("name"))
+        .as("putIfAbsent() should go by presence, not by whether the value renders empty")
+        .isEqualTo("");
+  }
+
+  @Test
   void getStringReturnsToStringOfStoredValue() {
     OutputObject root = new OutputObject(null, null);
     root.put("count", 7);
