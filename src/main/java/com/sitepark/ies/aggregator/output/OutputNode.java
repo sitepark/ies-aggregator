@@ -40,6 +40,25 @@ public abstract class OutputNode implements Output {
   }
 
   /**
+   * Stores {@code value} under {@code field} only if nothing is stored there yet.
+   *
+   * <p>For an area several aggregators contribute to: the first writer of a field wins, later ones
+   * leave it alone. SiteKit's legacy spells the same rule {@code overwrite="false"}.
+   *
+   * <p>Presence, not emptiness, decides — as with {@link java.util.Map#putIfAbsent}. A value that
+   * renders empty still occupies the field and blocks a later writer, so a caller that means "the
+   * first <i>non-empty</i> value wins" checks its value before calling.
+   *
+   * @param field the field name
+   * @param value the value to store if the field is free
+   */
+  public void putIfAbsent(String field, Object value) {
+    if (!this.has(field)) {
+      this.put(field, value);
+    }
+  }
+
+  /**
    * Returns {@code true} if a value is stored under {@code field}.
    *
    * @param field the field name
