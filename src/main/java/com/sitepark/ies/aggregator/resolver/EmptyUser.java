@@ -1,18 +1,18 @@
 package com.sitepark.ies.aggregator.resolver;
 
 /**
- * An {@link Editor} that carries no data — the null object returned by {@link Editor#empty()}.
+ * An {@link User} that carries no data — the null object returned by {@link User#empty()}.
  *
  * <p>Stateless, therefore a single shared {@link #INSTANCE}.
  */
-final class EmptyEditor implements Editor {
+final class EmptyUser implements User {
 
-  static final EmptyEditor INSTANCE = new EmptyEditor();
+  static final EmptyUser INSTANCE = new EmptyUser();
 
-  private EmptyEditor() {}
+  private EmptyUser() {}
 
   /**
-   * Returns the empty string; an empty editor has no id.
+   * Returns the empty string; an empty user has no id.
    *
    * @return the empty string
    */
@@ -22,7 +22,7 @@ final class EmptyEditor implements Editor {
   }
 
   /**
-   * Returns the empty string; an empty editor has no anchor.
+   * Returns the empty string; an empty user has no anchor.
    *
    * @return the empty string
    */
@@ -32,7 +32,7 @@ final class EmptyEditor implements Editor {
   }
 
   /**
-   * Returns the empty string; an empty editor has no name.
+   * Returns the empty string; an empty user has no name.
    *
    * @return the empty string
    */
@@ -42,7 +42,7 @@ final class EmptyEditor implements Editor {
   }
 
   /**
-   * Returns the empty string; an empty editor has no given name.
+   * Returns the empty string; an empty user has no given name.
    *
    * @return the empty string
    */
@@ -52,7 +52,7 @@ final class EmptyEditor implements Editor {
   }
 
   /**
-   * Returns the empty string; an empty editor has no family name.
+   * Returns the empty string; an empty user has no family name.
    *
    * @return the empty string
    */

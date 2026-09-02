@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * When an entity was touched and by whom.
  *
- * <p>Timestamp and editor belong together, so every action an entity went through — created,
+ * <p>Timestamp and user belong together, so every action an entity went through — created,
  * changed, and whatever is added later — is exposed as one {@code Revision} instead of two separate
  * accessors on {@link EntityDescriptor}.
  *
@@ -35,10 +35,10 @@ public interface Revision {
   @Nullable Instant at();
 
   /**
-   * The editor who performed this revision.
+   * The user who performed this revision.
    *
-   * @return the editor; never {@code null}, {@link Editor#empty()} if the action never happened or
-   *     the editor is unknown
+   * @return the user; never {@code null}, {@link User#empty()} if the action never happened or
+   *     the user is unknown
    */
-  Editor by();
+  User by();
 }

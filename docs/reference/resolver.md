@@ -98,22 +98,22 @@ public interface GroupResolver extends EntityResolver {
 ```
 
 A descriptor is a **view, not a snapshot**: obtaining it resolves nothing, every field is read on
-access. That matters for values that are expensive to produce — `Revision.by()` yields an `Editor`
+access. That matters for values that are expensive to produce — `Revision.by()` yields an `User`
 whose `id()` is cheap while `name()` is resolved only when it is actually read, so a template that
-never prints the editor never pays for the lookup. Missing data is never `null` at the descriptor
+never prints the user never pays for the lookup. Missing data is never `null` at the descriptor
 level: an empty resolver returns `EntityDescriptor.empty()` / `GroupDescriptor.empty()`, whose fields
-are neutral and whose revisions are `Revision.empty()` — with `Editor.empty()` as the editor. Only
+are neutral and whose revisions are `Revision.empty()` — with `User.empty()` as the user. Only
 `Revision.at()` is `@Nullable`, since a timestamp has no meaningful neutral value.
 
 New master data fields are added to the descriptor, not as new methods on the resolver.
 
 A field that links to a **user account** is followed with `resolveUser(key)` rather than
 `resolveLink(key)`. A user is not an entity of the content repository — no object type, no pool
-path, nothing to navigate into — so it answers an `Editor`, the same type a `Revision` names as
+path, nothing to navigate into — so it answers an `User`, the same type a `Revision` names as
 its author:
 
 ```java
-Editor account = resolver.resolveUser("sp_webaccount");
+User account = resolver.resolveUser("sp_webaccount");
 ```
 
 ## Navigation and scopes
@@ -176,7 +176,7 @@ Its contract:
 - **Typed target:** `createByEntity…` returns an `EntityResolver` (master data via `entity()`),
   `createByGroup…` a `GroupResolver`.
 - **Null-safe:** an unknown id or anchor is a normal case (deleted object, misspelled anchor in an
-  editorial field), not an error — never `null`, never an exception. Test with `isEmpty()`. The
+  userial field), not an error — never `null`, never an exception. Test with `isEmpty()`. The
   standalone methods return an empty, self-rooted resolver of the requested type
   (`EntityResolver.emptyRoot()` resp. `GroupResolver.emptyRoot()`); the `ResolverPath` overloads
   return an empty resolver carrying the given path (`EntityResolver.empty(path)` resp.

@@ -10,41 +10,41 @@ package com.sitepark.ies.aggregator.resolver;
  * <p>Deliberately minimal: only the data a template or assembler needs to name a person. It is not
  * a security principal — permissions, roles and authentication live outside this API.
  */
-public interface Editor {
+public interface User {
 
   /**
-   * Returns the editor that carries no data.
+   * Returns the user that carries no data.
    *
-   * <p>The null object for an unknown editor: every field is empty. Returned by {@link
-   * Revision#by()} when the action never happened or the editor is unknown, so callers can stay on
-   * the {@code Editor} type without null-checking it.
+   * <p>The null object for an unknown user: every field is empty. Returned by {@link
+   * Revision#by()} when the action never happened or the user is unknown, so callers can stay on
+   * the {@code User} type without null-checking it.
    *
-   * @return the empty editor
+   * @return the empty user
    */
-  static Editor empty() {
-    return EmptyEditor.INSTANCE;
+  static User empty() {
+    return EmptyUser.INSTANCE;
   }
 
   /**
-   * The id of the editor.
+   * The id of the user.
    *
    * <p>Cheap to read: implementations must not resolve anything here.
    *
-   * @return the editor id, or the empty string if unknown
+   * @return the user id, or the empty string if unknown
    */
   String id();
 
   /**
-   * The anchor of the editor — the stable, human-readable address of the user account.
+   * The anchor of the user — the stable, human-readable address of the user account.
    *
    * <p>Resolved on access, like {@link #name()}.
    *
-   * @return the anchor, or the empty string if the editor has none or cannot be resolved
+   * @return the anchor, or the empty string if the user has none or cannot be resolved
    */
   String anchor();
 
   /**
-   * The display name of the editor.
+   * The display name of the user.
    *
    * <p>Resolved on access, not when the surrounding {@link EntityDescriptor} is created — looking up
    * a name for an id can be expensive, and callers that never read it must not pay for it.
@@ -55,7 +55,7 @@ public interface Editor {
   String name();
 
   /**
-   * The given name of the editor.
+   * The given name of the user.
    *
    * <p>Resolved on access, like {@link #name()}. Kept apart from {@link #lastName()} because
    * consumers order and abbreviate the two parts differently; {@link #name()} is the ready-made
@@ -66,7 +66,7 @@ public interface Editor {
   String firstName();
 
   /**
-   * The family name of the editor.
+   * The family name of the user.
    *
    * <p>Resolved on access, like {@link #name()}.
    *
