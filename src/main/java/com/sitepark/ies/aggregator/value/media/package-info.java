@@ -22,6 +22,11 @@
  * com.sitepark.ies.aggregator.value.media.ColorSwatch ColorSwatch} of an {@link
  * com.sitepark.ies.aggregator.value.media.Image Image} is not: like the pixel dimensions it is
  * derived from the binary itself and therefore sits on the asset.
+ *
+ * <p>The {@link com.sitepark.ies.aggregator.value.media.Origin Origin} sits on the asset too, but on
+ * {@link com.sitepark.ies.aggregator.value.media.Media Media} rather than on one kind of it: where
+ * an asset was synchronised from is a property of the binary record, and a document imported from a
+ * media-management system has a provenance just as an image does.
  */
 @NullMarked
 package com.sitepark.ies.aggregator.value.media;

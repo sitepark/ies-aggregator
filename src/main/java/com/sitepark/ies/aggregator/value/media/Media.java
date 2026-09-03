@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.value.media;
 
 import com.sitepark.ies.aggregator.value.Emptiable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A media asset (e.g. image, document, audio, video) referenced from CMS source data.
@@ -62,4 +63,13 @@ public sealed interface Media extends Emptiable permits Image, Document, Audio, 
 
   /** Returns the descriptive metadata of the media asset. */
   Metadata metadata();
+
+  /**
+   * Returns where the asset was synchronised from, or {@code null} if it stems from no external
+   * system.
+   *
+   * <p>Unlike the other accessors this one is nullable rather than neutral: an empty {@link Origin}
+   * would claim a provenance the asset does not have.
+   */
+  @Nullable Origin origin();
 }
