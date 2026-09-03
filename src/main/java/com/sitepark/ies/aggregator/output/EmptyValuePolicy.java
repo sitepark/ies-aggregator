@@ -61,25 +61,16 @@ public interface EmptyValuePolicy {
         public boolean keepNull() {
           return true;
         }
-
-        // Keeping every empty value is a statement about the caller's own data, not about the
-        // models the aggregator built, so below one of those the default applies again.
-        @Override
-        public EmptyValuePolicy insideDomainObject() {
-          return ANNOTATED;
-        }
       };
 
   /**
    * The policy that applies once the visitor descends into a domain object — the properties of a
-   * model the aggregator itself assembled, rather than values the caller handed in.
+   * model the aggregator assembled, rather than values a caller handed it.
    *
-   * <p>Almost every policy answers itself, and that is the default: a rule about which empty values
-   * survive holds just as well one level down. {@link #KEEP_ALL} is the exception, and the reason
-   * this seam exists. It is a compatibility setting for data an SPML page produced, where a key has
-   * to stay put even when its value is empty; the models the aggregator assembles carry no such
-   * promise, and letting the setting reach into them fills the output with empty properties nothing
-   * asked for.
+   * <p>Answers {@code this} by default: a rule about which empty values survive normally holds one
+   * level down as well. Override it where a policy is a statement about <i>whose</i> data it
+   * governs rather than about the values themselves — a caller that needs its own empty keys to
+   * stay put has said nothing about the models it did not write.
    *
    * <p>The switch applies from the moment a domain object — or a {@link
    * com.sitepark.ies.aggregator.value.text.TranslatableContainer} rendering one — is entered, and it

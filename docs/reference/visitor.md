@@ -367,17 +367,22 @@ new MapConverter(mapper, policy);                       // same for the converte
 
 #### The policy stops at a domain object
 
-A policy governs the values the visitor was **handed**, not the models the aggregator assembled from
-them. `insideDomainObject()` says which policy applies once the visitor descends into a domain
-object — or into a `TranslatableContainer` that renders one. It answers `this` by default, so almost
-every policy simply carries on one level down.
+`insideDomainObject()` says which policy applies once the visitor descends into a domain object — or
+into a `TranslatableContainer` that renders one. It answers `this` by default, so a policy normally
+carries on one level down.
 
-`KEEP_ALL` is the exception and the reason the seam exists. It is a compatibility setting for data a
-caller produced, where a key has to stay put even when its value is empty; below a domain object it
-steps back to `ANNOTATED`. The live case is SPML: `MapResolver` renders the resource map with
-`KEEP_ALL` so the empty values an SPML page wrote survive, while a rich text — which reaches the
-writer unresolved, because it has to stay translatable until then — must not gain empty properties
-of its own.
+Override it where a policy is a statement about **whose** data it governs rather than about the
+values themselves. A caller that needs its own empty keys to stay put has said nothing about the
+models it did not write, and letting such a rule reach into them fills the output with empty
+properties nobody asked for:
+
+```java
+EmptyValuePolicy keepsOnlyItsOwn =
+    new EmptyValuePolicy() {
+      @Override public boolean keepIfEmpty(Class<?> type) { return true; }
+      @Override public EmptyValuePolicy insideDomainObject() { return ANNOTATED; }
+    };
+```
 
 The switch nests and is restored on the way out, so a rich text holding a link holding another rich
 text comes out right. `or(…)` combines what both sides apply below.

@@ -25,6 +25,24 @@ import org.junit.jupiter.api.Test;
 
 class JsonWriterTest {
 
+  /**
+   * Keeps every empty value of its own but hands over to the default below a domain object — the
+   * shape a caller uses when its compatibility promise covers only the data it wrote itself.
+   */
+  private static final EmptyValuePolicy KEEPS_ONLY_ITS_OWN =
+      new EmptyValuePolicy() {
+
+        @Override
+        public boolean keepIfEmpty(Class<?> type) {
+          return true;
+        }
+
+        @Override
+        public EmptyValuePolicy insideDomainObject() {
+          return EmptyValuePolicy.ANNOTATED;
+        }
+      };
+
   public record Link(String name, TranslatableText label) {}
 
   private static final DomainObjectMapper LINK_MAPPER =
@@ -271,23 +289,23 @@ class JsonWriterTest {
   }
 
   @Test
-  void keepAllDoesNotReachIntoAModelRenderedByAContainer() {
+  void aSteppingBackPolicyDoesNotReachIntoAModelRenderedByAContainer() {
     OutputObject root = new OutputObject(null, null);
     root.put("fromSpml", "");
     root.put("card", new CardContainer(new Card("Headline", "", List.of())));
 
     StringWriter sw = new StringWriter();
-    root.accept(new JsonWriter(sw, cardMapper(), Translations.SOURCE, EmptyValuePolicy.KEEP_ALL));
+    root.accept(new JsonWriter(sw, cardMapper(), Translations.SOURCE, KEEPS_ONLY_ITS_OWN));
 
     assertThat(sw.toString())
         .as(
-            "KEEP_ALL keeps the caller's own empty value but must not fill the model the container"
-                + " renders with empty properties")
+            "the policy keeps the caller's own empty value but must not fill the model the"
+                + " container renders with empty properties")
         .isEqualTo("{\"fromSpml\":\"\",\"card\":{\"headline\":\"Headline\"}}");
   }
 
   @Test
-  void keepAllStillReachesIntoAModelWhoseTypeIsKeptDeliberately() {
+  void aTypeRuleCombinedWithItStillReachesIntoTheModel() {
     OutputObject root = new OutputObject(null, null);
     root.put("card", new CardContainer(new Card("Headline", "", List.of())));
 
@@ -297,10 +315,10 @@ class JsonWriterTest {
             sw,
             cardMapper(),
             Translations.SOURCE,
-            EmptyValuePolicy.KEEP_ALL.or(EmptyValuePolicy.keepTypes(String.class))));
+            KEEPS_ONLY_ITS_OWN.or(EmptyValuePolicy.keepTypes(String.class))));
 
     assertThat(sw.toString())
-        .as("a policy combined with KEEP_ALL keeps its own rule below the model")
+        .as("a type rule combined with it keeps working below the model")
         .isEqualTo("{\"card\":{\"headline\":\"Headline\",\"note\":\"\"}}");
   }
 

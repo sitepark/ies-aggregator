@@ -11,6 +11,24 @@ import org.junit.jupiter.api.Test;
 
 class EmptyValuePolicyTest {
 
+  /**
+   * Keeps every empty value of its own, and hands over to the default below a domain object — the
+   * shape a caller uses when its compatibility promise covers only the data it wrote itself.
+   */
+  private static final EmptyValuePolicy KEEPS_ONLY_ITS_OWN =
+      new EmptyValuePolicy() {
+
+        @Override
+        public boolean keepIfEmpty(Class<?> type) {
+          return true;
+        }
+
+        @Override
+        public EmptyValuePolicy insideDomainObject() {
+          return EmptyValuePolicy.ANNOTATED;
+        }
+      };
+
   @OutputKeepIfEmpty
   record KeptFlag() implements Emptiable {
     @Override
@@ -170,18 +188,16 @@ class EmptyValuePolicyTest {
   }
 
   @Test
-  void keepAllStepsBackToTheDefaultInsideADomainObject() {
-    assertThat(EmptyValuePolicy.KEEP_ALL.insideDomainObject())
-        .as(
-            "keeping every empty value is a compatibility setting for the caller's data, not for"
-                + " the models the aggregator assembled")
+  void aPolicyCanStepBackInsideADomainObject() {
+    assertThat(KEEPS_ONLY_ITS_OWN.insideDomainObject())
+        .as("a policy about whose data it governs hands over below a model it did not write")
         .isSameAs(EmptyValuePolicy.ANNOTATED);
   }
 
   @Test
   void combiningKeepsBothRulesInsideADomainObject() {
     EmptyValuePolicy combined =
-        EmptyValuePolicy.KEEP_ALL.or(EmptyValuePolicy.keepTypes(CharSequence.class));
+        KEEPS_ONLY_ITS_OWN.or(EmptyValuePolicy.keepTypes(CharSequence.class));
 
     EmptyValuePolicy inside = combined.insideDomainObject();
 
@@ -189,7 +205,7 @@ class EmptyValuePolicyTest {
         .as("the combined type rule survives below a domain object")
         .isTrue();
     assertThat(inside.keepIfEmpty(Integer.class))
-        .as("what only KEEP_ALL kept does not survive below a domain object")
+        .as("what only the stepping-back side kept does not survive below a domain object")
         .isFalse();
   }
 }
