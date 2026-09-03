@@ -8,6 +8,7 @@ import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.value.text.Text;
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.text.Translations;
@@ -21,6 +22,24 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class PhpArrayWriterTest {
+
+  /**
+   * Keeps every empty value of its own but hands over to the default below a domain object — the
+   * shape a caller uses when its compatibility promise covers only the data it wrote itself.
+   */
+  private static final EmptyValuePolicy KEEPS_ONLY_ITS_OWN =
+      new EmptyValuePolicy() {
+
+        @Override
+        public boolean keepIfEmpty(Class<?> type) {
+          return true;
+        }
+
+        @Override
+        public EmptyValuePolicy insideDomainObject() {
+          return EmptyValuePolicy.ANNOTATED;
+        }
+      };
 
   public record Link(String name, TranslatableText label) {}
 
@@ -163,6 +182,56 @@ class PhpArrayWriterTest {
     assertThat(sw.toString())
         .as("An empty value of a type the policy keeps should be rendered while others drop")
         .isEqualTo("[\n\t\"headline\" => \"\"\n]");
+  }
+
+  /** A model an aggregator assembled, with one filled and two empty properties. */
+  public record Card(String headline, String note, List<String> tags) {}
+
+  /** A container that renders a whole model, the way a rich text does. */
+  private record CardContainer(Card card) implements TranslatableContainer {
+    @Override
+    public Object render(Translations translations) {
+      return this.card;
+    }
+  }
+
+  /**
+   * The live case behind this test: SPML renders the resource map with {@code KEEP_ALL} so its own
+   * empty values survive, while the models the aggregator handed it must not gain empty properties.
+   * A {@code TranslatableContainer} is the one value that reaches the writer unresolved, because it
+   * has to stay translatable until here.
+   */
+  @Test
+  void aSteppingBackPolicyDoesNotReachIntoAModelRenderedByAContainer() {
+    DomainObjectMapper mapper =
+        value -> {
+          if (value instanceof Card card) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("headline", card.headline());
+            map.put("note", card.note());
+            map.put("tags", card.tags());
+            return map;
+          }
+          return null;
+        };
+    OutputObject root = new OutputObject(null, null);
+    root.put("fromSpml", "");
+    root.put("card", new CardContainer(new Card("Headline", "", List.of())));
+
+    StringWriter sw = new StringWriter();
+    root.accept(new PhpArrayWriter(sw, mapper, Translations.SOURCE, KEEPS_ONLY_ITS_OWN));
+
+    assertThat(sw.toString())
+        .as(
+            "the policy keeps the caller's own empty value but must not fill the model the"
+                + " container renders with empty properties")
+        .isEqualTo(
+            "[\n"
+                + "\t\"fromSpml\" => \"\",\n"
+                + "\t\"card\" => [\n"
+                + "\t\t\"headline\" => \"Headline\"\n"
+                + "\t]\n"
+                + "]");
   }
 
   @Test

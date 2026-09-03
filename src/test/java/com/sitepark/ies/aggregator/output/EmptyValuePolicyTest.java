@@ -11,6 +11,24 @@ import org.junit.jupiter.api.Test;
 
 class EmptyValuePolicyTest {
 
+  /**
+   * Keeps every empty value of its own, and hands over to the default below a domain object — the
+   * shape a caller uses when its compatibility promise covers only the data it wrote itself.
+   */
+  private static final EmptyValuePolicy KEEPS_ONLY_ITS_OWN =
+      new EmptyValuePolicy() {
+
+        @Override
+        public boolean keepIfEmpty(Class<?> type) {
+          return true;
+        }
+
+        @Override
+        public EmptyValuePolicy insideDomainObject() {
+          return EmptyValuePolicy.ANNOTATED;
+        }
+      };
+
   @OutputKeepIfEmpty
   record KeptFlag() implements Emptiable {
     @Override
@@ -152,5 +170,42 @@ class EmptyValuePolicyTest {
     assertThatThrownBy(() -> EmptyValuePolicy.ANNOTATED.or(null))
         .as("or should fail fast on a null policy")
         .isInstanceOf(NullPointerException.class);
+  }
+
+  @Test
+  void mostPoliciesApplyUnchangedInsideADomainObject() {
+    assertThat(EmptyValuePolicy.ANNOTATED.insideDomainObject())
+        .as("a rule about which empties survive holds one level down as well")
+        .isSameAs(EmptyValuePolicy.ANNOTATED);
+    assertThat(EmptyValuePolicy.DROP_ALL.insideDomainObject())
+        .as("dropping everything means dropping everything, at any depth")
+        .isSameAs(EmptyValuePolicy.DROP_ALL);
+
+    EmptyValuePolicy keepText = EmptyValuePolicy.keepTypes(CharSequence.class);
+    assertThat(keepText.insideDomainObject())
+        .as("a type rule is not a statement about who produced the value")
+        .isSameAs(keepText);
+  }
+
+  @Test
+  void aPolicyCanStepBackInsideADomainObject() {
+    assertThat(KEEPS_ONLY_ITS_OWN.insideDomainObject())
+        .as("a policy about whose data it governs hands over below a model it did not write")
+        .isSameAs(EmptyValuePolicy.ANNOTATED);
+  }
+
+  @Test
+  void combiningKeepsBothRulesInsideADomainObject() {
+    EmptyValuePolicy combined =
+        KEEPS_ONLY_ITS_OWN.or(EmptyValuePolicy.keepTypes(CharSequence.class));
+
+    EmptyValuePolicy inside = combined.insideDomainObject();
+
+    assertThat(inside.keepIfEmpty(String.class))
+        .as("the combined type rule survives below a domain object")
+        .isTrue();
+    assertThat(inside.keepIfEmpty(Integer.class))
+        .as("what only the stepping-back side kept does not survive below a domain object")
+        .isFalse();
   }
 }

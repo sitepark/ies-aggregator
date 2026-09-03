@@ -64,6 +64,27 @@ public interface EmptyValuePolicy {
       };
 
   /**
+   * The policy that applies once the visitor descends into a domain object — the properties of a
+   * model the aggregator assembled, rather than values a caller handed it.
+   *
+   * <p>Answers {@code this} by default: a rule about which empty values survive normally holds one
+   * level down as well. Override it where a policy is a statement about <i>whose</i> data it
+   * governs rather than about the values themselves — a caller that needs its own empty keys to
+   * stay put has said nothing about the models it did not write.
+   *
+   * <p>The switch applies from the moment a domain object — or a {@link
+   * com.sitepark.ies.aggregator.value.text.TranslatableContainer} rendering one — is entered, and it
+   * nests: the returned policy governs everything below, including further domain objects, and the
+   * previous one is restored on the way out.
+   *
+   * @return the policy governing the properties of a domain object; {@code this} unless a policy
+   *     says otherwise
+   */
+  default EmptyValuePolicy insideDomainObject() {
+    return this;
+  }
+
+  /**
    * Returns a policy that keeps every empty value assignable to one of {@code types} — so naming an
    * interface of a sealed hierarchy (e.g. {@code Text}) covers all of its variants.
    *
@@ -103,6 +124,12 @@ public interface EmptyValuePolicy {
       @Override
       public boolean keepNull() {
         return EmptyValuePolicy.this.keepNull() || other.keepNull();
+      }
+
+      // Combines what both sides apply below a domain object, so neither side loses its rule.
+      @Override
+      public EmptyValuePolicy insideDomainObject() {
+        return EmptyValuePolicy.this.insideDomainObject().or(other.insideDomainObject());
       }
     };
   }
