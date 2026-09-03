@@ -365,6 +365,23 @@ new MapConverter(mapper, policy);                       // same for the converte
   **ancestors** of a kept value survive the pruning as well, so `{"meta":{"headline":""}}` is
   rendered rather than dropped as an empty branch.
 
+#### The policy stops at a domain object
+
+A policy governs the values the visitor was **handed**, not the models the aggregator assembled from
+them. `insideDomainObject()` says which policy applies once the visitor descends into a domain
+object — or into a `TranslatableContainer` that renders one. It answers `this` by default, so almost
+every policy simply carries on one level down.
+
+`KEEP_ALL` is the exception and the reason the seam exists. It is a compatibility setting for data a
+caller produced, where a key has to stay put even when its value is empty; below a domain object it
+steps back to `ANNOTATED`. The live case is SPML: `MapResolver` renders the resource map with
+`KEEP_ALL` so the empty values an SPML page wrote survive, while a rich text — which reaches the
+writer unresolved, because it has to stay translatable until then — must not gain empty properties
+of its own.
+
+The switch nests and is restored on the way out, so a rich text holding a link holding another rich
+text comes out right. `or(…)` combines what both sides apply below.
+
 The three levels are complementary:
 
 | Level                 | Decides by         | Configured where                        |

@@ -61,7 +61,37 @@ public interface EmptyValuePolicy {
         public boolean keepNull() {
           return true;
         }
+
+        // Keeping every empty value is a statement about the caller's own data, not about the
+        // models the aggregator built, so below one of those the default applies again.
+        @Override
+        public EmptyValuePolicy insideDomainObject() {
+          return ANNOTATED;
+        }
       };
+
+  /**
+   * The policy that applies once the visitor descends into a domain object — the properties of a
+   * model the aggregator itself assembled, rather than values the caller handed in.
+   *
+   * <p>Almost every policy answers itself, and that is the default: a rule about which empty values
+   * survive holds just as well one level down. {@link #KEEP_ALL} is the exception, and the reason
+   * this seam exists. It is a compatibility setting for data an SPML page produced, where a key has
+   * to stay put even when its value is empty; the models the aggregator assembles carry no such
+   * promise, and letting the setting reach into them fills the output with empty properties nothing
+   * asked for.
+   *
+   * <p>The switch applies from the moment a domain object — or a {@link
+   * com.sitepark.ies.aggregator.value.text.TranslatableContainer} rendering one — is entered, and it
+   * nests: the returned policy governs everything below, including further domain objects, and the
+   * previous one is restored on the way out.
+   *
+   * @return the policy governing the properties of a domain object; {@code this} unless a policy
+   *     says otherwise
+   */
+  default EmptyValuePolicy insideDomainObject() {
+    return this;
+  }
 
   /**
    * Returns a policy that keeps every empty value assignable to one of {@code types} — so naming an
@@ -103,6 +133,12 @@ public interface EmptyValuePolicy {
       @Override
       public boolean keepNull() {
         return EmptyValuePolicy.this.keepNull() || other.keepNull();
+      }
+
+      // Combines what both sides apply below a domain object, so neither side loses its rule.
+      @Override
+      public EmptyValuePolicy insideDomainObject() {
+        return EmptyValuePolicy.this.insideDomainObject().or(other.insideDomainObject());
       }
     };
   }

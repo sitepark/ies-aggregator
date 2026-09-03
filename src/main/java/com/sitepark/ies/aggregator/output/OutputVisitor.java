@@ -59,6 +59,13 @@ public abstract class OutputVisitor {
   private final Translations translations;
   private final EmptyValuePolicy emptyValuePolicy;
 
+  /**
+   * The policy in force right now. Equal to {@link #emptyValuePolicy} while the visitor walks the
+   * values it was handed, and {@link EmptyValuePolicy#insideDomainObject()} of the enclosing one
+   * while it walks the properties of a domain object — see {@link #insideDomainObject}.
+   */
+  private EmptyValuePolicy activePolicy;
+
   /** Creates a visitor without a domain object mapper, rendering the source language. */
   protected OutputVisitor() {
     this(DomainObjectMapper.NONE, Translations.SOURCE);
@@ -113,6 +120,7 @@ public abstract class OutputVisitor {
     this.domainObjectMapper = Objects.requireNonNull(domainObjectMapper);
     this.translations = Objects.requireNonNull(translations);
     this.emptyValuePolicy = Objects.requireNonNull(emptyValuePolicy);
+    this.activePolicy = this.emptyValuePolicy;
   }
 
   /** Returns the configured domain object mapper. */
@@ -125,9 +133,36 @@ public abstract class OutputVisitor {
     return this.translations;
   }
 
-  /** Returns the policy deciding which empty values are rendered anyway. */
+  /**
+   * Returns the configured policy deciding which empty values are rendered anyway.
+   *
+   * <p>The <i>configured</i> one, not necessarily the one in force: below a domain object the
+   * visitor applies {@link EmptyValuePolicy#insideDomainObject()} instead.
+   */
   protected final EmptyValuePolicy emptyValuePolicy() {
     return this.emptyValuePolicy;
+  }
+
+  /**
+   * Runs {@code body} with the policy that governs the properties of a domain object.
+   *
+   * <p>Nests: the switch applies to everything below, including further domain objects, and the
+   * enclosing policy is restored on the way out — which is what makes a rich text holding a link
+   * holding another rich text come out right.
+   *
+   * @param body what to render below the domain object
+   */
+  // The assignment is what body.run() reads, through the visit methods it calls; PMD's dataflow
+  // does not follow that and sees only the restore in the finally block.
+  @SuppressWarnings("PMD.UnusedAssignment")
+  private void insideDomainObject(Runnable body) {
+    EmptyValuePolicy enclosing = this.activePolicy;
+    this.activePolicy = enclosing.insideDomainObject();
+    try {
+      body.run();
+    } finally {
+      this.activePolicy = enclosing;
+    }
   }
 
   /**
@@ -151,9 +186,9 @@ public abstract class OutputVisitor {
    */
   protected final boolean rendersEmpty(@Nullable Object value) {
     if (value == null) {
-      return !this.emptyValuePolicy.keepNull();
+      return !this.activePolicy.keepNull();
     }
-    if (this.emptyValuePolicy.keepIfEmpty(value.getClass())) {
+    if (this.activePolicy.keepIfEmpty(value.getClass())) {
       return false;
     }
     return switch (value) {
@@ -173,9 +208,22 @@ public abstract class OutputVisitor {
           yield Array.getLength(value) == 0;
         }
         Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
-        yield properties != null && allRenderEmpty(properties.values());
+        // Judged the way it will be written: under the policy that governs the inside of a domain
+        // object, so this decision and visitDomain cannot disagree.
+        yield properties != null && allRenderEmptyInsideDomainObject(properties.values());
       }
     };
+  }
+
+  /** {@link #allRenderEmpty} under the policy that governs the properties of a domain object. */
+  private boolean allRenderEmptyInsideDomainObject(Iterable<?> values) {
+    EmptyValuePolicy enclosing = this.activePolicy;
+    this.activePolicy = enclosing.insideDomainObject();
+    try {
+      return allRenderEmpty(values);
+    } finally {
+      this.activePolicy = enclosing;
+    }
   }
 
   private boolean allRenderEmpty(Iterable<?> values) {
@@ -376,7 +424,7 @@ public abstract class OutputVisitor {
     if (properties == null) {
       visitUnknown(value);
     } else {
-      visitMap(properties);
+      insideDomainObject(() -> visitMap(properties));
     }
   }
 
@@ -422,7 +470,9 @@ public abstract class OutputVisitor {
    * @param value the translatable container to render
    */
   public void visitTranslatableContainer(TranslatableContainer value) {
-    visitField(null, value.render(this.translations));
+    // The container is the aggregator's own value and so is whatever it renders to, even when that
+    // is a whole model: the switch belongs here, not one level further down.
+    insideDomainObject(() -> visitField(null, value.render(this.translations)));
   }
 
   /**

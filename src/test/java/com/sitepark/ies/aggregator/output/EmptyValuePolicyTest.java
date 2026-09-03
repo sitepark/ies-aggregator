@@ -153,4 +153,43 @@ class EmptyValuePolicyTest {
         .as("or should fail fast on a null policy")
         .isInstanceOf(NullPointerException.class);
   }
+
+  @Test
+  void mostPoliciesApplyUnchangedInsideADomainObject() {
+    assertThat(EmptyValuePolicy.ANNOTATED.insideDomainObject())
+        .as("a rule about which empties survive holds one level down as well")
+        .isSameAs(EmptyValuePolicy.ANNOTATED);
+    assertThat(EmptyValuePolicy.DROP_ALL.insideDomainObject())
+        .as("dropping everything means dropping everything, at any depth")
+        .isSameAs(EmptyValuePolicy.DROP_ALL);
+
+    EmptyValuePolicy keepText = EmptyValuePolicy.keepTypes(CharSequence.class);
+    assertThat(keepText.insideDomainObject())
+        .as("a type rule is not a statement about who produced the value")
+        .isSameAs(keepText);
+  }
+
+  @Test
+  void keepAllStepsBackToTheDefaultInsideADomainObject() {
+    assertThat(EmptyValuePolicy.KEEP_ALL.insideDomainObject())
+        .as(
+            "keeping every empty value is a compatibility setting for the caller's data, not for"
+                + " the models the aggregator assembled")
+        .isSameAs(EmptyValuePolicy.ANNOTATED);
+  }
+
+  @Test
+  void combiningKeepsBothRulesInsideADomainObject() {
+    EmptyValuePolicy combined =
+        EmptyValuePolicy.KEEP_ALL.or(EmptyValuePolicy.keepTypes(CharSequence.class));
+
+    EmptyValuePolicy inside = combined.insideDomainObject();
+
+    assertThat(inside.keepIfEmpty(String.class))
+        .as("the combined type rule survives below a domain object")
+        .isTrue();
+    assertThat(inside.keepIfEmpty(Integer.class))
+        .as("what only KEEP_ALL kept does not survive below a domain object")
+        .isFalse();
+  }
 }

@@ -10,6 +10,7 @@ import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.value.Emptiable;
 import com.sitepark.ies.aggregator.value.text.Text;
+import com.sitepark.ies.aggregator.value.text.TranslatableContainer;
 import com.sitepark.ies.aggregator.value.text.TranslatableSplitText;
 import com.sitepark.ies.aggregator.value.text.TranslatableText;
 import com.sitepark.ies.aggregator.value.text.Translations;
@@ -243,6 +244,64 @@ class JsonWriterTest {
             "A KeepEmpty property must survive nested inside a domain object while its empty"
                 + " sibling drops")
         .isEqualTo("{\"meta\":{\"detail\":{\"note\":\"\"}}}");
+  }
+
+  /** A model an aggregator assembled, with one filled and two empty properties. */
+  public record Card(String headline, String note, List<String> tags) {}
+
+  /** A container that renders a whole model, the way a rich text does. */
+  private record CardContainer(Card card) implements TranslatableContainer {
+    @Override
+    public Object render(Translations translations) {
+      return this.card;
+    }
+  }
+
+  private static DomainObjectMapper cardMapper() {
+    return value -> {
+      if (value instanceof Card card) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("headline", card.headline());
+        map.put("note", card.note());
+        map.put("tags", card.tags());
+        return map;
+      }
+      return null;
+    };
+  }
+
+  @Test
+  void keepAllDoesNotReachIntoAModelRenderedByAContainer() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("fromSpml", "");
+    root.put("card", new CardContainer(new Card("Headline", "", List.of())));
+
+    StringWriter sw = new StringWriter();
+    root.accept(new JsonWriter(sw, cardMapper(), Translations.SOURCE, EmptyValuePolicy.KEEP_ALL));
+
+    assertThat(sw.toString())
+        .as(
+            "KEEP_ALL keeps the caller's own empty value but must not fill the model the container"
+                + " renders with empty properties")
+        .isEqualTo("{\"fromSpml\":\"\",\"card\":{\"headline\":\"Headline\"}}");
+  }
+
+  @Test
+  void keepAllStillReachesIntoAModelWhoseTypeIsKeptDeliberately() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("card", new CardContainer(new Card("Headline", "", List.of())));
+
+    StringWriter sw = new StringWriter();
+    root.accept(
+        new JsonWriter(
+            sw,
+            cardMapper(),
+            Translations.SOURCE,
+            EmptyValuePolicy.KEEP_ALL.or(EmptyValuePolicy.keepTypes(String.class))));
+
+    assertThat(sw.toString())
+        .as("a policy combined with KEEP_ALL keeps its own rule below the model")
+        .isEqualTo("{\"card\":{\"headline\":\"Headline\",\"note\":\"\"}}");
   }
 
   @Test
