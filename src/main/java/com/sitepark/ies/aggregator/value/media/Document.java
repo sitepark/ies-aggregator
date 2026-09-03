@@ -17,5 +17,6 @@ public record Document(
     long fileSize,
     Hash hash,
     GenericMetadata metadata,
+    @Nullable Origin origin,
     @Nullable String extractedContent)
     implements Media {}

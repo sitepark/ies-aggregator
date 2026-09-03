@@ -15,6 +15,7 @@ public record Image(
     long fileSize,
     Hash hash,
     ImageMetadata metadata,
+    @Nullable Origin origin,
     int width,
     int height,
     @Nullable ColorSwatch colorSwatch)

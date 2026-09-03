@@ -1,10 +1,13 @@
 package com.sitepark.ies.aggregator.value.media;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The empty {@link Media} asset: a placeholder used where a media field references no asset.
  *
  * <p>All accessors return neutral values ({@code 0}, {@code ""}, an empty {@link Hash} and {@link
- * Metadata} without any descriptive data), and {@link #isEmpty()} returns {@code true}. There is
+ * Metadata} without any descriptive data) — except {@link #origin()}, which has no neutral value
+ * and stays {@code null} — and {@link #isEmpty()} returns {@code true}. There is
  * exactly one instance, obtained via {@link Media#empty()}.
  */
 public final class EmptyMedia implements Media {
@@ -55,6 +58,11 @@ public final class EmptyMedia implements Media {
   @Override
   public Metadata metadata() {
     return EMPTY_METADATA;
+  }
+
+  @Override
+  public @Nullable Origin origin() {
+    return null;
   }
 
   @Override
