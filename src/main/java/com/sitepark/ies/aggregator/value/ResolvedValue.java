@@ -15,8 +15,13 @@ import org.jspecify.annotations.Nullable;
  * Resolver}, providing typed accessor methods.
  *
  * <p>An empty resolved value ({@link #EMPTY}) indicates that no value was found for the requested
- * key. Calling a typed accessor on an empty value without a default throws {@link
- * IllegalArgumentException}.
+ * key. Reading one is not an error: the no-argument accessors answer the neutral value of their
+ * type — {@code 0}, {@code false}, the empty string, text, URI, media or map — so a caller need not
+ * check for absence before reading. {@link IllegalArgumentException} is raised by a value that
+ * <i>is</i> set and cannot be read as the requested type.
+ *
+ * <p>{@link #asEnum(Class)} is the exception: an enum has no neutral constant to fall back to, so
+ * it throws on an empty value and a caller that tolerates absence passes a default.
  */
 public final class ResolvedValue implements Emptiable {
   private static final String VALUE_NOT_SET = "Value not set";
@@ -105,9 +110,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as an {@code int}.
+   * Returns the value as an {@code int}, or {@code 0} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not an integral number
+   * @throws IllegalArgumentException if the value is not an integral number
    */
   public int asInt() {
     return asInt(0);
@@ -135,9 +140,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a {@code long}.
+   * Returns the value as a {@code long}, or {@code 0} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not an integral number
+   * @throws IllegalArgumentException if the value is not an integral number
    */
   public long asLong() {
     return asLong(0);
@@ -165,9 +170,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a {@code float}.
+   * Returns the value as a {@code float}, or {@code 0.0f} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not a {@link Number}
+   * @throws IllegalArgumentException if the value is not a {@link Number}
    */
   public float asFloat() {
     return asFloat(0.0f);
@@ -194,9 +199,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a {@code double}.
+   * Returns the value as a {@code double}, or {@code 0.0} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not a {@link Number}
+   * @throws IllegalArgumentException if the value is not a {@link Number}
    */
   public double asDouble() {
     return asDouble(0.0);
@@ -223,9 +228,7 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a string via {@code toString()}.
-   *
-   * @throws IllegalArgumentException if empty
+   * Returns the value as a string via {@code toString()}, or the empty string if empty.
    */
   public String asString() {
     return asString("");
@@ -245,10 +248,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a {@link PlainText}.
+   * Returns the value as a {@link PlainText}, or {@link PlainText#EMPTY} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not a {@link PlainText} or {@link
-   *     String}
+   * @throws IllegalArgumentException if the value is not a {@link PlainText} or {@link String}
    */
   public PlainText asText() {
     return asText(PlainText.EMPTY);
@@ -279,8 +281,7 @@ public final class ResolvedValue implements Emptiable {
   /**
    * Returns the value as a {@link PlainUri}.
    *
-   * @throws IllegalArgumentException if empty or the value is not a {@link PlainUri} or {@link
-   *     String}
+   * @throws IllegalArgumentException if the value is not a {@link PlainUri} or {@link String}
    */
   public PlainUri asUri() {
     return asUri(Uri.empty());
@@ -394,10 +395,9 @@ public final class ResolvedValue implements Emptiable {
   }
 
   /**
-   * Returns the value as a {@code boolean}.
+   * Returns the value as a {@code boolean}, or {@code false} if empty.
    *
-   * @throws IllegalArgumentException if empty or the value is not a {@link Boolean} or {@link
-   *     String}
+   * @throws IllegalArgumentException if the value is not a {@link Boolean} or {@link String}
    */
   public boolean asBoolean() {
     return asBoolean(false);
@@ -485,8 +485,7 @@ public final class ResolvedValue implements Emptiable {
    * parsing embedded JSON) when needed.
    *
    * @param parser the parser used to deserialize a string value
-   * @throws IllegalArgumentException if empty, or the value is neither a {@link Map} nor a {@link
-   *     String}
+   * @throws IllegalArgumentException if the value is neither a {@link Map} nor a {@link String}
    */
   @SuppressWarnings("unchecked")
   public Map<String, Object> asMap(StructuredValueParser parser) {
