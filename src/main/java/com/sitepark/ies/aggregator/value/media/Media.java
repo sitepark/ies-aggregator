@@ -12,11 +12,12 @@ import org.jspecify.annotations.Nullable;
  * asset, see {@link com.sitepark.ies.aggregator.value.uri.UriTarget#ofMedia(int, int)}.
  *
  * <p>Sealed over the concrete media kinds {@link Image}, {@link Document}, {@link Audio} and {@link
- * Video}; the common metadata is exposed here, while kind-specific data lives on each
- * implementation. {@link EmptyMedia} completes the family as the {@link #empty() empty} media asset,
+ * Video}, plus {@link UnclassifiedMedia} for an asset the store sorts into none of them; the common
+ * metadata is exposed here, while kind-specific data lives on each implementation. {@link EmptyMedia} completes the family as the {@link #empty() empty} media asset,
  * so a media field can be filled without {@code null}.
  */
-public sealed interface Media extends Emptiable permits Image, Document, Audio, Video, EmptyMedia {
+public sealed interface Media extends Emptiable
+    permits Image, Document, Audio, Video, UnclassifiedMedia, EmptyMedia {
 
   /**
    * Returns the empty media asset, used where a media field references no asset.
