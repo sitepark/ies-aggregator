@@ -9,6 +9,13 @@ import org.junit.jupiter.api.Test;
 class EmptyResolverTest {
 
   @Test
+  void nodeKeyIsEmptyBecauseThereIsNoNode() {
+    assertThat(Resolver.empty().nodeKey())
+        .as("an empty resolver reads from no node and therefore has no key")
+        .isEmpty();
+  }
+
+  @Test
   void isAlwaysEmpty() {
     assertThat(Resolver.empty().isEmpty())
         .as("EmptyResolver should always report itself as empty")

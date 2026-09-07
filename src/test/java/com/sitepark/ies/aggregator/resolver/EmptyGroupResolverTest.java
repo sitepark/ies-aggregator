@@ -9,6 +9,13 @@ import org.junit.jupiter.api.Test;
 class EmptyGroupResolverTest {
 
   @Test
+  void nodeKeyIsEmptyBecauseThereIsNoNode() {
+    assertThat(GroupResolver.empty(pathOf(mock(), mock())).nodeKey())
+        .as("an empty resolver reads from no node and therefore has no key")
+        .isEmpty();
+  }
+
+  @Test
   void isAlwaysEmpty() {
     assertThat(GroupResolver.empty(pathOf(mock(), mock())).isEmpty())
         .as("EmptyGroupResolver should always report itself as empty")

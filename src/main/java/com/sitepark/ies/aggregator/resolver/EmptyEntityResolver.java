@@ -42,6 +42,16 @@ public final class EmptyEntityResolver implements EntityResolver {
   }
 
   /**
+   * Returns the empty string; this resolver reads from no node and therefore has no key.
+   *
+   * @return the empty string
+   */
+  @Override
+  public String nodeKey() {
+    return "";
+  }
+
+  /**
    * Returns the surrounding navigation path supplied at construction time.
    *
    * @return the navigation path; never {@code null}

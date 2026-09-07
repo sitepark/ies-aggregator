@@ -19,6 +19,11 @@ class ResolverTest {
       }
 
       @Override
+      public String nodeKey() {
+        return "map";
+      }
+
+      @Override
       public ResolverPath path() {
         return ResolverPath.of(this);
       }
@@ -46,6 +51,11 @@ class ResolverTest {
       @Override
       public boolean isEmpty() {
         return false;
+      }
+
+      @Override
+      public String nodeKey() {
+        return "resolving";
       }
 
       @Override
