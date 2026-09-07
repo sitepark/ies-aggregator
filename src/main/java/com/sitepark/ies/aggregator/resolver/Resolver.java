@@ -95,12 +95,20 @@ public interface Resolver {
    *   <li><strong>stable</strong> — the same node answers the same key in every run, so an id
    *       derived from it does not change when the content is generated again;
    *   <li><strong>unique</strong> — no two nodes of the source system share a key, across objects
-   *       as well as within one.
+   *       as well as within one;
+   *   <li><strong>opaque</strong> — the key is an id of its own or a digest, and says nothing about
+   *       how the source system addresses the node. None of its notation — numeric ids, type or
+   *       version markers, field paths, bracketed list positions — appears in the key.
    * </ul>
    *
    * <p>Implementations answer the node's own id wherever the source system keeps one, and otherwise
-   * derive the key from whatever identifies the node there. A resolver that reads from no node at
-   * all — an empty one — answers the empty string.
+   * derive the key from whatever identifies the node there, hashing it so that the notation stays
+   * behind. A key is therefore already fit to be used as an id: a caller that combines it with
+   * something else has to make that combination opaque again, but hashing the key on its own only
+   * hashes a hash.
+   *
+   * <p>A resolver that reads from no node at all — an empty one — answers the empty string, which
+   * is how absence stays distinguishable from a key.
    *
    * @return the node key, or the empty string if this resolver reads from no node
    */

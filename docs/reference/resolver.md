@@ -160,6 +160,13 @@ String key = resolver.nodeKey();
 - **unique** — no two nodes share a key, within one object as well as across objects.
 - **route-independent** — the same node reached through two different navigation chains answers the
   same key. A path cannot express this, since the two chains differ.
+- **opaque** — the key is an id of its own or a digest. How the source system addresses the node —
+  numeric ids, type and version markers, field paths, bracketed list positions — does not appear in
+  it. An implementation that has nothing but such an address hashes it.
+
+Because a key is already opaque, it is fit to be used as an id as it is. Hashing it again only
+hashes a hash; a caller that *combines* it with something else is the one that has to make the
+combination opaque.
 
 Implementations answer the node's own id wherever the source system keeps one, and otherwise derive
 the key from whatever identifies the node there. A resolver that reads from no node — an empty one —
