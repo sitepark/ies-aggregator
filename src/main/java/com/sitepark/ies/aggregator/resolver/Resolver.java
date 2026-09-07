@@ -79,6 +79,34 @@ public interface Resolver {
   boolean isEmpty();
 
   /**
+   * Returns a stable, unique key of the node this resolver reads from.
+   *
+   * <p>Where {@link #path()} records the <em>route</em> taken to reach this resolver, the node key
+   * identifies the node itself, and is therefore independent of that route: the same node reached
+   * through two different navigation chains answers the same key, while two sibling entries of one
+   * {@link #resolveList(String)} answer different ones — something a path of segment keys cannot
+   * express, because every element of a list is resolved under the same key.
+   *
+   * <p>Callers derive from it the identities that have to survive across aggregation runs — the
+   * model id of a section, say, under which a visitor's consent is remembered. Two properties make
+   * that possible:
+   *
+   * <ul>
+   *   <li><strong>stable</strong> — the same node answers the same key in every run, so an id
+   *       derived from it does not change when the content is generated again;
+   *   <li><strong>unique</strong> — no two nodes of the source system share a key, across objects
+   *       as well as within one.
+   * </ul>
+   *
+   * <p>Implementations answer the node's own id wherever the source system keeps one, and otherwise
+   * derive the key from whatever identifies the node there. A resolver that reads from no node at
+   * all — an empty one — answers the empty string.
+   *
+   * @return the node key, or the empty string if this resolver reads from no node
+   */
+  String nodeKey();
+
+  /**
    * Returns the full navigation path from the outermost root resolver to this resolver.
    *
    * <p>Unlike {@link #root()} and {@link #globalRoot()}, which only expose the current and outermost

@@ -43,6 +43,8 @@ public interface Resolver {
 
     boolean isEmpty();
 
+    String nodeKey();                          // stable, unique key of the resolved node
+
     Resolver resolve(String key);              // sub-resolver (may cross a link/scope boundary)
 
     List<Resolver> resolveList(String key);    // list of sub-resolvers
@@ -137,6 +139,34 @@ becomes the new `globalRoot()` (not just the current-scope `root()`, as a plain 
 
 An empty resolver from a failed lookup still carries the surrounding `path()`, so callers can
 navigate back up the tree even after a missing key (`Resolver.empty(path)`).
+
+## Identity of a node
+
+`path()` records the **route** taken to a resolver. `nodeKey()` identifies the **node itself**, and
+the two answer different questions.
+
+A path is a sequence of field names, so it cannot tell siblings of a list apart: every element of a
+`resolveList(key)` is resolved under the same `key`. It also says nothing about *which* object was
+entered at a scope boundary — an `enterRoot` segment carries no key at all. A node key has neither
+limitation:
+
+```java
+String key = resolver.nodeKey();
+```
+
+- **stable** — the same node answers the same key in every run, so an id derived from it survives
+  across aggregations. This is what makes it usable for identities that outlive a single generation,
+  such as the model id of a section under which a visitor's consent is remembered.
+- **unique** — no two nodes share a key, within one object as well as across objects.
+- **route-independent** — the same node reached through two different navigation chains answers the
+  same key. A path cannot express this, since the two chains differ.
+
+Implementations answer the node's own id wherever the source system keeps one, and otherwise derive
+the key from whatever identifies the node there. A resolver that reads from no node — an empty one —
+answers the empty string, so test `isEmpty()` rather than the key when you mean absence.
+
+Do not build an identity from `path()` — neither from its segment keys nor from its `toString()`,
+which is deliberately identity-based and changes between runs.
 
 ## Obtaining a root resolver
 
