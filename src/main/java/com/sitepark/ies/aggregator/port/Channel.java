@@ -1,6 +1,7 @@
 package com.sitepark.ies.aggregator.port;
 
 import com.sitepark.ies.aggregator.value.AccessRestriction;
+import com.sitepark.ies.aggregator.value.ResourcePathType;
 import com.sitepark.ies.aggregator.value.uri.PlainUri;
 import com.sitepark.ies.aggregator.value.uri.UriTarget;
 import java.util.Optional;
@@ -37,6 +38,18 @@ public interface Channel {
    * @return the encoding name, e.g. {@code UTF-8}
    */
   String encoding();
+
+  /**
+   * How this channel addresses the resources it publishes.
+   *
+   * <p>The scheme changes the document, not only the file name: a resource addressed by its path may
+   * have to resolve its own context when loaded, while one addressed by its id can be plain data.
+   * Which of the two a writer produces is therefore a property of the channel.
+   *
+   * @return the addressing scheme; never {@code null}, {@link ResourcePathType#URL} unless the
+   *     channel configures otherwise
+   */
+  ResourcePathType resourcePathType();
 
   /**
    * Whether the object with the given id is published in this channel.
