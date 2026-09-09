@@ -18,9 +18,12 @@ class PublicationTest {
   @Test
   void exposesAllComponents() {
     Uri uri = Uri.of("https://example.com/page");
-    Publication publication = new Publication(42, "/content/page", uri);
+    Publication publication = new Publication(42, PublicationType.OBJECT, "/content/page", uri);
 
     assertThat(publication.id()).as("id() should return the constructor argument").isEqualTo(42);
+    assertThat(publication.type())
+        .as("type() should return the constructor argument")
+        .isEqualTo(PublicationType.OBJECT);
     assertThat(publication.resourcePath())
         .as("resourcePath() should return the constructor argument")
         .isEqualTo("/content/page");

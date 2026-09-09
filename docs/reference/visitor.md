@@ -68,8 +68,11 @@ representation.
   string, so the `JsonWriter` writes `"2023-11-14T22:13:20Z"` and the `MapConverter` keeps the
   `Instant` object itself. Like numbers and booleans, an `Instant` never counts as empty:
   `Instant.EPOCH` renders as `0` instead of being dropped.
-- **Extensible:** Custom output formats or analyses are created by subclassing
-  `OutputVisitor`.
+- **Extensible:** Custom renderings of a value or subtree, and analyses over one, are created by
+  subclassing `OutputVisitor`. A whole *document* — the file a channel publishes, frame included —
+  is a layer above: see `OutputWriter`, which composes visitors rather than extending them. A
+  visitor renders a value; a writer decides which values make up a file and what goes between
+  them.
 
 ## Bundled visitors
 
