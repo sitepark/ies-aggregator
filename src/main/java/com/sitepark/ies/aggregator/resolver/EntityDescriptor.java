@@ -18,8 +18,8 @@ public interface EntityDescriptor {
    *
    * <p>Returned by {@link EntityResolver#entity()} of an empty resolver, so callers can stay on the
    * {@code EntityDescriptor} type without null-checking it: {@link #id()} is {@code 0}, {@link
-   * #type()}/{@link #qualifiedId()}/{@link #version()}/{@link #name()}/{@link #anchor()} are empty
-   * and both revisions are {@link Revision#empty()}.
+   * #type()}/{@link #qualifiedId()}/{@link #version()}/{@link #name()}/{@link #anchor()} are empty,
+   * {@link #isMedia()} is {@code false} and both revisions are {@link Revision#empty()}.
    *
    * @return the empty descriptor
    */
@@ -62,6 +62,19 @@ public interface EntityDescriptor {
    * @return the object type, or the empty string if unknown
    */
   String type();
+
+  /**
+   * Whether the content of the entity <em>is</em> a media asset.
+   *
+   * <p>True for an entity that exists to carry a file — an image in a media pool, a document, an
+   * icon — and false for one that merely holds files in its fields: an ordinary page with an upload
+   * is not a medium. The distinction decides how the entity is addressed, because a medium is
+   * published under its binary rather than as a page of its own (see {@link
+   * com.sitepark.ies.aggregator.value.uri.UriTarget#ofMedia(int, int)}).
+   *
+   * @return {@code true} if the entity is a medium
+   */
+  boolean isMedia();
 
   /**
    * The name of the entity.

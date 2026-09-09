@@ -53,6 +53,16 @@ final class EmptyEntityDescriptor implements EntityDescriptor {
   }
 
   /**
+   * Returns {@code false}; an empty entity is not a medium.
+   *
+   * @return {@code false}
+   */
+  @Override
+  public boolean isMedia() {
+    return false;
+  }
+
+  /**
    * Returns the empty string; an empty entity has no file name.
    *
    * @return the empty string
