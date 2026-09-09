@@ -63,6 +63,16 @@ final class EmptyGroupDescriptor implements GroupDescriptor {
   }
 
   /**
+   * Returns {@code false}; a group is never a medium.
+   *
+   * @return {@code false}
+   */
+  @Override
+  public boolean isMedia() {
+    return false;
+  }
+
+  /**
    * Returns the empty string; a group is not published as a file.
    *
    * @return the empty string
