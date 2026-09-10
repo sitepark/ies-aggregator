@@ -1,7 +1,8 @@
 package com.sitepark.ies.aggregator.resolver;
 
 /**
- * Creates root {@link Resolver} instances for objects addressed by id or anchor.
+ * Creates root {@link Resolver} instances for objects addressed by id or anchor, and for a media
+ * asset addressed through the object that carries it.
  *
  * <p>Aggregators and assemblers normally reach data in two ways: through the {@link Resolver} handed
  * to them as {@code source}, and by navigating its fields via {@link Resolver#resolve(String)} /
@@ -137,4 +138,31 @@ public interface RootResolverFactory {
    * @see GroupResolver#empty(ResolverPath)
    */
   GroupResolver createByGroupId(ResolverPath path, int id);
+
+  /**
+   * Creates a fresh standalone root {@link Resolver} for a media asset uploaded into a field of an
+   * object.
+   *
+   * <p>Addressed by the same pair as everywhere else a media asset is named — see {@link
+   * com.sitepark.ies.aggregator.value.uri.UriTarget#ofMedia(int, int)} and {@link
+   * com.sitepark.ies.aggregator.value.media.Media#objectId()} — because an asset never stands on
+   * its own: it is always reached through the object that carries it.
+   *
+   * <p>Not an {@link EntityResolver}: a media asset is not an entity and has no {@link
+   * EntityDescriptor}. What it does have is a place in the object it was uploaded to, so the
+   * returned resolver is <em>not</em> its own root: {@link Resolver#root()} answers the object, and
+   * {@link Resolver#path()} carries the field steps that lead down to the asset. That is what makes
+   * an aggregation of the asset able to read its surroundings — the object for the pool path, the
+   * field it sits in for a title.
+   *
+   * <p>A missing asset is a normal case, not an error: the returned resolver is never {@code null};
+   * if the object does not exist or carries no asset with that id, an empty {@link Resolver} is
+   * returned, so callers never need to null-check. Test with {@link Resolver#isEmpty()}.
+   *
+   * @param objectId the id of the object the media asset was uploaded to
+   * @param mediaId the id of the media asset within that object
+   * @return a fresh {@link Resolver} instance for the asset, or an empty {@link Resolver} if the
+   *     object or the asset does not exist
+   */
+  Resolver createByMedia(int objectId, int mediaId);
 }

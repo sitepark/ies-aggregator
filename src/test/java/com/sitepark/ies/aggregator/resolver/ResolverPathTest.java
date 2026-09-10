@@ -70,6 +70,43 @@ class ResolverPathTest {
   }
 
   @Test
+  void parentIsTheNodeTheLastStepCameFrom() {
+    Resolver root = mock();
+    Resolver child = mock();
+    ResolverPath childPath = descend(ResolverPath.of(root), "address", child);
+
+    assertThat(childPath.parent())
+        .as("The parent of a descended-into resolver should be the node it was resolved from")
+        .isSameAs(root);
+  }
+
+  @Test
+  void parentIsEmptyWhereTheNavigationStarts() {
+    ResolverPath path = ResolverPath.of(mock());
+
+    assertThat(path.parent().isEmpty())
+        .as("A single-segment path has no parent, and answers an empty resolver rather than null")
+        .isTrue();
+  }
+
+  @Test
+  void parentStaysTheStepBackWhereRootJumpsAcrossAScope() {
+    Resolver root = mock();
+    Resolver author = mock();
+    Resolver address = mock();
+    ResolverPath addressPath =
+        descend(enterScope(ResolverPath.of(root), "author", author), "address", address);
+
+    assertThat(addressPath.parent())
+        .as("parent() answers the last step, not the scope the step happens to sit in")
+        .isSameAs(author);
+    assertThat(addressPath.root())
+        .as("root() is the scope entered on the way, which is a different question")
+        .isSameAs(author);
+    assertThat(addressPath.globalRoot()).as("globalRoot() stays the outermost node").isSameAs(root);
+  }
+
+  @Test
   void enterScopeMakesChildTheNewRootButKeepsGlobalRoot() {
     Resolver root = mock();
     Resolver author = mock();
