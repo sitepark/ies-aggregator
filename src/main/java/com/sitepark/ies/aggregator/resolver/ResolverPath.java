@@ -201,6 +201,26 @@ public final class ResolverPath {
   }
 
   /**
+   * Returns the resolver this one was navigated from.
+   *
+   * <p>The step back, not the scope: {@link #root()} answers where the current scope began, which
+   * for a resolver several steps deep is a different node — and a scope boundary resets it while
+   * the path keeps growing. This answers the one node the last step came from.
+   *
+   * <p>A path of a single segment has no parent: the navigation starts at this resolver. An empty
+   * {@link Resolver} is returned for that case rather than {@code null}, as everywhere else in the
+   * navigation; test with {@link Resolver#isEmpty()}.
+   *
+   * @return the resolver of the preceding segment, or an empty resolver if the path begins here
+   */
+  public Resolver parent() {
+    if (this.segments.size() < 2) {
+      return Resolver.empty(this);
+    }
+    return this.segments.get(this.segments.size() - 2).resolver();
+  }
+
+  /**
    * Returns the last (most recently added) segment — the one for this resolver itself.
    *
    * @return the current segment
