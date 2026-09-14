@@ -20,9 +20,10 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
- * Visitor that serializes an {@link Output} tree to compact JSON and writes it to a {@link Writer}.
+ * Visitor that serializes an {@link Output} tree to JSON and writes it to a {@link Writer}.
  *
  * <p>Output rules:
  *
@@ -39,12 +40,20 @@ import java.util.Map;
  *   <li>{@code null} is written as {@code null}.
  * </ul>
  *
+ * <p>Indentation is given by a {@link JsonIndent} and defaults to {@link JsonIndent#NONE} — compact
+ * output on a single line. With an indenting one, every entry goes on its own line, a space follows
+ * each key, and an empty object or array still stays on one line as {@code {}} or {@code []}.
+ *
  * <p>Any {@link IOException} from the underlying writer is rethrown as {@link
  * UncheckedIOException}.
  */
 public final class JsonWriter extends OutputVisitor {
 
   private final Writer writer;
+
+  private final JsonIndent indentation;
+
+  private int indentWidth;
 
   /**
    * Creates a writer that uses no domain object mapper and renders the source language.
@@ -104,8 +113,32 @@ public final class JsonWriter extends OutputVisitor {
       DomainObjectMapper domainObjectMapper,
       Translations translations,
       EmptyValuePolicy emptyValuePolicy) {
+    this(writer, domainObjectMapper, translations, emptyValuePolicy, JsonIndent.NONE);
+  }
+
+  /**
+   * Creates a writer with a custom domain object mapper, translation table, empty-value policy and
+   * indentation.
+   *
+   * @param writer the target writer
+   * @param domainObjectMapper the mapper for unwrapping domain objects
+   * @param translations the translation table (use {@link Translations#SOURCE} for the source
+   *     language)
+   * @param emptyValuePolicy the policy deciding which empty values are rendered anyway (use {@link
+   *     EmptyValuePolicy#ANNOTATED} for the default behavior)
+   * @param indentation how the document is indented (use {@link JsonIndent#NONE} for compact
+   *     output)
+   */
+  public JsonWriter(
+      Writer writer,
+      DomainObjectMapper domainObjectMapper,
+      Translations translations,
+      EmptyValuePolicy emptyValuePolicy,
+      JsonIndent indentation) {
     super(domainObjectMapper, translations, emptyValuePolicy);
     this.writer = writer;
+    this.indentation = indentation;
+    this.indentWidth = indentation.initial();
   }
 
   @Override
@@ -120,16 +153,7 @@ public final class JsonWriter extends OutputVisitor {
 
   @Override
   public void visitList(OutputList list) {
-    write('[');
-    boolean first = true;
-    for (OutputListItem item : nonEmptyItems(list)) {
-      if (!first) {
-        write(',');
-      }
-      visitListItem(item);
-      first = false;
-    }
-    write(']');
+    writeJsonArray(nonEmptyItems(list), this::visitListItem);
   }
 
   @Override
@@ -159,29 +183,34 @@ public final class JsonWriter extends OutputVisitor {
 
   @Override
   public void visitMap(Map<?, ?> map) {
-    write('{');
+    Map<?, ?> entries = nonEmptyMap(map);
+    if (entries.isEmpty()) {
+      write("{}");
+      return;
+    }
+    openBlock('{');
     boolean first = true;
-    for (Map.Entry<?, ?> entry : nonEmptyMap(map).entrySet()) {
+    for (Map.Entry<?, ?> entry : entries.entrySet()) {
       if (!first) {
         write(',');
       }
+      newLine();
       String key = entry.getKey() == null ? "" : entry.getKey().toString();
-      writeQuoted(key);
-      write(':');
+      writeKey(key);
       visitField(key, entry.getValue());
       first = false;
     }
-    write('}');
+    closeBlock('}');
   }
 
   @Override
   public void visitCollection(Collection<?> collection) {
-    writeRawIterable(nonEmptyElements(collection));
+    writeJsonArray(nonEmptyElements(collection), item -> visitField(null, item));
   }
 
   @Override
   public void visitArray(Object[] array) {
-    writeRawIterable(nonEmptyElements(List.of(array)));
+    writeJsonArray(nonEmptyElements(List.of(array)), item -> visitField(null, item));
   }
 
   @Override
@@ -190,31 +219,71 @@ public final class JsonWriter extends OutputVisitor {
   }
 
   private void writeJsonObject(OutputNode node) {
-    write('{');
+    Map<String, Object> entries = nonEmptyEntries(node);
+    if (entries.isEmpty()) {
+      write("{}");
+      return;
+    }
+    openBlock('{');
     boolean first = true;
-    for (Map.Entry<String, Object> entry : nonEmptyEntries(node).entrySet()) {
+    for (Map.Entry<String, Object> entry : entries.entrySet()) {
       if (!first) {
         write(',');
       }
-      writeQuoted(entry.getKey());
-      write(':');
+      newLine();
+      writeKey(entry.getKey());
       visitField(entry.getKey(), entry.getValue());
       first = false;
     }
-    write('}');
+    closeBlock('}');
   }
 
-  private void writeRawIterable(Iterable<?> items) {
-    write('[');
+  private <T> void writeJsonArray(List<T> items, Consumer<T> writeItem) {
+    if (items.isEmpty()) {
+      write("[]");
+      return;
+    }
+    openBlock('[');
     boolean first = true;
-    for (Object item : items) {
+    for (T item : items) {
       if (!first) {
         write(',');
       }
-      visitField(null, item);
+      newLine();
+      writeItem.accept(item);
       first = false;
     }
-    write(']');
+    closeBlock(']');
+  }
+
+  private void writeKey(String key) {
+    writeQuoted(key);
+    write(this.indentation.isCompact() ? ":" : ": ");
+  }
+
+  private void openBlock(char bracket) {
+    write(bracket);
+    this.indentWidth += this.indentation.factor();
+  }
+
+  private void closeBlock(char bracket) {
+    this.indentWidth -= this.indentation.factor();
+    newLine();
+    write(bracket);
+  }
+
+  /**
+   * Starts the next line of the document, indented to the current level. Writes nothing at all when
+   * the output is compact.
+   */
+  private void newLine() {
+    if (this.indentation.isCompact()) {
+      return;
+    }
+    write('\n');
+    for (int i = 0; i < this.indentWidth; i++) {
+      write(this.indentation.indentChar());
+    }
   }
 
   private void writeQuoted(String s) {

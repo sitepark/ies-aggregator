@@ -85,6 +85,15 @@ class JsonWriterTest {
     return sw.toString();
   }
 
+  private static String render(OutputObject root, JsonIndent indent) {
+    StringWriter sw = new StringWriter();
+    JsonWriter writer =
+        new JsonWriter(
+            sw, DomainObjectMapper.NONE, Translations.SOURCE, EmptyValuePolicy.ANNOTATED, indent);
+    root.accept(writer);
+    return sw.toString();
+  }
+
   @Test
   void emptyObjectRendersAsEmptyJsonObject() {
     OutputObject root = new OutputObject(null, null);
@@ -464,5 +473,110 @@ class JsonWriterTest {
     assertThat(render(root))
         .as("A Text value object should render as a quoted JSON string via its toString()")
         .isEqualTo("{\"title\":\"hello\"}");
+  }
+
+  @Test
+  void indentPutsEveryEntryOnItsOwnLine() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("name", "Alice");
+    OutputList list = root.nodeList("items");
+    list.addItem().put("id", 1);
+    list.addItem().put("id", 2);
+
+    assertThat(render(root, JsonIndent.of(2)))
+        .as("Each entry should go on its own line, indented by two spaces per nesting level")
+        .isEqualTo(
+            """
+            {
+              "name": "Alice",
+              "items": [
+                {
+                  "id": 1
+                },
+                {
+                  "id": 2
+                }
+              ]
+            }\
+            """);
+  }
+
+  @Test
+  void initialIndentShiftsEveryLineButTheOpeningBrace() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("a", 1);
+
+    assertThat(render(root, new JsonIndent(2, 4, ' ')))
+        .as(
+            "The opening brace should stay where the caller already stands, while every following"
+                + " line starts at the initial indent")
+        .isEqualTo(
+            """
+            {
+                  "a": 1
+                }\
+            """);
+  }
+
+  @Test
+  void indentCharIsWrittenOncePerNestingLevel() {
+    OutputObject root = new OutputObject(null, null);
+    root.node("inner").put("a", 1);
+
+    assertThat(render(root, new JsonIndent(1, 0, '\t')))
+        .as("A tab indent char should be written once per nesting level")
+        .isEqualTo("{\n\t\"inner\": {\n\t\t\"a\": 1\n\t}\n}");
+  }
+
+  @Test
+  void zeroFactorRendersCompactAndIgnoresInitialIndent() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("a", 1);
+    root.put("b", List.of(1, 2));
+
+    assertThat(render(root, new JsonIndent(0, 4, ' ')))
+        .as("A zero indent factor should render compact output, leaving the initial indent unused")
+        .isEqualTo("{\"a\":1,\"b\":[1,2]}");
+  }
+
+  @Test
+  void emptyObjectAndArrayStayOnOneLineWhenIndenting() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("obj", Map.of());
+    root.put("list", List.of());
+
+    StringWriter sw = new StringWriter();
+    root.accept(
+        new JsonWriter(
+            sw,
+            DomainObjectMapper.NONE,
+            Translations.SOURCE,
+            KEEPS_ONLY_ITS_OWN,
+            JsonIndent.of(2)));
+
+    assertThat(sw.toString())
+        .as("An empty object or array carries no entry to break the line for")
+        .isEqualTo(
+            """
+            {
+              "obj": {},
+              "list": []
+            }\
+            """);
+  }
+
+  @Test
+  void escapingIsUnaffectedByIndentation() {
+    OutputObject root = new OutputObject(null, null);
+    root.put("val", "a\nb\"c");
+
+    assertThat(render(root, JsonIndent.of(2)))
+        .as("Indentation should not change how a string value is escaped")
+        .isEqualTo(
+            """
+            {
+              "val": "a\\nb\\"c"
+            }\
+            """);
   }
 }
