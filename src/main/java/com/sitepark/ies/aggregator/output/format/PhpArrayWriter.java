@@ -5,7 +5,6 @@ import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
-import com.sitepark.ies.aggregator.output.OutputNode;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
 import com.sitepark.ies.aggregator.value.text.Translations;
@@ -114,19 +113,18 @@ public final class PhpArrayWriter extends OutputVisitor {
   }
 
   @Override
-  public void visitObject(OutputObject obj) {
-    writeAssociative(obj);
+  public void visitObject(OutputObject obj, Map<String, Object> entries) {
+    writeAssociative(entries);
   }
 
   @Override
-  public void visitListItem(OutputListItem item) {
-    writeAssociative(item);
+  public void visitListItem(OutputListItem item, Map<String, Object> entries) {
+    writeAssociative(entries);
   }
 
   @Override
-  public void visitList(OutputList list) {
-    List<OutputListItem> items = nonEmptyItems(list);
-    writeIndexed(items.size(), items::forEach, this::visitListItem);
+  public void visitList(OutputList list, List<Object> items) {
+    writeIndexed(items.size(), items::forEach, item -> visitField(null, item));
   }
 
   @Override
@@ -206,8 +204,7 @@ public final class PhpArrayWriter extends OutputVisitor {
     write(quote(value == null ? "" : value.toString()));
   }
 
-  private void writeAssociative(OutputNode node) {
-    Map<String, Object> entries = nonEmptyEntries(node);
+  private void writeAssociative(Map<String, Object> entries) {
     if (entries.isEmpty()) {
       write("[]");
       return;

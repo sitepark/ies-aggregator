@@ -116,21 +116,21 @@ public final class MapConverter extends OutputVisitor {
   }
 
   @Override
-  public void visitObject(OutputObject obj) {
+  public void visitObject(OutputObject obj, Map<String, Object> entries) {
     Map<@Nullable String, @Nullable Object> map = new LinkedHashMap<>();
     putValue(map);
     this.stack.push(new MapContainer(map));
-    iterateFields(obj);
+    entries.forEach(this::visitField);
     this.stack.pop();
   }
 
   @Override
-  public void visitList(OutputList list) {
+  public void visitList(OutputList list, List<Object> items) {
     List<@Nullable Object> array = new ArrayList<>();
     putValue(array);
     this.stack.push(new ListContainer(array));
-    for (OutputListItem item : nonEmptyItems(list)) {
-      visitListItem(item);
+    for (Object item : items) {
+      visitField(null, item);
     }
     this.stack.pop();
   }
@@ -158,11 +158,11 @@ public final class MapConverter extends OutputVisitor {
   }
 
   @Override
-  public void visitListItem(OutputListItem item) {
+  public void visitListItem(OutputListItem item, Map<String, Object> entries) {
     Map<@Nullable String, @Nullable Object> map = new LinkedHashMap<>();
     putValue(map);
     this.stack.push(new MapContainer(map));
-    iterateFields(item);
+    entries.forEach(this::visitField);
     this.stack.pop();
   }
 

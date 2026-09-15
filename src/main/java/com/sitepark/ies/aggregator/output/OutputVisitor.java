@@ -185,34 +185,103 @@ public abstract class OutputVisitor {
    * @return {@code true} if the value should be dropped from the output
    */
   protected final boolean rendersEmpty(@Nullable Object value) {
+    return retain(value) == DROPPED;
+  }
+
+  /**
+   * Marks a value that renders empty. A plain sentinel rather than {@code null}, because {@code
+   * null} is itself a value the policy may keep.
+   */
+  private static final Object DROPPED = new Object();
+
+  /**
+   * A domain object together with the property map it was mapped to.
+   *
+   * <p>Deciding whether a domain object renders empty means mapping it, and that map is what the
+   * visitor writes moments later. Carrying it from the one step to the other is what keeps {@link
+   * DomainObjectMapper#toProperties} from running twice per object.
+   */
+  private record Mapped(Object source, Map<String, Object> properties) {}
+
+  /**
+   * A node together with the entries that survived the emptiness filter.
+   *
+   * <p>Deciding whether a node renders empty means filtering its entries, and those entries are
+   * what the visitor writes moments later — the same reasoning as for {@link Mapped}, one level up.
+   */
+  private record MappedNode(OutputNode source, Map<String, Object> entries) {}
+
+  /** A list together with the items that survived the emptiness filter. */
+  private record MappedList(OutputList source, List<Object> items) {}
+
+  /**
+   * Returns what should be written for {@code value}, or {@link #DROPPED} if it renders empty.
+   *
+   * <p>For a domain object the result is a {@link Mapped} carrying the property map this decision
+   * was made on; {@link #visitField} unwraps it again. Every other value is returned as it is.
+   */
+  private @Nullable Object retain(@Nullable Object value) {
     if (value == null) {
-      return !this.activePolicy.keepNull();
+      return this.activePolicy.keepNull() ? null : DROPPED;
     }
     if (this.activePolicy.keepIfEmpty(value.getClass())) {
-      return false;
+      return value;
     }
     return switch (value) {
-      case KeepEmpty _ -> false;
-      case Emptiable e -> e.isEmpty();
-      case CharSequence s -> s.isEmpty();
-      case Number _ -> false;
-      case Boolean _ -> false;
-      case Instant _ -> false;
-      case OutputList l -> allRenderEmpty(l.items());
-      case OutputNode n -> allRenderEmpty(n.entries().values());
-      case Map<?, ?> m -> allRenderEmpty(m.values());
-      case Collection<?> c -> allRenderEmpty(c);
-      case Object[] a -> allRenderEmpty(List.of(a));
-      default -> {
-        if (value.getClass().isArray()) {
-          yield Array.getLength(value) == 0;
-        }
-        Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
-        // Judged the way it will be written: under the policy that governs the inside of a domain
-        // object, so this decision and visitDomain cannot disagree.
-        yield properties != null && allRenderEmptyInsideDomainObject(properties.values());
-      }
+      // Already decided on, and carrying its map: a container hands the same element to this
+      // method again when it is written.
+      case Mapped _, MappedNode _, MappedList _ -> value;
+      case KeepEmpty _ -> value;
+      case Emptiable e -> e.isEmpty() ? DROPPED : value;
+      case CharSequence s -> s.isEmpty() ? DROPPED : value;
+      case Number _ -> value;
+      case Boolean _ -> value;
+      case Instant _ -> value;
+      // Filtered rather than merely judged: the result is what gets written, so whatever mapping
+      // or filtering the decision required is kept instead of being redone child by child.
+      case OutputList l -> retainList(l);
+      case OutputNode n -> retainNode(n);
+      case Map<?, ?> m -> emptyToDropped(nonEmptyMap(m));
+      case Collection<?> c -> emptyToDropped(nonEmptyElements(c));
+      case Object[] a -> emptyToDropped(nonEmptyElements(List.of(a)));
+      default -> retainDomain(value);
     };
+  }
+
+  private Object retainList(OutputList list) {
+    List<Object> items = nonEmptyElements(list.items());
+    return items.isEmpty() ? DROPPED : new MappedList(list, items);
+  }
+
+  private Object retainNode(OutputNode node) {
+    Map<String, Object> entries = nonEmptyEntries(node);
+    return entries.isEmpty() ? DROPPED : new MappedNode(node, entries);
+  }
+
+  private Object retainDomain(Object value) {
+    if (value.getClass().isArray()) {
+      return Array.getLength(value) == 0 ? DROPPED : value;
+    }
+    Map<String, Object> properties = this.domainObjectMapper.toProperties(value);
+    if (properties == null) {
+      // Not a domain object after all; it falls through to visitUnknown.
+      return value;
+    }
+    // Judged the way it will be written: under the policy that governs the inside of a domain
+    // object, so this decision and visitDomain cannot disagree.
+    return allRenderEmptyInsideDomainObject(properties.values())
+        ? DROPPED
+        : new Mapped(value, properties);
+  }
+
+  /** The filtered container, or {@link #DROPPED} when nothing of it survived. */
+  private static Object emptyToDropped(Map<?, ?> filtered) {
+    return filtered.isEmpty() ? DROPPED : filtered;
+  }
+
+  /** The filtered container, or {@link #DROPPED} when nothing of it survived. */
+  private static Object emptyToDropped(List<Object> filtered) {
+    return filtered.isEmpty() ? DROPPED : filtered;
   }
 
   /** {@link #allRenderEmpty} under the policy that governs the properties of a domain object. */
@@ -247,27 +316,11 @@ public abstract class OutputVisitor {
     node.entries()
         .forEach(
             (key, value) -> {
-              if (!rendersEmpty(value)) {
-                result.put(key, value);
+              Object kept = retain(value);
+              if (kept != DROPPED) {
+                result.put(key, kept);
               }
             });
-    return result;
-  }
-
-  /**
-   * Returns the items of {@code list} in order, excluding those that {@link #rendersEmpty render
-   * empty}.
-   *
-   * @param list the list whose items to filter
-   * @return the non-empty items
-   */
-  protected final List<OutputListItem> nonEmptyItems(OutputList list) {
-    List<OutputListItem> result = new ArrayList<>();
-    for (OutputListItem item : list.items()) {
-      if (!rendersEmpty(item)) {
-        result.add(item);
-      }
-    }
     return result;
   }
 
@@ -282,8 +335,9 @@ public abstract class OutputVisitor {
     Map<Object, Object> result = new LinkedHashMap<>();
     map.forEach(
         (key, value) -> {
-          if (!rendersEmpty(value)) {
-            result.put(key, value);
+          Object kept = retain(value);
+          if (kept != DROPPED) {
+            result.put(key, kept);
           }
         });
     return result;
@@ -299,8 +353,9 @@ public abstract class OutputVisitor {
   protected final List<Object> nonEmptyElements(Iterable<?> items) {
     List<Object> result = new ArrayList<>();
     for (Object item : items) {
-      if (!rendersEmpty(item)) {
-        result.add(item);
+      Object kept = retain(item);
+      if (kept != DROPPED) {
+        result.add(kept);
       }
     }
     return result;
@@ -313,7 +368,22 @@ public abstract class OutputVisitor {
    * @param obj the object node to visit
    */
   public void visitObject(OutputObject obj) {
-    iterateFields(obj);
+    visitObject(obj, nonEmptyEntries(obj));
+  }
+
+  /**
+   * Called when the current value is an {@link OutputObject} whose entries have already been
+   * filtered. Default: dispatches each entry via {@link #visitField}.
+   *
+   * <p>This is the method to override. The single-argument {@link #visitObject(OutputObject)}
+   * filters and delegates here; it exists for callers that hold a node and no filtered view of it,
+   * such as {@link OutputObject#accept}.
+   *
+   * @param obj the object node being visited
+   * @param entries its non-empty entries, in document order
+   */
+  public void visitObject(OutputObject obj, Map<String, Object> entries) {
+    entries.forEach(this::visitField);
   }
 
   /**
@@ -322,8 +392,22 @@ public abstract class OutputVisitor {
    * @param list the list node to visit
    */
   public void visitList(OutputList list) {
-    for (OutputListItem item : nonEmptyItems(list)) {
-      visitListItem(item);
+    visitList(list, nonEmptyElements(list.items()));
+  }
+
+  /**
+   * Called when the current value is an {@link OutputList} whose items have already been filtered.
+   * Default: dispatches each item via {@link #visitField}.
+   *
+   * <p>This is the method to override; see {@link #visitObject(OutputObject, Map)} for why the
+   * single-argument variant remains.
+   *
+   * @param list the list node being visited
+   * @param items its non-empty items, in order
+   */
+  public void visitList(OutputList list, List<Object> items) {
+    for (Object item : items) {
+      visitField(null, item);
     }
   }
 
@@ -334,7 +418,21 @@ public abstract class OutputVisitor {
    * @param item the list item to visit
    */
   public void visitListItem(OutputListItem item) {
-    iterateFields(item);
+    visitListItem(item, nonEmptyEntries(item));
+  }
+
+  /**
+   * Called when the current value is an {@link OutputListItem} whose entries have already been
+   * filtered. Default: dispatches each entry via {@link #visitField}.
+   *
+   * <p>This is the method to override; see {@link #visitObject(OutputObject, Map)} for why the
+   * single-argument variant remains.
+   *
+   * @param item the list item being visited
+   * @param entries its non-empty entries, in document order
+   */
+  public void visitListItem(OutputListItem item, Map<String, Object> entries) {
+    entries.forEach(this::visitField);
   }
 
   /**
@@ -356,6 +454,11 @@ public abstract class OutputVisitor {
   public void visitField(@Nullable String key, @Nullable Object value) {
     switch (value) {
       case null -> visitNull();
+      case Mapped(var _, var properties) -> writeDomain(properties);
+      case MappedNode(OutputListItem item, var entries) -> visitListItem(item, entries);
+      case MappedNode(OutputObject obj, var entries) -> visitObject(obj, entries);
+      case MappedNode(var _, var entries) -> entries.forEach(this::visitField);
+      case MappedList(var list, var items) -> visitList(list, items);
       case KeepEmpty(var wrapped) -> visitField(key, wrapped);
       case OutputObject o -> visitObject(o);
       case OutputList l -> visitList(l);
@@ -424,8 +527,13 @@ public abstract class OutputVisitor {
     if (properties == null) {
       visitUnknown(value);
     } else {
-      insideDomainObject(() -> visitMap(properties));
+      writeDomain(properties);
     }
+  }
+
+  /** Writes an already-mapped domain object, under the policy that governs its inside. */
+  private void writeDomain(Map<String, Object> properties) {
+    insideDomainObject(() -> visitMap(properties));
   }
 
   /**

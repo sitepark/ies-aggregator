@@ -5,7 +5,6 @@ import com.sitepark.ies.aggregator.output.EmptyValuePolicy;
 import com.sitepark.ies.aggregator.output.Output;
 import com.sitepark.ies.aggregator.output.OutputList;
 import com.sitepark.ies.aggregator.output.OutputListItem;
-import com.sitepark.ies.aggregator.output.OutputNode;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
 import com.sitepark.ies.aggregator.value.text.PlainText;
@@ -142,18 +141,18 @@ public final class JsonWriter extends OutputVisitor {
   }
 
   @Override
-  public void visitObject(OutputObject obj) {
-    writeJsonObject(obj);
+  public void visitObject(OutputObject obj, Map<String, Object> entries) {
+    writeJsonObject(entries);
   }
 
   @Override
-  public void visitListItem(OutputListItem item) {
-    writeJsonObject(item);
+  public void visitListItem(OutputListItem item, Map<String, Object> entries) {
+    writeJsonObject(entries);
   }
 
   @Override
-  public void visitList(OutputList list) {
-    writeJsonArray(nonEmptyItems(list), this::visitListItem);
+  public void visitList(OutputList list, List<Object> items) {
+    writeJsonArray(items, item -> visitField(null, item));
   }
 
   @Override
@@ -218,8 +217,7 @@ public final class JsonWriter extends OutputVisitor {
     writeQuoted(value == null ? "" : value.toString());
   }
 
-  private void writeJsonObject(OutputNode node) {
-    Map<String, Object> entries = nonEmptyEntries(node);
+  private void writeJsonObject(Map<String, Object> entries) {
     if (entries.isEmpty()) {
       write("{}");
       return;
