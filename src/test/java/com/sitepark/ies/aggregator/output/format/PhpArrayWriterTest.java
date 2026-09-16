@@ -54,6 +54,21 @@ class PhpArrayWriterTest {
         return null;
       };
 
+  /**
+   * What a reflective mapper makes of a {@link TranslatableContainer}: it finds {@code
+   * getTranslatableTextList()} and maps the texts the container holds instead of what it renders.
+   * The visitor must never ask it.
+   */
+  private static final DomainObjectMapper CONTAINER_AS_BEAN_MAPPER =
+      value -> {
+        if (value instanceof TranslatableSplitText splitted) {
+          Map<String, Object> map = new LinkedHashMap<>();
+          map.put("translatableTextList", splitted.getTranslatableTextList());
+          return map;
+        }
+        return null;
+      };
+
   private static String render(OutputObject root) {
     StringWriter sw = new StringWriter();
     PhpArrayWriter writer = new PhpArrayWriter(sw);
@@ -400,6 +415,22 @@ class PhpArrayWriterTest {
     assertThat(render(root, de))
         .as("TranslatableSplitText should render its segments through the writer's table")
         .isEqualTo("[\n\t\"text\" => \"Hello, Welt\"\n]");
+  }
+
+  @Test
+  void aContainerRendersItselfEvenWhenTheMapperWouldMapIt() {
+    OutputObject root = new OutputObject(null, null);
+    TranslatableSplitText name = new TranslatableSplitText();
+    name.add("10. ");
+    name.add(TranslatableText.of("Anmeldung"));
+    root.put("name", name);
+
+    StringWriter sw = new StringWriter();
+    root.accept(new PhpArrayWriter(sw, CONTAINER_AS_BEAN_MAPPER));
+
+    assertThat(sw.toString())
+        .as("a container renders itself; a mapper that recognizes it must not get the chance")
+        .isEqualTo("[\n\t\"name\" => \"10. Anmeldung\"\n]");
   }
 
   @Test

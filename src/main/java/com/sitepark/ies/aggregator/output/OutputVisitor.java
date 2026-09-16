@@ -219,6 +219,11 @@ public abstract class OutputVisitor {
    *
    * <p>For a domain object the result is a {@link Mapped} carrying the property map this decision
    * was made on; {@link #visitField} unwraps it again. Every other value is returned as it is.
+   *
+   * <p>A {@link TranslatableContainer} is one of those: it renders itself and must reach {@link
+   * #visitField} unmapped. A container that reports emptiness implements {@link Emptiable} — {@link
+   * com.sitepark.ies.aggregator.value.uri.Uri Uri} and {@link
+   * com.sitepark.ies.aggregator.value.text.Text Text} do; one that does not is always kept.
    */
   private @Nullable Object retain(@Nullable Object value) {
     if (value == null) {
@@ -244,6 +249,9 @@ public abstract class OutputVisitor {
       case Map<?, ?> m -> emptyToDropped(nonEmptyMap(m));
       case Collection<?> c -> emptyToDropped(nonEmptyElements(c));
       case Object[] a -> emptyToDropped(nonEmptyElements(List.of(a)));
+      // Rendered by visitField, not mapped: a container's getters are its collection side, not its
+      // output, so mapping one would write the texts it holds instead of what it renders.
+      case TranslatableContainer _ -> value;
       default -> retainDomain(value);
     };
   }
