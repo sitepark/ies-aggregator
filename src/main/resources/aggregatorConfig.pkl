@@ -1,0 +1,135 @@
+/// Schema for the configuration an IES aggregator module contributes.
+///
+/// Every aggregator project amends this module from its own `config.pkl`:
+///
+///     amends "modulepath:/ies-aggregator/aggregatorConfig.pkl"
+///
+///     sectionTypes {
+///       ["myType"] {
+///         aggregator {
+///           className = "com.example.MySectionAggregator"
+///           classNameFor = "/aggregator/sectionTypes/myType.spml"
+///         }
+///       }
+///     }
+///
+/// A library project stops here - it ships that `config.pkl` in its jar and nothing else.
+/// The root project additionally amends [AggregatorRenderer], hands it every dependency's
+/// config plus its own, and renders the single `config.json` the IES reads.
+///
+/// Every field is optional on purpose. What a jar contributes is a fragment that is
+/// cascade-merged into `system.config`; it is not a document that has to stand on its
+/// own. Keys must not contain dots - `CascardingData.resolveNames` would expand them
+/// into exactly the nesting this schema already expresses.
+module AggregatorConfig
+
+/// The `aggregator` block of a section type or resource area.
+///
+/// Only the keys an aggregator jar actually registers are typed. The node is shared with
+/// the CMS configuration, which sets many further keys (module, uri, suffix, type, id,
+/// content, hooks, ...) - those are merged in from elsewhere and are none of this
+/// module's business.
+///
+/// `classNameFor` names the SPML template the class replaces. Leaving it out is the
+/// exception, not a shortcut: a class without it serves every section type derived from
+/// the one it is registered for. `sectionType.spml` compares the named template against
+/// the effective `aggregator.uri` to tell them apart.
+class SectionTypeAggregator {
+  className: String?
+  classNameFor: String?
+}
+
+/// The `aggregator` block of an object type, and of the global embedded-media node.
+///
+/// A separate class from [SectionTypeAggregator] because the two nodes share no key:
+/// a section type registers a class and the template it replaces, an object type
+/// registers the root of a publishing pipeline.
+///
+/// `rootAggregatorFactory` takes precedence over the SPML `module`/`uri` of the CMS
+/// configuration - that is the migration switch. `outputWriter` belongs with it: without
+/// one the resource is published in the channel's default format rather than the PHP
+/// document a SiteKit consumer reads.
+class ObjectTypeAggregator {
+  rootAggregatorFactory: String?
+  outputWriter: String?
+}
+
+/// Mirrors com.sitepark.ies.aggregator.adapter.value.SectionType, reduced to the fields a
+/// jar registers. The runtime node carries more (id, order, template, options, nested
+/// sectionTypes); those come from the CMS configuration.
+class SectionType {
+  aggregator: SectionTypeAggregator?
+}
+
+/// Mirrors com.sitepark.ies.aggregator.adapter.value.Step.
+class Step {
+  sectionTypes: Mapping<String, SectionType>?
+}
+
+class ObjectType {
+  aggregator: ObjectTypeAggregator?
+  steps: Mapping<String, Step>?
+}
+
+/// A resource area.
+///
+/// `enabled` is the staged-migration switch: `getResource.spml` builds a synthetic section
+/// type from this block only when the value is exactly `true`, which lets the Java path be
+/// switched on area by area.
+class Area {
+  enabled: Boolean?
+  aggregator: SectionTypeAggregator?
+}
+
+class Global {
+  embeddedMedia: EmbeddedMedia?
+}
+
+/// The outer half of `global.embeddedMedia.aggregator.embeddedMedia`.
+///
+/// The repetition of the name is not a typo. The outer `embeddedMedia` is the file name
+/// under `WEB-INF/config/global/`, which the cascading configuration turns into a key;
+/// the inner one is the sub-block of the aggregator node, mirroring
+/// `objectTypes.<type>.aggregator.embeddedMedia`. `TemplateReferenceResolver` merges the
+/// global block with the object-type-specific one and reads the result, so a jar has to
+/// write into exactly this nesting.
+class EmbeddedMedia {
+  aggregator: EmbeddedMediaAggregator
+}
+
+class EmbeddedMediaAggregator {
+  embeddedMedia: ObjectTypeAggregator
+}
+
+sectionTypes: Mapping<String, SectionType>
+
+areas: Mapping<String, Area>
+
+objectTypes: Mapping<String, ObjectType>
+
+global: Global
+
+/// Merges [other] onto this config. Values of [other] win.
+///
+/// The merge is flat per entry: a colliding key is REPLACED, not amended. A project that
+/// overrides `sectionTypes.text.aggregator.className` therefore has to repeat every other
+/// field of that entry - `classNameFor` included - or it silently drops them. Registering
+/// a class without naming the template it replaces is the silent takeover described on
+/// [SectionTypeAggregator], so this matters.
+///
+/// Precedence follows the order in which [AggregatorRenderer.configs] is reduced, which
+/// the root project decides.
+function merge(other: module): module = (module) {
+  sectionTypes {
+    ...other.sectionTypes
+  }
+  areas {
+    ...other.areas
+  }
+  objectTypes {
+    ...other.objectTypes
+  }
+  global {
+    embeddedMedia = other.global.embeddedMedia ?? super.embeddedMedia
+  }
+}

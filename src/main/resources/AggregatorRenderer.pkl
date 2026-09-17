@@ -1,0 +1,62 @@
+/// Renders the configuration of the root aggregator module.
+///
+/// The root project - the one whose jar the IES loads as a module - amends this from its
+/// own `renderer.pkl` and hands it every config that should take part:
+///
+///     amends "modulepath:/ies-aggregator/AggregatorRenderer.pkl"
+///
+///     configs = (import*("../../../target/dependency/ * /config.pkl")) {
+///       ["my-aggregator"] = import("config.pkl")
+///     }
+///
+/// Library projects do not amend this module. They contribute a plain [AggregatorConfig]
+/// and are picked up here.
+///
+/// Two files are written:
+///
+///  - [jsonOutput] - what the IES actually reads (`ExtensionModuleFactory` pulls
+///    `config.json` out of the jar).
+///  - [pklOutput] - the same result as a Pkl module, so that a project built on top of
+///    this one can amend it instead of re-merging the whole chain.
+module AggregatorRenderer
+
+import "aggregatorConfig.pkl" as AggregatorConfig
+
+/// The configs to merge, in precedence order: **later entries win**.
+///
+/// The root project decides that order - there is no base-config rule in here. A glob
+/// import yields its entries sorted by path, so a project that needs a specific config to
+/// act as the base has to place it explicitly rather than rely on the glob.
+///
+/// The glob belongs in the root project, not in this module: a relative glob inside a
+/// module loaded via `modulepath:` becomes a `modulepath:` glob, and that scheme is not
+/// globbable.
+configs: Mapping<String, AggregatorConfig>
+
+/// Name of the rendered JSON, relative to the output directory. Override to write
+/// somewhere else.
+jsonOutput: String(matches(Regex(".*\\.json$"))) = "config.json"
+
+/// Name of the rendered Pkl module, relative to the output directory.
+pklOutput: String(matches(Regex(".*\\.pkl$"))) = "config.pkl"
+
+/// All [configs] folded into one, left to right.
+hidden effectiveConfig: AggregatorConfig =
+  configs.toMap().values.reduce((a: AggregatorConfig, b: AggregatorConfig) -> a.merge(b))
+
+output {
+  files {
+    [module.jsonOutput] {
+      value = module.effectiveConfig
+      renderer = new JsonRenderer {}
+    }
+    [module.pklOutput] {
+      text =
+        """
+        amends "modulepath:/ies-aggregator/aggregatorConfig.pkl"
+
+        \(new PcfRenderer {}.renderDocument(module.effectiveConfig))
+        """
+    }
+  }
+}
