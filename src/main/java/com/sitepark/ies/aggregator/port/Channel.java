@@ -40,6 +40,35 @@ public interface Channel {
   String encoding();
 
   /**
+   * What kind of site this channel publishes — {@code internet}, {@code intranet}, {@code citycall},
+   * {@code xzufi} and the like.
+   *
+   * <p>Distinct from {@link #name()}: the name identifies one channel, the nature says which of a
+   * handful of kinds it is, and rules that differ between the public web and an internal one are
+   * written against it. It is configuration of the channel itself, so a channel that never declared
+   * one answers empty rather than a guessed default.
+   *
+   * @return the nature of this channel, or empty if the channel declares none
+   */
+  Optional<String> nature();
+
+  /**
+   * The value of a configured attribute of this channel.
+   *
+   * <p>Attributes are the extension point of the channel configuration: a product or a customer
+   * puts its own switches there, and nothing in the platform knows what they mean. That is why the
+   * value is answered as text — the caller owns the interpretation.
+   *
+   * <p>An empty answer means the attribute is <em>not set</em>, which is not the same as being set
+   * to {@code false}. A rule that treats the two alike has to say so itself; this method will not
+   * decide it.
+   *
+   * @param name the name of the attribute
+   * @return the attribute value, or empty if this channel does not set it
+   */
+  Optional<String> attribute(String name);
+
+  /**
    * How this channel addresses the resources it publishes.
    *
    * <p>The scheme changes the document, not only the file name: a resource addressed by its path may
