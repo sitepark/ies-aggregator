@@ -1,6 +1,9 @@
 package com.sitepark.ies.aggregator.output;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
@@ -43,7 +46,7 @@ public class OutputList implements Output {
    * @param item the item to add; its parent must be this list
    * @throws IllegalArgumentException if the item's parent is not this list
    */
-  @SuppressWarnings("PMD.CompareObjectsWithEquals")
+  @SuppressWarnings({"PMD.CompareObjectsWithEquals", "ReferenceEquality"})
   public void addItem(OutputListItem item) {
     if (item.parent() != this) {
       throw new IllegalArgumentException("Parent of item must be this list");

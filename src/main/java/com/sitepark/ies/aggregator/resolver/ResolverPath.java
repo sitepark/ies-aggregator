@@ -249,6 +249,7 @@ public final class ResolverPath {
   }
 
   @Override
+  @SuppressWarnings("ReferenceEquality") // identity of the anchored objects is intended
   public boolean equals(@Nullable Object o) {
     return (o instanceof ResolverPath that)
         && this.globalRoot.get() == that.globalRoot.get()
@@ -345,6 +346,7 @@ public final class ResolverPath {
     }
 
     @Override
+    @SuppressWarnings("ReferenceEquality") // identity of the anchored objects is intended
     public boolean equals(@Nullable Object o) {
       return (o instanceof Segment that)
           && Objects.equals(this.key, that.key)
