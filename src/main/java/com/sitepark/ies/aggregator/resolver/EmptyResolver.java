@@ -154,6 +154,7 @@ public final class EmptyResolver implements Resolver {
    *     and {@code globalRoot} references as this instance
    */
   @Override
+  @SuppressWarnings("ReferenceEquality") // identity of the anchored objects is intended
   public boolean equals(Object o) {
     return (o instanceof EmptyResolver that)
         && this.path.root() == that.path.root()

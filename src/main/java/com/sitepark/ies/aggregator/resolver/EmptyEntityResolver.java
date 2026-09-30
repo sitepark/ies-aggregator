@@ -153,6 +153,7 @@ public final class EmptyEntityResolver implements EntityResolver {
    *     root} and {@code globalRoot} references as this instance
    */
   @Override
+  @SuppressWarnings("ReferenceEquality") // identity of the anchored objects is intended
   public boolean equals(Object o) {
     return (o instanceof EmptyEntityResolver that)
         && this.path.root() == that.path.root()

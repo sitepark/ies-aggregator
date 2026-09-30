@@ -185,7 +185,7 @@ public abstract class OutputVisitor {
    * @return {@code true} if the value should be dropped from the output
    */
   protected final boolean rendersEmpty(@Nullable Object value) {
-    return retain(value) == DROPPED;
+    return isDropped(retain(value));
   }
 
   /**
@@ -193,6 +193,12 @@ public abstract class OutputVisitor {
    * null} is itself a value the policy may keep.
    */
   private static final Object DROPPED = new Object();
+
+  /** {@link #DROPPED} is a sentinel, so identity is the intended comparison. */
+  @SuppressWarnings("ReferenceEquality")
+  private static boolean isDropped(@Nullable Object value) {
+    return value == DROPPED;
+  }
 
   /**
    * A domain object together with the property map it was mapped to.
@@ -325,7 +331,7 @@ public abstract class OutputVisitor {
         .forEach(
             (key, value) -> {
               Object kept = retain(value);
-              if (kept != DROPPED) {
+              if (!isDropped(kept)) {
                 result.put(key, kept);
               }
             });
@@ -344,7 +350,7 @@ public abstract class OutputVisitor {
     map.forEach(
         (key, value) -> {
           Object kept = retain(value);
-          if (kept != DROPPED) {
+          if (!isDropped(kept)) {
             result.put(key, kept);
           }
         });
@@ -362,7 +368,7 @@ public abstract class OutputVisitor {
     List<Object> result = new ArrayList<>();
     for (Object item : items) {
       Object kept = retain(item);
-      if (kept != DROPPED) {
+      if (!isDropped(kept)) {
         result.add(kept);
       }
     }

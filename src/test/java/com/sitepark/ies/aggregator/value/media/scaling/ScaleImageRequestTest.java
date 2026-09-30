@@ -3,7 +3,7 @@ package com.sitepark.ies.aggregator.value.media.scaling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.sitepark.ies.aggregator.value.media.*;
+import com.sitepark.ies.aggregator.value.media.Image;
 import com.sitepark.ies.aggregator.value.uri.UriTarget;
 import java.util.ArrayList;
 import java.util.List;
