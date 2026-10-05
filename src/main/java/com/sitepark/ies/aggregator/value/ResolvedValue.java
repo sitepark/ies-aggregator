@@ -116,7 +116,8 @@ public final class ResolvedValue implements Emptiable {
   /**
    * Returns the value as an {@code int}, or {@code 0} if empty.
    *
-   * @throws IllegalArgumentException if the value is not an integral number
+   * @throws IllegalArgumentException if the value is neither an integral number nor a string
+   *     holding one
    */
   public int asInt() {
     return asInt(0);
@@ -128,8 +129,13 @@ public final class ResolvedValue implements Emptiable {
    * <p>Accepts any integral {@link Number} ({@link Integer}, {@link Long}, {@link Short}, {@link
    * Byte}, {@link BigInteger}); fractional types are rejected to avoid silent truncation.
    *
-   * @param defaultValue the value to return when empty
-   * @throws IllegalArgumentException if not empty and the value is not an integral number
+   * <p>Also accepts a {@link String} holding a whole number, surrounding whitespace ignored: the CMS
+   * stores every field as text, so a number an editor entered or selected arrives as {@code "5"}. A
+   * blank string carries no number and yields {@code defaultValue}, like an empty value.
+   *
+   * @param defaultValue the value to return when empty or blank
+   * @throws IllegalArgumentException if not empty and the value is neither an integral number nor a
+   *     string holding one
    */
   public int asInt(int defaultValue) {
     if (this.isEmpty()) {
@@ -139,6 +145,17 @@ public final class ResolvedValue implements Emptiable {
     if (value instanceof Number number && isIntegral(number)) {
       return number.intValue();
     }
+    if (value instanceof String stringValue) {
+      String trimmed = stringValue.trim();
+      if (trimmed.isEmpty()) {
+        return defaultValue;
+      }
+      try {
+        return Integer.parseInt(trimmed);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Value is not an integral number: '" + trimmed + "'", e);
+      }
+    }
     throw new IllegalArgumentException(
         "Value is not an integral number (" + value.getClass().getName() + ")");
   }
@@ -146,7 +163,8 @@ public final class ResolvedValue implements Emptiable {
   /**
    * Returns the value as a {@code long}, or {@code 0} if empty.
    *
-   * @throws IllegalArgumentException if the value is not an integral number
+   * @throws IllegalArgumentException if the value is neither an integral number nor a string
+   *     holding one
    */
   public long asLong() {
     return asLong(0);
@@ -158,8 +176,13 @@ public final class ResolvedValue implements Emptiable {
    * <p>Accepts any integral {@link Number} ({@link Integer}, {@link Long}, {@link Short}, {@link
    * Byte}, {@link BigInteger}); fractional types are rejected to avoid silent truncation.
    *
-   * @param defaultValue the value to return when empty
-   * @throws IllegalArgumentException if not empty and the value is not an integral number
+   * <p>Also accepts a {@link String} holding a whole number, surrounding whitespace ignored: the CMS
+   * stores every field as text, so a number an editor entered or selected arrives as {@code "5"}. A
+   * blank string carries no number and yields {@code defaultValue}, like an empty value.
+   *
+   * @param defaultValue the value to return when empty or blank
+   * @throws IllegalArgumentException if not empty and the value is neither an integral number nor a
+   *     string holding one
    */
   public long asLong(long defaultValue) {
     if (this.isEmpty()) {
@@ -168,6 +191,17 @@ public final class ResolvedValue implements Emptiable {
     Object value = singleItemIfList();
     if (value instanceof Number number && isIntegral(number)) {
       return number.longValue();
+    }
+    if (value instanceof String stringValue) {
+      String trimmed = stringValue.trim();
+      if (trimmed.isEmpty()) {
+        return defaultValue;
+      }
+      try {
+        return Long.parseLong(trimmed);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Value is not an integral number: '" + trimmed + "'", e);
+      }
     }
     throw new IllegalArgumentException(
         "Value is not an integral number (" + value.getClass().getName() + ")");

@@ -183,6 +183,34 @@ class ResolvedValueTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
+  @Test
+  void asIntParsesTheTextTheCmsStores() {
+    assertThat(ResolvedValue.of(" 5 ").asInt())
+        .as("the CMS stores numbers as text, so asInt() should parse a whole-number string")
+        .isEqualTo(5);
+  }
+
+  @Test
+  void asIntReturnsDefaultForBlankText() {
+    assertThat(ResolvedValue.of("  ").asInt(-1))
+        .as("a blank text carries no number and should yield the default, like an empty value")
+        .isEqualTo(-1);
+  }
+
+  @Test
+  void asIntRejectsTextThatIsNoWholeNumber() {
+    assertThatThrownBy(() -> ResolvedValue.of("1.5").asInt())
+        .as("asInt() should reject text that is no whole number rather than truncate it")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void asIntRejectsTextOutsideTheIntRange() {
+    assertThatThrownBy(() -> ResolvedValue.of("9999999999").asInt())
+        .as("asInt() should reject text whose number does not fit into an int")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   // --- asLong -------------------------------------------------------------
 
   @Test
@@ -218,6 +246,20 @@ class ResolvedValueTest {
     assertThatThrownBy(() -> ResolvedValue.of("x").asLong(0L))
         .as("asLong() should reject payloads that are neither Integer nor Long")
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void asLongParsesTheTextTheCmsStores() {
+    assertThat(ResolvedValue.of("9999999999").asLong())
+        .as("the CMS stores numbers as text, so asLong() should parse a whole-number string")
+        .isEqualTo(9_999_999_999L);
+  }
+
+  @Test
+  void asLongReturnsDefaultForBlankText() {
+    assertThat(ResolvedValue.of("").asLong(12L))
+        .as("a blank text carries no number and should yield the default, like an empty value")
+        .isEqualTo(12L);
   }
 
   // --- asFloat ------------------------------------------------------------
