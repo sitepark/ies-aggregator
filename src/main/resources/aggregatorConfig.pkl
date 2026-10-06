@@ -9,6 +9,7 @@
 ///         aggregator {
 ///           className = "com.example.MySectionAggregator"
 ///           classNameFor = "/aggregator/sectionTypes/myType.spml"
+///           moduleFor = "my-module"
 ///         }
 ///       }
 ///     }
@@ -34,9 +35,15 @@ module AggregatorConfig
 /// exception, not a shortcut: a class without it serves every section type derived from
 /// the one it is registered for. `sectionType.spml` compares the named template against
 /// the effective `aggregator.uri` to tell them apart.
+///
+/// `moduleFor` names the module of that template. A project that overrides the section
+/// type with a template of its own often keeps the same `uri` and only changes the
+/// module; compared by `uri` alone, the class would replace the project's template.
+/// `sectionType.spml` compares it against the effective `aggregator.module`.
 class SectionTypeAggregator {
   className: String?
   classNameFor: String?
+  moduleFor: String?
 }
 
 /// The `aggregator` block of an object type, and of the global embedded-media node.
@@ -113,7 +120,7 @@ global: Global
 ///
 /// The merge is flat per entry: a colliding key is REPLACED, not amended. A project that
 /// overrides `sectionTypes.text.aggregator.className` therefore has to repeat every other
-/// field of that entry - `classNameFor` included - or it silently drops them. Registering
+/// field of that entry - `classNameFor` and `moduleFor` included - or it silently drops them. Registering
 /// a class without naming the template it replaces is the silent takeover described on
 /// [SectionTypeAggregator], so this matters.
 ///
