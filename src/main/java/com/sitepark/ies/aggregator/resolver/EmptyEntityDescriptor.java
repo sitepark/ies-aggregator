@@ -63,6 +63,16 @@ final class EmptyEntityDescriptor implements EntityDescriptor {
   }
 
   /**
+   * Returns {@link EntityKind#NONE}; an empty descriptor describes no entity.
+   *
+   * @return {@link EntityKind#NONE}
+   */
+  @Override
+  public EntityKind kind() {
+    return EntityKind.NONE;
+  }
+
+  /**
    * Returns the empty string; an empty entity has no file name.
    *
    * @return the empty string

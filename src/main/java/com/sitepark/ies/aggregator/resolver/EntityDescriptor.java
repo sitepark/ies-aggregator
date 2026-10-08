@@ -77,6 +77,17 @@ public interface EntityDescriptor {
   boolean isMedia();
 
   /**
+   * What kind of object the entity is.
+   *
+   * <p>A page and a resource article are both articles, but only a page is published as a file of
+   * its own; {@link #isMedia()} alone cannot tell them apart. The answer is consistent with it:
+   * {@link EntityKind#MEDIA} exactly when {@link #isMedia()} is {@code true}.
+   *
+   * @return the kind, {@link EntityKind#NONE} for an empty descriptor
+   */
+  EntityKind kind();
+
+  /**
    * The name of the entity.
    *
    * @return the entity name, or the empty string if unknown

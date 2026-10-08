@@ -73,6 +73,16 @@ final class EmptyGroupDescriptor implements GroupDescriptor {
   }
 
   /**
+   * Returns {@link EntityKind#NONE}; an empty descriptor describes no entity.
+   *
+   * @return {@link EntityKind#NONE}
+   */
+  @Override
+  public EntityKind kind() {
+    return EntityKind.NONE;
+  }
+
+  /**
    * Returns the empty string; a group is not published as a file.
    *
    * @return the empty string
