@@ -110,6 +110,10 @@ public interface Channel {
   /**
    * Resolves the URI under which the given target is accessible in this channel.
    *
+   * <p>For the current channel the URI is a path, since the resource being aggregated is published
+   * on the same site. For any other channel it is the full URL including the host: a path would
+   * point into the current site, where the target is not published.
+   *
    * @param target what to resolve the URI for (e.g. a standalone object or an article media binary)
    * @return the resolved URI, or empty if no URI can be determined
    */
