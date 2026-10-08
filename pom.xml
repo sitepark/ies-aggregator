@@ -5,7 +5,7 @@
 
 	<groupId>com.sitepark.ies</groupId>
 	<artifactId>ies-aggregator</artifactId>
-	<version>1.2.0</version>
+	<version>1.3.0-SNAPSHOT</version>
 
 	<name>IES Aggregator</name>
 	<description>Aggregator API for the IES CMS: turns CMS source data into prepared target
@@ -42,7 +42,7 @@
 	<scm>
 		<connection>scm:git:git@github.com:sitepark/ies-aggregator.git</connection>
 		<developerConnection>scm:git:git@github.com:sitepark/ies-aggregator.git</developerConnection>
-		<tag>1.2.0</tag>
+		<tag>HEAD</tag>
 		<url>https://github.com/sitepark/ies-aggregator</url>
 	</scm>
 
