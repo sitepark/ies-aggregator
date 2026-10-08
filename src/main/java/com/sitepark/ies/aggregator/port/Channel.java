@@ -81,6 +81,14 @@ public interface Channel {
   ResourcePathType resourcePathType();
 
   /**
+   * How this channel finds an object it does not publish itself, as its nature configures it.
+   *
+   * @return the lookup, or empty if the channel's nature configures none - then such an object is
+   *     not linked at all
+   */
+  Optional<UrlLookup> urlLookup();
+
+  /**
    * Whether the object with the given id is published in this channel.
    *
    * @param objectId the id of the object to check
