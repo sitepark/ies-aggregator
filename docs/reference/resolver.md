@@ -110,6 +110,18 @@ are neutral and whose revisions are `Revision.empty()` — with `User.empty()` a
 
 New master data fields are added to the descriptor, not as new methods on the resolver.
 
+A link field can hold **several links** - one per ticked checkbox, as the category roots of a
+`categoryList` section do. `resolveLink(key)` follows the first of them only; `resolveLinks(key)`
+follows all, in stored order, and leaves out every link that cannot be followed:
+
+```java
+List<EntityResolver> roots = resolver.resolveLinks("sp_categoryRoots");
+```
+
+The default implementation answers the single link `resolveLink` follows; a source that stores
+several links overrides it. Never read such a field with `resolveLink` - in production it would be
+silently short.
+
 A field that links to a **user account** is followed with `resolveUser(key)` rather than
 `resolveLink(key)`. A user is not an entity of the content repository — no object type, no pool
 path, nothing to navigate into — so it answers an `User`, the same type a `Revision` names as

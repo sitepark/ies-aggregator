@@ -102,6 +102,25 @@ class ResolverTest {
   }
 
   @Test
+  void resolveLinksAnswersTheOneLinkByDefault() {
+    EntityResolver entity = mock(EntityResolver.class);
+    Resolver resolver = resolverResolvingTo(entity);
+
+    assertThat(resolver.resolveLinks("link"))
+        .as("the default resolveLinks() should answer the link resolveLink() follows")
+        .containsExactly(entity);
+  }
+
+  @Test
+  void resolveLinksAnswersNothingWhenTheLinkCannotBeFollowed() {
+    Resolver resolver = resolverResolvingTo(Resolver.empty());
+
+    assertThat(resolver.resolveLinks("link"))
+        .as("the default resolveLinks() should leave out a link that cannot be followed")
+        .isEmpty();
+  }
+
+  @Test
   void resolveUserAnswersTheEmptyUserByDefault() {
     Resolver resolver = resolverWith(Map.of());
 

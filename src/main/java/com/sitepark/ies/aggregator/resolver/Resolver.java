@@ -225,6 +225,25 @@ public interface Resolver {
   }
 
   /**
+   * Follows every link of a link field that holds several, in the order they are stored.
+   *
+   * <p>A field the editor fills from a list of checkboxes (a category root per box, say) stores
+   * several links under one key. {@link #resolveLink(String)} answers the first of them only; this
+   * method answers all. A link that cannot be followed is left out, so every entry is a real
+   * entity and the list is empty when none is.
+   *
+   * <p>The default implementation knows no field with several links: it answers the one {@link
+   * #resolveLink(String)} follows, or nothing. A source that stores several links overrides it.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the linked entities in stored order; unmodifiable, empty if the field holds none
+   */
+  default List<EntityResolver> resolveLinks(String key) {
+    EntityResolver linked = resolveLink(key);
+    return linked.isEmpty() ? List.of() : List.of(linked);
+  }
+
+  /**
    * Follows a link field that points at a user account.
    *
    * <p>Separate from {@link #resolveLink(String)} because a user is not an entity of the content
