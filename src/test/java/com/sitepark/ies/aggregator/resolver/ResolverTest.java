@@ -121,6 +121,15 @@ class ResolverTest {
   }
 
   @Test
+  void resolveGroupLinkAnswersTheEmptyGroupByDefault() {
+    Resolver resolver = resolverWith(Map.of());
+
+    assertThat(resolver.resolveGroupLink("sp_galleryGroup").isEmpty())
+        .as("the default resolveGroupLink() should answer an empty group")
+        .isTrue();
+  }
+
+  @Test
   void resolveUserAnswersTheEmptyUserByDefault() {
     Resolver resolver = resolverWith(Map.of());
 

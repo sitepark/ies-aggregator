@@ -244,6 +244,26 @@ public interface Resolver {
   }
 
   /**
+   * Follows a link field that points at a group (a pool) rather than an entity.
+   *
+   * <p>Some fields link a group on purpose - the pool whose pictures a picture gallery shows, for
+   * one. {@link #resolveLink(String)} answers entities only and leaves such a target out; this
+   * method answers it as a {@link GroupResolver}, so its members can be read through {@link
+   * GroupResolver#entities()}. A link that is absent, cannot be followed or does not name a group
+   * answers an empty {@link GroupResolver} (test with {@link #isEmpty()}).
+   *
+   * <p>The default implementation knows no group links and answers the empty group; a source that
+   * can follow them overrides it.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the linked group, or an empty {@link GroupResolver}
+   * @see GroupResolver#empty(ResolverPath)
+   */
+  default GroupResolver resolveGroupLink(String key) {
+    return GroupResolver.empty(path());
+  }
+
+  /**
    * Follows a link field that points at a user account.
    *
    * <p>Separate from {@link #resolveLink(String)} because a user is not an entity of the content
