@@ -30,6 +30,17 @@ public interface Channel {
   String name();
 
   /**
+   * The name of the tenant this channel publishes for.
+   *
+   * <p>Distinct from {@link #name()}: a tenant runs several channels, and every one of them answers
+   * the same tenant name. A site uses it where an editor named no title of its own, as the legacy
+   * did with {@code system.client.name}.
+   *
+   * @return the tenant name, or empty if none is known
+   */
+  Optional<String> tenantName();
+
+  /**
    * The character encoding the content of this channel is published in.
    *
    * <p>A property of the channel, not of a single resource: a consumer that reads generated output
