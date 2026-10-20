@@ -66,4 +66,29 @@ public interface EntityResolver extends Resolver {
    * @return the parent group path; never {@code null}, empty if the entity has no parent group
    */
   List<GroupResolver> parentGroupPath();
+
+  /**
+   * The entities whose link field points at this entity - the inverse of {@link
+   * Resolver#resolveLinks(String)}.
+   *
+   * <p>{@code linkField} names the field the way the referring entity stores it, without the
+   * iterate path around it: {@code sp_parent_navigation.link} finds a link stored in any entry of
+   * {@code sp_parent_navigation_iterate}. Every referring entity appears once; one that cannot be
+   * loaded is left out.
+   *
+   * <p>The answer reflects what the referring entities hold now, not what they published. It is
+   * <b>not filtered by publication</b> - a caller that lists only published referrers asks the
+   * channel, as it does for any other target. The order is the order of the store and carries no
+   * meaning; a caller that needs one sorts.
+   *
+   * <p>The default implementation knows no inverse index and answers none. A source that can look
+   * referrers up overrides it, and registers there whatever makes this entity be generated again
+   * when a new referrer appears.
+   *
+   * @param linkField the link field of the referring entities; must not be {@code null}
+   * @return the referring entities; unmodifiable, empty if none points at this entity
+   */
+  default List<EntityResolver> resolveReferrers(String linkField) {
+    return List.of();
+  }
 }
