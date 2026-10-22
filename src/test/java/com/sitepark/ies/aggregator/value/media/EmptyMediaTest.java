@@ -16,7 +16,7 @@ class EmptyMediaTest {
         "image/png",
         1024L,
         new Hash(HashAlgorithm.SHA_256, "abc"),
-        new ImageMetadata(null, null, null, null, null, FocalPoint.CENTER),
+        new ImageMetadata(null, null, null, null, null, FocalPoint.CENTER, null),
         null,
         800,
         600,
