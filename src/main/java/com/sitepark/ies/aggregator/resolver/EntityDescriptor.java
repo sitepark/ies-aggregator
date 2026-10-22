@@ -126,4 +126,23 @@ public interface EntityDescriptor {
    *     changed
    */
   Revision changed();
+
+  /**
+   * Whether the entity is archived.
+   *
+   * <p>An archived entity stays published but drops out of what lists current content - a search
+   * filters it, a consumer marks it. How that is decided is the platform's business: the archive
+   * settings of the groups above the entity, and whether they bind it, as well as what the entity
+   * itself asks for, now or from a given date on. A source that decides it also arranges for the
+   * entity to be generated again when the answer changes - on that date, or when a setting above
+   * it changes.
+   *
+   * <p>The default implementation knows no archive and answers {@code false}, as does every
+   * entity that cannot be archived, a group or a medium.
+   *
+   * @return {@code true} if the entity is archived
+   */
+  default boolean isArchive() {
+    return false;
+  }
 }
