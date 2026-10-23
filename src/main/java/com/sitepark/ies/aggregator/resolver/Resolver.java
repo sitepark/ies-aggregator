@@ -281,6 +281,25 @@ public interface Resolver {
   }
 
   /**
+   * Returns the qualified id of the first target a link field holds, without following the link.
+   *
+   * <p>Some fields link an object the content repository cannot answer - a pool of the user
+   * repository, for one - and the consumer needs only its id. This method reads that id from the
+   * field as it is stored: it neither loads the target nor checks that it exists, is published or
+   * is of a certain kind. The id has the form {@link EntityDescriptor#qualifiedId()} has.
+   *
+   * <p>The default implementation knows no links and answers the empty string; a source that can
+   * read them overrides it.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the qualified id of the first link target, or the empty string if the field is absent,
+   *     empty or no link field
+   */
+  default String linkTargetId(String key) {
+    return "";
+  }
+
+  /**
    * Returns the value at the given key as a {@link ResolvedValue}.
    *
    * <p>If the key is absent, or the stored data cannot be represented as a value (e.g. it is a

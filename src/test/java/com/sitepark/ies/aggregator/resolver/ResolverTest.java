@@ -139,6 +139,15 @@ class ResolverTest {
   }
 
   @Test
+  void linkTargetIdAnswersTheEmptyStringByDefault() {
+    Resolver resolver = resolverWith(Map.of());
+
+    assertThat(resolver.linkTargetId("sp_userPool"))
+        .as("linkTargetId() should answer the empty string for a source that knows no links")
+        .isEmpty();
+  }
+
+  @Test
   void coalesceReturnsFirstNonEmptyValue() {
     Resolver resolver = resolverWith(Map.of("b", ResolvedValue.of("second")));
 
