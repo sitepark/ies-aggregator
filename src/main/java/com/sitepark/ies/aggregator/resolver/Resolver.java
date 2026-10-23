@@ -264,6 +264,23 @@ public interface Resolver {
   }
 
   /**
+   * Follows every link of a field that points at groups (pools) - a field the editor fills from a
+   * list of checkboxes, such as the further groups a microsite search covers.
+   *
+   * <p>The group counterpart of {@link #resolveLinks(String)}: each link is followed as {@link
+   * #resolveGroupLink(String)} follows the first, and a link that does not name a group is left
+   * out. The default implementation answers the one group {@link #resolveGroupLink(String)} finds;
+   * a source that keeps several links in one field overrides it.
+   *
+   * @param key the link field name; must not be {@code null}
+   * @return the linked groups in stored order, or an empty list if there are none
+   */
+  default List<GroupResolver> resolveGroupLinks(String key) {
+    GroupResolver linked = resolveGroupLink(key);
+    return linked.isEmpty() ? List.of() : List.of(linked);
+  }
+
+  /**
    * Follows a link field that points at a user account.
    *
    * <p>Separate from {@link #resolveLink(String)} because a user is not an entity of the content

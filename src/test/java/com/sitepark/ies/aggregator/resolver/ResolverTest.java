@@ -1,6 +1,8 @@
 package com.sitepark.ies.aggregator.resolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.sitepark.ies.aggregator.value.ResolvedValue;
@@ -127,6 +129,26 @@ class ResolverTest {
     assertThat(resolver.resolveGroupLink("sp_galleryGroup").isEmpty())
         .as("the default resolveGroupLink() should answer an empty group")
         .isTrue();
+  }
+
+  @Test
+  void resolveGroupLinksAnswersTheOneGroupByDefault() {
+    GroupResolver group = mock(GroupResolver.class);
+    Resolver resolver = mock(Resolver.class, CALLS_REAL_METHODS);
+    doReturn(group).when(resolver).resolveGroupLink("sp_groups");
+
+    assertThat(resolver.resolveGroupLinks("sp_groups"))
+        .as("the default resolveGroupLinks() should answer the group resolveGroupLink() follows")
+        .containsExactly(group);
+  }
+
+  @Test
+  void resolveGroupLinksAnswersNothingWithoutAGroup() {
+    Resolver resolver = resolverWith(Map.of());
+
+    assertThat(resolver.resolveGroupLinks("sp_groups"))
+        .as("the default resolveGroupLinks() should leave out a link that names no group")
+        .isEmpty();
   }
 
   @Test
