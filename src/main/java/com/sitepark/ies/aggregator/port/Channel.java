@@ -80,6 +80,24 @@ public interface Channel {
   Optional<String> attribute(String name);
 
   /**
+   * The absolute URL of the site this channel publishes, as the channel configures it - e.g.
+   * {@code https://www.example.org}.
+   *
+   * <p>Answered verbatim: a consumer that builds a URL from it appends its own path, as the legacy
+   * did with {@code system.publisher.url}, and a trailing slash in the configuration stays in the
+   * result. {@link #resolveUri(UriTarget)} answers a path for the current channel; this is what a
+   * resource needs whose format demands an absolute URL, such as the sitemap line of robots.txt.
+   *
+   * <p>The default answers empty, so a channel implementation that does not know its URL never
+   * invents one.
+   *
+   * @return the channel's URL, or empty if the channel configures none
+   */
+  default Optional<PlainUri> url() {
+    return Optional.empty();
+  }
+
+  /**
    * How this channel addresses the resources it publishes.
    *
    * <p>The scheme changes the document, not only the file name: a resource addressed by its path may
