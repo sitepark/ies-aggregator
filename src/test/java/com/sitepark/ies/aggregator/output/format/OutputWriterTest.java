@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.sitepark.ies.aggregator.output.DomainObjectMapper;
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.port.Channel;
+import com.sitepark.ies.aggregator.resolver.Resolver;
 import com.sitepark.ies.aggregator.value.Publication;
 import com.sitepark.ies.aggregator.value.PublicationType;
 import com.sitepark.ies.aggregator.value.ResourcePathType;
@@ -85,6 +86,15 @@ class OutputWriterTest {
     StringWriter target = new StringWriter();
     new ExampleWriter().write(root, context(pathType, resourcePath), target);
     return target.toString();
+  }
+
+  @Test
+  void aWriterTranslatesNothingUnlessItSaysSo() {
+    OutputWriter writer = (root, context, target) -> {};
+
+    assertThat(writer.translationSource(mock(Resolver.class)))
+        .as("a document is translated only when its writer names the source language")
+        .isEmpty();
   }
 
   @Test

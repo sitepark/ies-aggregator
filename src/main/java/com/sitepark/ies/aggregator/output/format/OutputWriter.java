@@ -2,8 +2,11 @@ package com.sitepark.ies.aggregator.output.format;
 
 import com.sitepark.ies.aggregator.output.OutputObject;
 import com.sitepark.ies.aggregator.output.OutputVisitor;
+import com.sitepark.ies.aggregator.resolver.Resolver;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Writes a finished output tree as the complete document a channel publishes — frame included.
@@ -38,4 +41,21 @@ public interface OutputWriter {
    * @throws IOException if writing fails
    */
   void write(OutputObject root, OutputContext context, Writer target) throws IOException;
+
+  /**
+   * The language the document's texts are written in, if the document is to be translated.
+   *
+   * <p>Whether a document goes through the channel's translation is a property of its format, as
+   * the legacy frames show: one frame hands its data to the translation, another does not. A writer
+   * whose document is translated answers the source language; the runtime then keeps the
+   * aggregated tree, translates the {@code TranslatableText}s in it, and writes the document once
+   * more per target language with {@link OutputContext#translations()}. The default answers empty:
+   * the document is not translated, and the runtime writes no translations for it.
+   *
+   * @param source what the document was aggregated from
+   * @return the source language, or empty if the document is not translated
+   */
+  default Optional<Locale> translationSource(Resolver source) {
+    return Optional.empty();
+  }
 }
