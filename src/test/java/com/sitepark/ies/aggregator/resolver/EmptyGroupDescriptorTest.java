@@ -94,4 +94,11 @@ class EmptyGroupDescriptorTest {
         .as("The empty group descriptor is stateless and should be shared")
         .isSameAs(GroupDescriptor.empty());
   }
+
+  @Test
+  void urlMappingsAreEmpty() {
+    assertThat(GroupDescriptor.empty().urlMappings())
+        .as("An empty group is no site and should have no URL mappings")
+        .isEmpty();
+  }
 }

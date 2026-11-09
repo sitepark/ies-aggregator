@@ -1,5 +1,8 @@
 package com.sitepark.ies.aggregator.resolver;
 
+import com.sitepark.ies.aggregator.value.SiteUrlMapping;
+import java.util.List;
+
 /**
  * A {@link GroupDescriptor} that carries no data — the null object returned by {@link
  * GroupDescriptor#empty()}.
@@ -150,5 +153,15 @@ final class EmptyGroupDescriptor implements GroupDescriptor {
   @Override
   public String lang() {
     return "";
+  }
+
+  /**
+   * Returns the empty list; an empty group is not a site and has no URL mappings.
+   *
+   * @return the empty list
+   */
+  @Override
+  public List<SiteUrlMapping> urlMappings() {
+    return List.of();
   }
 }
