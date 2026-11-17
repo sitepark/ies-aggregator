@@ -6,8 +6,9 @@ import org.jspecify.annotations.Nullable;
  * An entry of a container's list, lying in a section or directly in the container.
  *
  * @param entry the entry
- * @param index the position of the entry in the container's list; fixed section types are chosen
- *     by it
+ * @param index the position of the entry among the filled entries of the container's list, counted
+ *     from 0 - the {@code index} SiteKit's {@code contentContainer.spml} sees when it loops over
+ *     {@code filledItems}; fixed section types are chosen by it
  * @param rule how the entry takes part in the hierarchy, or {@code null} if its section type is not
  *     configured for the container; the former aggregator leaves such entries out, the tree keeps
  *     them in place
