@@ -18,12 +18,36 @@ import org.jspecify.annotations.Nullable;
  * @param componentId the fixed id of the component ({@code aggregator.id}), or {@code null}
  * @param subinformationFieldName the field the entry's scope moves into ({@code
  *     template.subinformationFieldName}), or {@code null}
+ * @param content the node of the current section an entry of this type is placed in ({@code
+ *     aggregator.content}), or {@code null} to place it in the section itself
  */
 public record SubSectionType(
     String id,
     @Nullable String type,
     @Nullable String componentId,
-    @Nullable String subinformationFieldName) {
+    @Nullable String subinformationFieldName,
+    @Nullable Content content) {
+
+  /**
+   * The node of the current section an entry is placed in, as {@code sectionType.spml:50-93}
+   * resolves {@code aggregator.content}: the node of that type (and id, if one is given) the section
+   * holds already, else a new one with the given id or the next of its type, which joins the section
+   * only if anything was placed in it.
+   *
+   * @param type the type of the node; never empty
+   * @param id the id of the node, or {@code null} to look for any node of the type and to draw the
+   *     id of a new one
+   */
+  public record Content(String type, @Nullable String id) {}
+
+  /** A section type that is placed in the section itself. */
+  public SubSectionType(
+      String id,
+      @Nullable String type,
+      @Nullable String componentId,
+      @Nullable String subinformationFieldName) {
+    this(id, type, componentId, subinformationFieldName, null);
+  }
 
   /**
    * Reads the section type from its configuration.
@@ -38,7 +62,15 @@ public record SubSectionType(
         id,
         text(aggregator.get("type")),
         text(aggregator.get("id")),
-        text(template.get("subinformationFieldName")));
+        text(template.get("subinformationFieldName")),
+        content(aggregator.get("content")));
+  }
+
+  private static @Nullable Content content(@Nullable Object content) {
+    if (!(content instanceof Map<?, ?> node) || text(node.get("type")) == null) {
+      return null;
+    }
+    return new Content(String.valueOf(node.get("type")), text(node.get("id")));
   }
 
   /** The type of the component an entry of this type gets: {@code aggregator.type}, else the id. */
