@@ -15,9 +15,12 @@ import org.jspecify.annotations.Nullable;
  *     whether the type is enabled there; {@code null} if it names none
  * @param type the output type of the component ({@code aggregator.type}), or {@code null}
  * @param componentId the fixed id of the component ({@code aggregator.id}), or {@code null}
- * @param config the {@code aggregator.config} the component carries, or {@code null}
  * @param subinformationFieldName the field the entry's scope moves into ({@code
  *     template.subinformationFieldName}), or {@code null}
+ *
+ * <p>Not carried: {@code aggregator.config}, which {@code sectionType.spml} copies onto the
+ * component. No project configures it, and its purpose is open even in SiteKit; a container does
+ * not reproduce it.
  */
 public record SubSectionType(
     String id,
@@ -25,7 +28,6 @@ public record SubSectionType(
     @Nullable Map<String, Boolean> natures,
     @Nullable String type,
     @Nullable String componentId,
-    @Nullable Object config,
     @Nullable String subinformationFieldName) {
 
   public SubSectionType {
@@ -50,7 +52,6 @@ public record SubSectionType(
         natures(aggregator.get("natures")),
         text(aggregator.get("type")),
         text(aggregator.get("id")),
-        aggregator.get("config"),
         text(template.get("subinformationFieldName")));
   }
 

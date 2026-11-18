@@ -18,8 +18,7 @@ class SubSectionTypeTest {
             Map.of("subinformationFieldName", "sp_moreLikeThis"));
 
     assertThat(type)
-        .isEqualTo(
-            new SubSectionType("iframe2", true, null, "iframe", "map", null, "sp_moreLikeThis"));
+        .isEqualTo(new SubSectionType("iframe2", true, null, "iframe", "map", "sp_moreLikeThis"));
   }
 
   @Test
