@@ -26,10 +26,10 @@ class HierarchyRuleTest {
                 "implicitSection",
                 true,
                 "type",
-                "stuttgart.collapsible"));
+                "customer.collapsible"));
 
     assertThat(rule)
-        .isEqualTo(new HierarchyRule(true, 2, "cards", true, 1, true, "stuttgart.collapsible"));
+        .isEqualTo(new HierarchyRule(true, 2, "cards", true, 1, true, "customer.collapsible"));
   }
 
   @Test
