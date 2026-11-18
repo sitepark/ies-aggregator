@@ -20,6 +20,25 @@ class OutputObjectTest {
   }
 
   @Test
+  void removeTakesTheFieldAway() {
+    OutputObject root = new OutputObject(null, null);
+    OutputObject section = root.node("section");
+    root.put("kept", "yes");
+
+    Object removed = root.remove("section");
+
+    assertThat(removed).as("the removed value is handed back").isSameAs(section);
+    assertThat(root.entries())
+        .as("the field is gone, a later node() starts afresh")
+        .containsOnlyKeys("kept");
+  }
+
+  @Test
+  void removeOfAnAbsentFieldAnswersNull() {
+    assertThat(new OutputObject(null, null).remove("section")).isNull();
+  }
+
+  @Test
   void rootPathIsEmptyString() {
     assertThat(new OutputObject(null, null).path())
         .as("Root path should be the empty string")

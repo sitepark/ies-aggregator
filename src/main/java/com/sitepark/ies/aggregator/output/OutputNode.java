@@ -90,6 +90,21 @@ public abstract class OutputNode implements Output {
   }
 
   /**
+   * Removes the value stored under {@code field}, if any.
+   *
+   * <p>For a node that is written by one aggregator and taken away by another before the next one
+   * writes: a container lets each of its section types describe its section in the node {@code
+   * section} of a root the section types share, and moves what one wrote into that section before
+   * the next one runs.
+   *
+   * @param field the field name
+   * @return the value that was stored, or {@code null} if there was none
+   */
+  public @Nullable Object remove(String field) {
+    return this.content.remove(field);
+  }
+
+  /**
    * Copies all entries from {@code map} into this node's field map.
    *
    * @param map the entries to add
