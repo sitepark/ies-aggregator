@@ -19,6 +19,24 @@ class SubSectionTypeTest {
   }
 
   @Test
+  void readsTheNodeTheTypeIsPlacedIn() {
+    SubSectionType type =
+        SubSectionType.of(
+            "errorPage", Map.of("content", Map.of("type", "main", "id", "main")), Map.of());
+
+    assertThat(type.content())
+        .as("aggregator.content, as sectionType.spml resolves it")
+        .isEqualTo(new SubSectionType.Content("main", "main"));
+  }
+
+  @Test
+  void aContentWithoutTypeIsNone() {
+    assertThat(SubSectionType.of("text", Map.of("content", Map.of("id", "x")), Map.of()).content())
+        .as("sectionType.spml asks for aggregator.content.type")
+        .isNull();
+  }
+
+  @Test
   void componentTypeFallsBackToTheId() {
     SubSectionType type = SubSectionType.of("text", Map.of(), Map.of());
 
