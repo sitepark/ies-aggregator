@@ -8,16 +8,21 @@ import java.util.Map;
  *
  * <p>A {@link SubAggregatorAware} aggregator gets the sub-aggregators only. A container also has to
  * know how each of its section types is configured before it lets that type's aggregator run:
- * whether the type is switched off, the type and id of the component it gets, the scope it reads.
+ * the type and id of the component an entry gets, and the scope it reads.
  * The former aggregator read that from the section type's configuration for every entry ({@code
  * sectionType.spml}); the orchestrator hands the same part of the configuration in here, after
  * {@link SubAggregatorAware#setSubAggregators} and before the call to {@link Aggregator#aggregate}.
  *
  * <p>The keys are those of the sub-aggregators: the key of the section type in {@code sectionTypes}
  * for a selectable section type, {@value #FIXED_KEY_PREFIX} followed by the position (e.g. {@code
- * #fixed:0}) for a fixed section type of {@code fixedSectionTypes}. Unlike the sub-aggregators, the
- * map holds every section type the container offers, also one that has no Java aggregator: the
- * container sees its configuration even where it cannot run it.
+ * #fixed:0}) for a fixed section type of {@code fixedSectionTypes}.
+ *
+ * <p>The map holds the section types that are placed in the current channel. Unlike the
+ * sub-aggregators it holds such a type also when it has no Java aggregator: the container sees its
+ * configuration even where it cannot run it. A section type that is not placed - switched off by
+ * {@code enabled: false}, or not enabled for the nature of the channel by {@code
+ * aggregator.natures} - is in neither map; an entry of such a type is left out without a trace, as
+ * {@code sectionType.spml} leaves it out before it draws the entry's id.
  */
 public interface SubSectionTypesAware {
 
