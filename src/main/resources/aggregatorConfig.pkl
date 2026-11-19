@@ -59,6 +59,38 @@ class SectionTypeAggregator {
 class ObjectTypeAggregator {
   rootAggregatorFactory: String?
   outputWriter: String?
+
+  /// Java classes for entries of the object type's `hooks`, keyed by area (`data`,
+  /// `metadata`, ...) and then by the hook's key in the CMS configuration:
+  ///
+  ///     objectTypes {
+  ///       ["rubric"] {
+  ///         aggregator {
+  ///           hooks {
+  ///             ["data"] {
+  ///               ["rubric"] {
+  ///                 className = "com.example.RubricHook"
+  ///                 classNameFor = "/aggregator/objectTypes/rubric.spml"
+  ///                 moduleFor = "my-module"
+  ///               }
+  ///             }
+  ///           }
+  ///         }
+  ///       }
+  ///     }
+  ///
+  /// The merge adds the keys to the hook entry the CMS configuration holds; the page
+  /// aggregation runs the class instead of the SPML hook only where `classNameFor` and
+  /// `moduleFor` still name that entry's `uri` and `module` - the same switch as for a
+  /// section type.
+  hooks: Mapping<String, Mapping<String, Hook>>?
+}
+
+/// A Java class for one hook entry of an object type; see [ObjectTypeAggregator.hooks].
+class Hook {
+  className: String?
+  classNameFor: String?
+  moduleFor: String?
 }
 
 /// Mirrors com.sitepark.ies.aggregator.adapter.value.SectionType, reduced to the fields a
