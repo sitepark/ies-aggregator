@@ -23,6 +23,14 @@ import java.util.Map;
  * {@code enabled: false}, or not enabled for the nature of the channel by {@code
  * aggregator.natures} - is in neither map; an entry of such a type is left out without a trace, as
  * {@code sectionType.spml} leaves it out before it draws the entry's id.
+ *
+ * <p>A {@link RootAggregatorFactory} that builds a page from its object type's steps gets the
+ * same, keyed {@code <step>/<section type>} and in the order the section types are placed in (see
+ * {@link SubAggregatorAware}). A step that is switched off or not enabled for the channel's nature
+ * contributes none of its section types; a section type without any aggregator - an editing-only
+ * type, configured without {@code aggregator.uri} and class - is not placed. A placed section type
+ * that has only its SPML aggregator is in this map and not among the sub-aggregators, so the
+ * factory can refuse the page.
  */
 public interface SubSectionTypesAware {
 
