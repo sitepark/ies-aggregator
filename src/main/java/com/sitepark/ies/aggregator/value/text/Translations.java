@@ -17,8 +17,12 @@ import org.jspecify.annotations.Nullable;
  * rendered into any number of languages — even concurrently.
  *
  * <p>Build a table from the collected texts and the index-corresponding translations returned by a
- * translation service via {@link #fromIndexed(List, List, String)}. Use {@link #SOURCE} to render
- * the untranslated source language.
+ * translation service via {@link #fromIndexed(List, List, String, String)}. Use {@link #SOURCE} to
+ * render the untranslated source language.
+ *
+ * <p>The target language comes in two forms: {@link #targetLang()}, the language code that
+ * language-dependent parts are rendered with, and {@link #targetLocale()}, the language as the
+ * channel configures it (e.g. {@code en_US_deepl}), which a document names as its own language.
  *
  * <p>The keying is by reference and independent of {@link TranslatableText}'s {@code equals}: an
  * {@link IdentityHashMap} compares keys by reference in any case. Two value-equal source texts at
@@ -36,13 +40,18 @@ import org.jspecify.annotations.Nullable;
 public final class Translations {
 
   /** Renders the source language: no translations and no language prefix. */
-  public static final Translations SOURCE = new Translations(null, new IdentityHashMap<>());
+  public static final Translations SOURCE = new Translations(null, null, new IdentityHashMap<>());
 
   private final @Nullable String targetLang;
+  private final @Nullable String targetLocale;
   private final Map<TranslatableText, String> translations;
 
-  private Translations(@Nullable String targetLang, Map<TranslatableText, String> translations) {
+  private Translations(
+      @Nullable String targetLang,
+      @Nullable String targetLocale,
+      Map<TranslatableText, String> translations) {
     this.targetLang = targetLang;
+    this.targetLocale = targetLocale;
     this.translations = new IdentityHashMap<>(translations);
   }
 
@@ -60,6 +69,23 @@ public final class Translations {
    */
   public static Translations fromIndexed(
       List<TranslatableText> nodes, List<String> targets, String targetLang) {
+    return fromIndexed(nodes, targets, targetLang, targetLang);
+  }
+
+  /**
+   * Builds a translation table by index correspondence, as {@link #fromIndexed(List, List,
+   * String)} does, for a target language whose configured form differs from its language code.
+   *
+   * @param nodes the collected source texts, in order
+   * @param targets the translated strings, in the same order
+   * @param targetLang the language code of the translations (e.g. {@code "en"})
+   * @param targetLocale the target language as the channel configures it, in the form of {@link
+   *     java.util.Locale#toString()} (e.g. {@code "en_US_deepl"})
+   * @return the translation table
+   * @throws IllegalArgumentException if {@code nodes} and {@code targets} differ in size
+   */
+  public static Translations fromIndexed(
+      List<TranslatableText> nodes, List<String> targets, String targetLang, String targetLocale) {
     if (nodes.size() != targets.size()) {
       throw new IllegalArgumentException(
           "nodes and targets must have the same size, but were "
@@ -71,12 +97,21 @@ public final class Translations {
     for (int i = 0; i < nodes.size(); i++) {
       map.put(nodes.get(i), targets.get(i));
     }
-    return new Translations(targetLang, map);
+    return new Translations(targetLang, targetLocale, map);
   }
 
   /** Returns the target language code, or {@code null} for the source language. */
   public @Nullable String targetLang() {
     return this.targetLang;
+  }
+
+  /**
+   * Returns the target language as the channel configures it, in the form of {@link
+   * java.util.Locale#toString()} (e.g. {@code "en_US_deepl"}), or {@code null} for the source
+   * language. Built without one, it is the {@link #targetLang() language code}.
+   */
+  public @Nullable String targetLocale() {
+    return this.targetLocale;
   }
 
   /**
@@ -93,6 +128,8 @@ public final class Translations {
   public String toString() {
     return "Translations{targetLang='"
         + this.targetLang
+        + "', targetLocale='"
+        + this.targetLocale
         + "', size="
         + this.translations.size()
         + "}";
