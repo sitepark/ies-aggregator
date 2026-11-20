@@ -65,6 +65,40 @@ class TranslationsTest {
   }
 
   @Test
+  void sourceTableHasNoTargetLocale() {
+    assertThat(Translations.SOURCE.targetLocale())
+        .as("SOURCE renders the source language, so it names no target language either")
+        .isNull();
+  }
+
+  @Test
+  void keepsTheConfiguredTargetLocaleBesideTheLanguageCode() {
+    Translations table = Translations.fromIndexed(List.of(), List.of(), "en", "en_US_deepl");
+
+    assertThat(List.of(table.targetLang(), table.targetLocale()))
+        .as("the code renders language-dependent parts, the configured form names the document's")
+        .containsExactly("en", "en_US_deepl");
+  }
+
+  @Test
+  void takesTheLanguageCodeAsTargetLocaleWhenNoneIsGiven() {
+    Translations table = Translations.fromIndexed(List.of(), List.of(), "en");
+
+    assertThat(table.targetLocale())
+        .as("a table built with the code alone names that code as its target language")
+        .isEqualTo("en");
+  }
+
+  @Test
+  void namesBothFormsOfTheTargetLanguageInItsDescription() {
+    Translations table = Translations.fromIndexed(List.of(), List.of(), "en", "en_US_deepl");
+
+    assertThat(table.toString())
+        .as("the description shows what the table renders for")
+        .isEqualTo("Translations{targetLang='en', targetLocale='en_US_deepl', size=0}");
+  }
+
+  @Test
   void sourceTableReturnsSourceText() {
     TranslatableText text = TranslatableText.of("hello");
 
