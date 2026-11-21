@@ -44,6 +44,13 @@ class EmptyEntityResolverTest {
   }
 
   @Test
+  void resolveReferrerLinksAnswersNoneByDefault() {
+    assertThat(EntityResolver.empty(pathOf(mock(), mock())).resolveReferrerLinks("a.link"))
+        .as("a source without an inverse index knows no referrer links")
+        .isEmpty();
+  }
+
+  @Test
   void resolveListReturnsEmptyList() {
     assertThat(EntityResolver.empty(pathOf(mock(), mock())).resolveList("anything"))
         .as("resolveList() should always return an empty list")

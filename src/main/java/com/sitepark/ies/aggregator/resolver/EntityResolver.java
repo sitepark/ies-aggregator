@@ -91,4 +91,29 @@ public interface EntityResolver extends Resolver {
   default List<EntityResolver> resolveReferrers(String linkField) {
     return List.of();
   }
+
+  /**
+   * The links that point at this entity, each with the scope it is stored in - what the template
+   * function {@code referrerLinks} answers.
+   *
+   * <p>Where {@link #resolveReferrers(String)} names every referring entity once, this answers
+   * every link: a referrer that links this entity from two entries of a list appears twice, and
+   * each {@link ReferrerLink#linkScope()} is the entry that holds the link, so the fields that
+   * describe the link can be read next to it. {@code linkField} is spelled as for {@link
+   * #resolveReferrers(String)}, without the iterate path.
+   *
+   * <p>As there, the answer reflects what the referring entities hold now and is <b>not filtered
+   * by publication</b>; a link whose referrer cannot be loaded is left out. The order is the order
+   * of the store, as the template function answers it.
+   *
+   * <p>The default implementation knows no inverse index and answers none. A source that can look
+   * referrers up overrides it, and registers there whatever makes this entity be generated again
+   * when a new referrer appears.
+   *
+   * @param linkField the link field of the referring entities; must not be {@code null}
+   * @return the links; unmodifiable, empty if none points at this entity
+   */
+  default List<ReferrerLink> resolveReferrerLinks(String linkField) {
+    return List.of();
+  }
 }
