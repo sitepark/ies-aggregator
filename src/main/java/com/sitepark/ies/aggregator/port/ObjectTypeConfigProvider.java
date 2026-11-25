@@ -23,8 +23,10 @@ public interface ObjectTypeConfigProvider {
   /**
    * Returns the configuration of the given object's type, bound to {@code type}.
    *
-   * <p>Keyed by the object rather than by the type name: which configuration applies can depend on
-   * where the object sits, and only the adapter knows that.
+   * <p>Keyed by the object rather than by the type name: which configuration applies depends on
+   * where the object sits, and only the adapter knows that. A type is configured within the type of
+   * the group that offers it, so the same type may be configured differently in two groups, and
+   * there is no definition of a type independent of an object.
    *
    * @param objectId the id of the object whose type configuration is wanted
    * @param type the target type the configuration is bound to
@@ -33,25 +35,4 @@ public interface ObjectTypeConfigProvider {
    *     configuration cannot be found
    */
   <T> Optional<T> configuration(int objectId, Class<T> type);
-
-  /**
-   * Returns the global definition of an object type, bound to {@code type}.
-   *
-   * <p>Unlike {@link #configuration(int, Class)}, which answers what applies to one object where it
-   * sits, this answers the type as the distribution defines it, independent of any object and of
-   * any group that offers or overrides it. A rule written against the type itself - the menu
-   * default of a navigation child, say - asks here; a rule about the object being aggregated asks
-   * {@link #configuration(int, Class)}.
-   *
-   * <p>The default implementation knows no global definitions and answers none.
-   *
-   * @param objectType the name of the object type, as {@link
-   *     com.sitepark.ies.aggregator.resolver.EntityDescriptor#type()} answers it
-   * @param type the target type the configuration is bound to
-   * @param <T> the target type
-   * @return the bound configuration, or {@link Optional#empty()} if the type is not defined
-   */
-  default <T> Optional<T> typeConfiguration(String objectType, Class<T> type) {
-    return Optional.empty();
-  }
 }
