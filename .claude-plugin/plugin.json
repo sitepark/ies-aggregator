@@ -1,0 +1,9 @@
+{
+  "name": "ies-aggregator",
+  "description": "Knowledge about the IES Aggregator API: resolvers, assemblers, aggregators, output nodes, visitors, ports and the module configuration - what exists and how to use it.",
+  "author": {
+    "name": "Sitepark"
+  },
+  "homepage": "https://github.com/sitepark/ies-aggregator",
+  "repository": "https://github.com/sitepark/ies-aggregator"
+}
